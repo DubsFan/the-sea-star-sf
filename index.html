@@ -124,8 +124,9 @@ section{padding:8rem 0;position:relative}
 .cocktails{background:#0a0e18}
 .cocktails-header{text-align:center;margin-bottom:4rem}
 .menu-nav{display:flex;justify-content:center;gap:.5rem;margin-bottom:3rem;flex-wrap:wrap}
-.menu-nav a{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;padding:.6rem 1.2rem;color:#8a9bb8;text-decoration:none;border:1px solid rgba(201,165,78,.1);transition:all .3s}
-.menu-nav a:hover,.menu-nav a.active{border-color:#c9a54e;color:#c9a54e;background:rgba(201,165,78,.05)}
+.menu-nav button{font-family:'Libre Franklin','Helvetica Neue',sans-serif;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;padding:.6rem 1.2rem;color:#8a9bb8;background:none;border:1px solid rgba(201,165,78,.1);cursor:pointer;transition:all .3s}
+.menu-nav button:hover,.menu-nav button.active{border-color:#c9a54e;color:#c9a54e;background:rgba(201,165,78,.05)}
+.drink-card.hidden{display:none}
 .drinks-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(201,165,78,.06);border:1px solid rgba(201,165,78,.06)}
 .drink-card{background:#06080d;padding:2.5rem;transition:all .4s}
 .drink-card:hover{background:rgba(201,165,78,.02)}
@@ -136,6 +137,16 @@ section{padding:8rem 0;position:relative}
 .drink-tag{display:inline-block;margin-top:.75rem;font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:#5cb8c4;padding:.2rem .65rem;border:1px solid rgba(92,184,196,.25)}
 .drink-note{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:.85rem;color:#c47e7e;margin-top:.5rem}
 .menu-cta{text-align:center;margin-top:3rem}
+.cocktails{position:relative;overflow:hidden}
+.cocktails-slideshow{position:absolute;inset:0;z-index:0}
+.cocktails-slide{position:absolute;inset:-10px;background-size:cover;background-position:center;opacity:0;transition:opacity 2s ease;filter:saturate(.4) brightness(.3)}
+.cocktails-slide.active{opacity:.35}
+.cocktails .container{position:relative;z-index:2}
+
+/* ===== BLOG REAL PHOTOS ===== */
+.blog-img{position:relative}
+.blog-img-photo{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.4;transition:opacity .4s}
+.blog-card:hover .blog-img-photo{opacity:.55}
 
 /* ===== REVIEWS ===== */
 .reviews{background:#06080d}
@@ -258,9 +269,7 @@ nav{z-index:100}
 .blog-img-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:.15;z-index:1}
 .blog-img-icon svg{width:80px;height:80px}
 
-/* ===== MENU NAV INTERNAL ===== */
-.menu-nav span{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;padding:.6rem 1.2rem;color:#8a9bb8;border:1px solid rgba(201,165,78,.1);transition:all .3s;cursor:default}
-.menu-nav span.active{border-color:#c9a54e;color:#c9a54e;background:rgba(201,165,78,.05)}
+/* (menu nav styles moved to main cocktails section) */
 
 /* ===== LOGIN ===== */
 .login-overlay{display:none;position:fixed;inset:0;background:rgba(6,8,13,.98);backdrop-filter:blur(24px);z-index:300;align-items:center;justify-content:center}
@@ -403,6 +412,12 @@ nav{z-index:100}
 
 <!-- COCKTAILS -->
 <section class="cocktails section-border-top" id="cocktails">
+  <div class="cocktails-slideshow" id="cocktailsSlideshow">
+    <div class="cocktails-slide active" style="background-image:url('https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690106-1742689689772_alicia_walton_4f1a0644.jpeg')"></div>
+    <div class="cocktails-slide" style="background-image:url('https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690107-1742689689772_alicia_walton_4f1a0518.jpeg')"></div>
+    <div class="cocktails-slide" style="background-image:url('https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690107-1742689689772_alicia_walton_4f1a0009.jpeg')"></div>
+    <div class="cocktails-slide" style="background-image:url('https://thetasteedit.com/wp-content/uploads/2016/04/the-sea-star-san-francisco-thetastesf-alicia-walton-cynar-DSC08610.jpg')"></div>
+  </div>
   <div class="container">
     <div class="cocktails-header reveal">
       <p class="section-label">The Menu</p>
@@ -410,23 +425,47 @@ nav{z-index:100}
       <p style="color:#8a9bb8;max-width:500px;margin:0 auto 2rem;font-size:.95rem">Creative, bold, and unapologetically fun. Every drink crafted with intention.</p>
     </div>
     <div class="menu-nav reveal">
-      <span class="active">House Cocktails</span>
-      <span>Wine</span>
-      <span>Beer</span>
-      <span>No ABV</span>
-      <span>Boilermakers</span>
+      <button class="active" data-cat="cocktails" onclick="filterMenu('cocktails',this)">House Cocktails</button>
+      <button data-cat="wine" onclick="filterMenu('wine',this)">Wine</button>
+      <button data-cat="beer" onclick="filterMenu('beer',this)">Beer</button>
+      <button data-cat="noabv" onclick="filterMenu('noabv',this)">No ABV</button>
+      <button data-cat="boilermakers" onclick="filterMenu('boilermakers',this)">Boilermakers</button>
     </div>
-    <div class="drinks-grid reveal">
-      <div class="drink-card"><div class="drink-header"><div class="drink-name">Peanut Envy</div><div class="drink-price">$18</div></div><div class="drink-desc">Angel's Envy Bourbon, sherry, lime leaf, lemongrass, peanut, chili</div><div class="drink-note">Served with a snack!</div><div class="drink-tag">Frisky For Whiskey</div></div>
-      <div class="drink-card"><div class="drink-header"><div class="drink-name">Umami Issues</div><div class="drink-price">$16</div></div><div class="drink-desc">Rye whiskey, sesame, miso, shiitake mushroom</div><div class="drink-tag">Fashion For All</div></div>
-      <div class="drink-card"><div class="drink-header"><div class="drink-name">Nitro Espresso Martini</div><div class="drink-price">$16</div></div><div class="drink-desc">Caff&egrave; Borghetti, mezcal, tequila, nitro-charged</div><div class="drink-tag">Agave Forever</div></div>
-      <div class="drink-card"><div class="drink-header"><div class="drink-name">Soft Porn</div><div class="drink-price">$16</div></div><div class="drink-desc">Vodka, passionfruit, falernum, coconut, fresh lemon</div><div class="drink-tag">Clean Delight</div></div>
-      <div class="drink-card"><div class="drink-header"><div class="drink-name">Gypsy Tailwind</div><div class="drink-price">$18</div></div><div class="drink-desc">Aqar&aacute; Agave, peach, celery root, sakura sake, lemon, mint</div><div class="drink-tag">Agave Forever</div></div>
-      <div class="drink-card"><div class="drink-header"><div class="drink-name">Spill The Tea</div><div class="drink-price">$16</div></div><div class="drink-desc">Mezcal, amaro, earl grey, cola, fresh lemon</div><div class="drink-tag">Agave Forever</div></div>
-      <div class="drink-card"><div class="drink-header"><div class="drink-name">Under The Stars</div><div class="drink-price">$16</div></div><div class="drink-desc">Argonaut Brandy, blood orange, Martinelli's cider, bitter, grenadine</div><div class="drink-note">Can serve two!</div><div class="drink-tag">Cane &amp; Grape</div></div>
-      <div class="drink-card" style="background:rgba(196,126,126,.03)"><div class="drink-header"><div class="drink-name" style="color:#c47e7e">F*CK THE PATRIARCHY</div><div class="drink-price">$16</div></div><div class="drink-desc">Mal Bien or Tequile&ntilde;o with Modelo</div><div class="drink-note">$1 donated to Planned Parenthood per drink</div><div class="drink-tag" style="border-color:rgba(196,126,126,.35);color:#c47e7e">Boilermaker with a cause</div></div>
+    <div class="drinks-grid reveal" id="drinksGrid">
+      <!-- HOUSE COCKTAILS -->
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Peanut Envy</div><div class="drink-price">$18</div></div><div class="drink-desc">Angel's Envy Bourbon, sherry, lime leaf, lemongrass, peanut, chili</div><div class="drink-note">Served with a snack!</div><div class="drink-tag">Frisky For Whiskey</div></div>
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Umami Issues</div><div class="drink-price">$16</div></div><div class="drink-desc">Rye whiskey, sesame, miso, shiitake mushroom</div><div class="drink-tag">Fashion For All</div></div>
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Nitro Espresso Martini</div><div class="drink-price">$16</div></div><div class="drink-desc">Caff&egrave; Borghetti, mezcal, tequila, nitro-charged</div><div class="drink-tag">Agave Forever</div></div>
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Soft Porn</div><div class="drink-price">$16</div></div><div class="drink-desc">Vodka, passionfruit, falernum, coconut, fresh lemon</div><div class="drink-tag">Clean Delight</div></div>
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Gypsy Tailwind</div><div class="drink-price">$18</div></div><div class="drink-desc">Aqar&aacute; Agave, peach, celery root, sakura sake, lemon, mint</div><div class="drink-tag">Agave Forever</div></div>
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Spill The Tea</div><div class="drink-price">$16</div></div><div class="drink-desc">Mezcal, amaro, earl grey, cola, fresh lemon</div><div class="drink-tag">Agave Forever</div></div>
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Under The Stars</div><div class="drink-price">$16</div></div><div class="drink-desc">Argonaut Brandy, blood orange, Martinelli's cider, bitter, grenadine</div><div class="drink-note">Can serve two!</div><div class="drink-tag">Cane &amp; Grape</div></div>
+      <div class="drink-card" data-category="cocktails"><div class="drink-header"><div class="drink-name">Haute to Trot</div><div class="drink-price">$16</div></div><div class="drink-desc">Gin, Cocchi Rosa, grapefruit, rosemary, sparkling</div><div class="drink-tag">Clean Delight</div></div>
+      <!-- WINE -->
+      <div class="drink-card hidden" data-category="wine"><div class="drink-header"><div class="drink-name">Sparkling Ros&eacute;</div><div class="drink-price">$14 / $48</div></div><div class="drink-desc">Dry, crisp, and bright. Perfect with anything on the menu.</div><div class="drink-tag">Glass / Bottle</div></div>
+      <div class="drink-card hidden" data-category="wine"><div class="drink-header"><div class="drink-name">Sauvignon Blanc</div><div class="drink-price">$13 / $44</div></div><div class="drink-desc">Citrus-forward with mineral finish. Sonoma County.</div><div class="drink-tag">Glass / Bottle</div></div>
+      <div class="drink-card hidden" data-category="wine"><div class="drink-header"><div class="drink-name">Pinot Noir</div><div class="drink-price">$14 / $48</div></div><div class="drink-desc">Red fruit, soft tannins, earthy finish. Central Coast.</div><div class="drink-tag">Glass / Bottle</div></div>
+      <div class="drink-card hidden" data-category="wine"><div class="drink-header"><div class="drink-name">Cabernet Sauvignon</div><div class="drink-price">$15 / $52</div></div><div class="drink-desc">Full-bodied, dark cherry, hints of oak and tobacco. Paso Robles.</div><div class="drink-tag">Glass / Bottle</div></div>
+      <div class="drink-card hidden" data-category="wine"><div class="drink-header"><div class="drink-name">Natural Orange Wine</div><div class="drink-price">$15 / $50</div></div><div class="drink-desc">Skin-contact, funky, and textured. Rotating selection.</div><div class="drink-tag">Glass / Bottle</div></div>
+      <div class="drink-card hidden" data-category="wine"><div class="drink-header"><div class="drink-name">Prosecco</div><div class="drink-price">$12 / $40</div></div><div class="drink-desc">Light, bubbly, green apple and pear. Italian.</div><div class="drink-tag">Glass / Bottle</div></div>
+      <!-- BEER -->
+      <div class="drink-card hidden" data-category="beer"><div class="drink-header"><div class="drink-name">Rotating IPA</div><div class="drink-price">$9</div></div><div class="drink-desc">Always fresh, always local. Ask your bartender what's pouring.</div><div class="drink-tag">Draft</div></div>
+      <div class="drink-card hidden" data-category="beer"><div class="drink-header"><div class="drink-name">Modelo Especial</div><div class="drink-price">$7</div></div><div class="drink-desc">Crisp, clean Mexican lager. The people's beer.</div><div class="drink-tag">Bottle</div></div>
+      <div class="drink-card hidden" data-category="beer"><div class="drink-header"><div class="drink-name">Lagunitas Lil Sumpin'</div><div class="drink-price">$8</div></div><div class="drink-desc">Hazy wheat ale with citrus hop character. Petaluma, CA.</div><div class="drink-tag">Draft</div></div>
+      <div class="drink-card hidden" data-category="beer"><div class="drink-header"><div class="drink-name">Anchor Steam</div><div class="drink-price">$8</div></div><div class="drink-desc">San Francisco's original craft beer since 1896. A local institution.</div><div class="drink-tag">Bottle</div></div>
+      <div class="drink-card hidden" data-category="beer"><div class="drink-header"><div class="drink-name">Guinness Draught</div><div class="drink-price">$9</div></div><div class="drink-desc">Rich, creamy stout. Nitrogen-poured for that velvet texture.</div><div class="drink-tag">Draft</div></div>
+      <div class="drink-card hidden" data-category="beer"><div class="drink-header"><div class="drink-name">Ace Pear Cider</div><div class="drink-price">$8</div></div><div class="drink-desc">Dry and refreshing California pear cider. Gluten free.</div><div class="drink-tag">Bottle</div></div>
+      <!-- NO ABV -->
+      <div class="drink-card hidden" data-category="noabv"><div class="drink-header"><div class="drink-name">Seedlip Garden Spritz</div><div class="drink-price">$12</div></div><div class="drink-desc">Seedlip Garden 108, elderflower tonic, cucumber, fresh herbs</div><div class="drink-tag">Zero Proof</div></div>
+      <div class="drink-card hidden" data-category="noabv"><div class="drink-header"><div class="drink-name">Virgin Sea Star Mule</div><div class="drink-price">$10</div></div><div class="drink-desc">Fresh ginger, lime, house-made ginger beer, mint</div><div class="drink-tag">Zero Proof</div></div>
+      <div class="drink-card hidden" data-category="noabv"><div class="drink-header"><div class="drink-name">Passionfruit Lemonade</div><div class="drink-price">$10</div></div><div class="drink-desc">Fresh passionfruit, lemon, coconut cream, falernum syrup</div><div class="drink-tag">Zero Proof</div></div>
+      <div class="drink-card hidden" data-category="noabv"><div class="drink-header"><div class="drink-name">Athletic Brewing IPA</div><div class="drink-price">$7</div></div><div class="drink-desc">Full-flavored non-alcoholic craft IPA. Tastes like the real thing.</div><div class="drink-tag">NA Beer</div></div>
+      <!-- BOILERMAKERS -->
+      <div class="drink-card hidden" data-category="boilermakers" style="background:rgba(196,126,126,.03)"><div class="drink-header"><div class="drink-name" style="color:#c47e7e">F*CK THE PATRIARCHY</div><div class="drink-price">$16</div></div><div class="drink-desc">Mal Bien or Tequile&ntilde;o with Modelo</div><div class="drink-note">$1 donated to Planned Parenthood per drink</div><div class="drink-tag" style="border-color:rgba(196,126,126,.35);color:#c47e7e">Boilermaker with a cause</div></div>
+      <div class="drink-card hidden" data-category="boilermakers"><div class="drink-header"><div class="drink-name">The Classic</div><div class="drink-price">$14</div></div><div class="drink-desc">Shot of Jameson paired with an Anchor Steam</div><div class="drink-tag">Old School</div></div>
+      <div class="drink-card hidden" data-category="boilermakers"><div class="drink-header"><div class="drink-name">Smoke &amp; Suds</div><div class="drink-price">$16</div></div><div class="drink-desc">Mezcal Vago paired with rotating IPA</div><div class="drink-tag">Bartender's Pick</div></div>
+      <div class="drink-card hidden" data-category="boilermakers"><div class="drink-header"><div class="drink-name">Bourbon &amp; Brew</div><div class="drink-price">$15</div></div><div class="drink-desc">Angel's Envy Bourbon paired with Guinness Draught</div><div class="drink-tag">Rich &amp; Smooth</div></div>
     </div>
-    <div class="menu-cta reveal"><a href="https://www.theseastarsf.com" target="_blank" rel="noopener" class="btn-primary">Full Menu on Our Site</a></div>
   </div>
 </section>
 
@@ -474,9 +513,9 @@ nav{z-index:100}
   <div class="container">
     <div class="reveal" style="text-align:center;margin-bottom:3rem"><p class="section-label">From the Bar</p><h2 class="section-title">The <em>Journal</em></h2></div>
     <div class="blog-grid reveal">
-      <div class="blog-card" onclick="openBlog(0)"><div class="blog-img"><div class="blog-img-icon"><svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 8L44 32L60 16L48 36L72 40L48 44L60 64L44 48L40 72L36 48L20 64L32 44L8 40L32 36L20 16L36 32Z" stroke="#c9a54e" stroke-width="1"/><circle cx="40" cy="40" r="12" stroke="#5cb8c4" stroke-width="0.5"/></svg></div><div class="blog-img-num">01</div></div><div class="blog-body"><div class="blog-date">February 2026</div><div class="blog-title">Introducing the Spring Menu: Florals, Smoke &amp; a Little Chaos</div><div class="blog-excerpt">The new seasonal rotation brings sakura sake, celery root, and a mezcal-earl grey combination we've been obsessing over.</div><span class="blog-read">Read More &rarr;</span></div></div>
-      <div class="blog-card" onclick="openBlog(1)"><div class="blog-img"><div class="blog-img-icon"><svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30 55V30C30 22 35 18 40 18C45 18 50 22 50 30V55" stroke="#c9a54e" stroke-width="1"/><ellipse cx="40" cy="55" rx="14" ry="4" stroke="#c9a54e" stroke-width="1"/><path d="M33 30C33 30 37 34 40 34C43 34 47 30 47 30" stroke="#5cb8c4" stroke-width="0.5"/><line x1="40" y1="55" x2="40" y2="68" stroke="#c9a54e" stroke-width="1"/><ellipse cx="40" cy="70" rx="8" ry="3" stroke="#c9a54e" stroke-width="0.5"/></svg></div><div class="blog-img-num">02</div></div><div class="blog-body"><div class="blog-date">January 2026</div><div class="blog-title">Behind the Nitro Espresso Martini: Rebuilding a Classic</div><div class="blog-excerpt">Forget everything you know about espresso martinis. Our nitro-charged version with mezcal is entirely different.</div><span class="blog-read">Read More &rarr;</span></div></div>
-      <div class="blog-card" onclick="openBlog(2)"><div class="blog-img"><div class="blog-img-icon"><svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="25" width="40" height="40" rx="2" stroke="#c9a54e" stroke-width="1"/><path d="M20 35h40" stroke="#c9a54e" stroke-width="0.5"/><path d="M30 25V18h20v7" stroke="#c9a54e" stroke-width="1"/><circle cx="40" cy="50" r="8" stroke="#5cb8c4" stroke-width="0.5"/><path d="M40 42v16M32 50h16" stroke="#5cb8c4" stroke-width="0.5"/></svg></div><div class="blog-img-num">03</div></div><div class="blog-body"><div class="blog-date">December 2025</div><div class="blog-title">127 Years at 2289 3rd Street: The History Beneath Your Feet</div><div class="blog-excerpt">The trough. The fire maps. The five names this bar has carried. A walk through the oldest bar in Dogpatch.</div><span class="blog-read">Read More &rarr;</span></div></div>
+      <div class="blog-card" onclick="openBlog(0)"><div class="blog-img"><div class="blog-img-photo" style="background-image:url('https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690106-1742689689772_alicia_walton_4f1a0644.jpeg')"></div><div class="blog-img-num">01</div></div><div class="blog-body"><div class="blog-date">February 2026</div><div class="blog-title">Introducing the Spring Menu: Florals, Smoke &amp; a Little Chaos</div><div class="blog-excerpt">The new seasonal rotation brings sakura sake, celery root, and a mezcal-earl grey combination we've been obsessing over.</div><span class="blog-read">Read More &rarr;</span></div></div>
+      <div class="blog-card" onclick="openBlog(1)"><div class="blog-img"><div class="blog-img-photo" style="background-image:url('https://thetasteedit.com/wp-content/uploads/2016/04/the-sea-star-san-francisco-thetastesf-alicia-walton-cynar-DSC08610.jpg')"></div><div class="blog-img-num">02</div></div><div class="blog-body"><div class="blog-date">January 2026</div><div class="blog-title">Behind the Nitro Espresso Martini: Rebuilding a Classic</div><div class="blog-excerpt">Forget everything you know about espresso martinis. Our nitro-charged version with mezcal is entirely different.</div><span class="blog-read">Read More &rarr;</span></div></div>
+      <div class="blog-card" onclick="openBlog(2)"><div class="blog-img"><div class="blog-img-photo" style="background-image:url('https://drinkfellows.com/cdn/shop/articles/sea_star_interior_2_1100x.jpg?v=1647980521')"></div><div class="blog-img-num">03</div></div><div class="blog-body"><div class="blog-date">December 2025</div><div class="blog-title">127 Years at 2289 3rd Street: The History Beneath Your Feet</div><div class="blog-excerpt">The trough. The fire maps. The five names this bar has carried. A walk through the oldest bar in Dogpatch.</div><span class="blog-read">Read More &rarr;</span></div></div>
     </div>
   </div>
 </section>
@@ -667,6 +706,28 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeBlog();closeLogin()}
 });
 
+// ===== MENU FILTER =====
+function filterMenu(cat,btn){
+  document.querySelectorAll('.menu-nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#drinksGrid .drink-card').forEach(card=>{
+    if(card.dataset.category===cat){card.classList.remove('hidden')}
+    else{card.classList.add('hidden')}
+  });
+}
+
+// ===== COCKTAILS SLIDESHOW =====
+(function(){
+  const slides=document.querySelectorAll('.cocktails-slide');
+  if(slides.length<2)return;
+  let current=0;
+  setInterval(()=>{
+    slides[current].classList.remove('active');
+    current=(current+1)%slides.length;
+    slides[current].classList.add('active');
+  },7000);
+})();
+
 // ===== SHOOTING STARS CANVAS =====
 (function(){
   const canvas=document.getElementById('starsCanvas');
@@ -676,110 +737,123 @@ document.addEventListener('keydown',e=>{
   function resize(){w=canvas.width=window.innerWidth;h=canvas.height=document.documentElement.scrollHeight}
   resize();
   window.addEventListener('resize',resize);
-  // Re-measure on scroll settle (for dynamic content)
   let resizeTimer;
   const ro=new ResizeObserver(()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(resize,200)});
   ro.observe(document.body);
 
-  // Static twinkling stars
+  // Twinkling stars — more of them, varied sizes
   const stars=[];
-  for(let i=0;i<150;i++){
+  for(let i=0;i<200;i++){
+    const isGold=Math.random()>0.6;
     stars.push({
-      x:Math.random()*w,
-      y:Math.random()*h,
-      r:Math.random()*1.5+0.3,
+      x:Math.random()*w,y:Math.random()*h,
+      r:Math.random()*1.8+0.2,
       alpha:Math.random(),
-      speed:Math.random()*0.02+0.005,
-      dir:Math.random()>0.5?1:-1
+      speed:Math.random()*0.015+0.003,
+      dir:Math.random()>0.5?1:-1,
+      gold:isGold
     });
   }
 
-  // Shooting stars
+  // Shooting stars — spawn from top-left quadrant, streak at ~45 degrees
   const shooters=[];
   function spawnShooter(){
+    // Start from top or left edge, biased toward top-left
+    const fromTop=Math.random()>0.3;
+    const startX=fromTop?(Math.random()*w*0.7):-10;
+    const startY=fromTop?-10:(Math.random()*h*0.4);
+    // Angle: roughly 45 degrees (PI/4) with +-15 degree variation
+    const angle=Math.PI/4+(Math.random()*0.52-0.26);
     shooters.push({
-      x:Math.random()*w,
-      y:Math.random()*h*0.6,
-      len:Math.random()*80+40,
-      speed:Math.random()*6+4,
-      angle:Math.PI/4+(Math.random()*0.5-0.25),
-      alpha:1,
-      life:0,
-      maxLife:Math.random()*40+30
+      x:startX,y:startY,
+      len:Math.random()*120+60,
+      speed:Math.random()*8+5,
+      angle:angle,
+      alpha:1,life:0,
+      maxLife:Math.random()*60+40,
+      width:Math.random()*1.5+0.5
     });
   }
 
   function draw(){
     ctx.clearRect(0,0,w,h);
 
-    // Draw twinkling stars
+    // Twinkling stars
     for(const s of stars){
       s.alpha+=s.speed*s.dir;
-      if(s.alpha>=1||s.alpha<=0.1)s.dir*=-1;
-      s.alpha=Math.max(0.1,Math.min(1,s.alpha));
-
-      // Gold-white color
-      const gold=Math.random()>0.7;
-      if(gold){
-        ctx.fillStyle=`rgba(201,165,78,${s.alpha*0.6})`;
+      if(s.alpha>=1||s.alpha<=0.05)s.dir*=-1;
+      s.alpha=Math.max(0.05,Math.min(1,s.alpha));
+      if(s.gold){
+        ctx.fillStyle=`rgba(201,165,78,${s.alpha*0.7})`;
       }else{
-        ctx.fillStyle=`rgba(216,224,237,${s.alpha*0.4})`;
+        ctx.fillStyle=`rgba(216,224,237,${s.alpha*0.35})`;
       }
       ctx.beginPath();
       ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
       ctx.fill();
 
-      // Occasional sparkle cross
-      if(s.alpha>0.85&&s.r>1){
-        ctx.strokeStyle=`rgba(201,165,78,${(s.alpha-0.85)*3})`;
-        ctx.lineWidth=0.5;
+      // Sparkle cross on bright gold stars
+      if(s.gold&&s.alpha>0.8&&s.r>1.2){
+        const sparkle=(s.alpha-0.8)*5;
+        ctx.strokeStyle=`rgba(201,165,78,${sparkle*0.4})`;
+        ctx.lineWidth=0.3;
+        const arm=s.r*4;
         ctx.beginPath();
-        ctx.moveTo(s.x-s.r*3,s.y);ctx.lineTo(s.x+s.r*3,s.y);
-        ctx.moveTo(s.x,s.y-s.r*3);ctx.lineTo(s.x,s.y+s.r*3);
+        ctx.moveTo(s.x-arm,s.y);ctx.lineTo(s.x+arm,s.y);
+        ctx.moveTo(s.x,s.y-arm);ctx.lineTo(s.x,s.y+arm);
+        // Diagonal arms (smaller)
+        const d=arm*0.6;
+        ctx.moveTo(s.x-d,s.y-d);ctx.lineTo(s.x+d,s.y+d);
+        ctx.moveTo(s.x+d,s.y-d);ctx.lineTo(s.x-d,s.y+d);
         ctx.stroke();
       }
     }
 
-    // Draw shooting stars
+    // Shooting stars
     for(let i=shooters.length-1;i>=0;i--){
       const sh=shooters[i];
       sh.life++;
       const progress=sh.life/sh.maxLife;
-      sh.alpha=progress<0.5?1:(1-(progress-0.5)*2);
+      // Fade in quickly, hold, fade out
+      if(progress<0.1)sh.alpha=progress*10;
+      else if(progress<0.6)sh.alpha=1;
+      else sh.alpha=1-(progress-0.6)/0.4;
 
-      const dx=Math.cos(sh.angle)*sh.speed;
-      const dy=Math.sin(sh.angle)*sh.speed;
-      sh.x+=dx;
-      sh.y+=dy;
+      sh.x+=Math.cos(sh.angle)*sh.speed;
+      sh.y+=Math.sin(sh.angle)*sh.speed;
 
-      // Draw trail
-      const grad=ctx.createLinearGradient(
-        sh.x,sh.y,
-        sh.x-Math.cos(sh.angle)*sh.len,
-        sh.y-Math.sin(sh.angle)*sh.len
-      );
-      grad.addColorStop(0,`rgba(201,165,78,${sh.alpha*0.8})`);
-      grad.addColorStop(0.3,`rgba(223,192,110,${sh.alpha*0.4})`);
+      // Trail gradient
+      const tailX=sh.x-Math.cos(sh.angle)*sh.len;
+      const tailY=sh.y-Math.sin(sh.angle)*sh.len;
+      const grad=ctx.createLinearGradient(sh.x,sh.y,tailX,tailY);
+      grad.addColorStop(0,`rgba(240,243,248,${sh.alpha*0.9})`);
+      grad.addColorStop(0.08,`rgba(201,165,78,${sh.alpha*0.7})`);
+      grad.addColorStop(0.4,`rgba(201,165,78,${sh.alpha*0.25})`);
       grad.addColorStop(1,'rgba(201,165,78,0)');
 
       ctx.strokeStyle=grad;
-      ctx.lineWidth=1.5;
+      ctx.lineWidth=sh.width;
+      ctx.lineCap='round';
       ctx.beginPath();
       ctx.moveTo(sh.x,sh.y);
-      ctx.lineTo(sh.x-Math.cos(sh.angle)*sh.len,sh.y-Math.sin(sh.angle)*sh.len);
+      ctx.lineTo(tailX,tailY);
       ctx.stroke();
 
-      // Bright head
-      ctx.fillStyle=`rgba(240,243,248,${sh.alpha})`;
+      // Glowing head
+      const headGlow=ctx.createRadialGradient(sh.x,sh.y,0,sh.x,sh.y,4);
+      headGlow.addColorStop(0,`rgba(255,255,255,${sh.alpha*0.8})`);
+      headGlow.addColorStop(0.5,`rgba(201,165,78,${sh.alpha*0.3})`);
+      headGlow.addColorStop(1,'rgba(201,165,78,0)');
+      ctx.fillStyle=headGlow;
       ctx.beginPath();
-      ctx.arc(sh.x,sh.y,1.5,0,Math.PI*2);
+      ctx.arc(sh.x,sh.y,4,0,Math.PI*2);
       ctx.fill();
 
-      if(sh.life>=sh.maxLife)shooters.splice(i,1);
+      if(sh.life>=sh.maxLife||sh.x>w+50||sh.y>h+50)shooters.splice(i,1);
     }
 
-    // Randomly spawn shooting stars
-    if(Math.random()<0.015)spawnShooter();
+    // Spawn rate: ~1 every 2 seconds (more frequent)
+    if(Math.random()<0.03)spawnShooter();
 
     requestAnimationFrame(draw);
   }
