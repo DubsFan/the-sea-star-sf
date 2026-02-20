@@ -101,8 +101,14 @@ section{padding:8rem 0;position:relative}
 .stat-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:#8a9bb8;margin-top:.25rem}
 
 /* ===== ALICIA ===== */
-.alicia{background:linear-gradient(180deg,#06080d 0%,#0a0e18 100%)}
-.alicia-inner{text-align:center;max-width:800px;margin:0 auto}
+.alicia{background:linear-gradient(180deg,#06080d 0%,#0a0e18 100%);position:relative;overflow:hidden}
+.alicia-slideshow{position:absolute;inset:0;z-index:0}
+.alicia-slide{position:absolute;inset:-20px;background-size:cover;background-position:center 20%;opacity:0;transition:opacity 2.5s cubic-bezier(.22,1,.36,1);transform:scale(1);filter:saturate(.6)}
+.alicia-slide.active{opacity:1;animation:kenBurns 12s ease-in-out forwards}
+@keyframes kenBurns{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.08) translate(-1%,1%)}}
+.alicia-slideshow::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#06080d 0%,rgba(6,8,13,.78) 15%,rgba(10,14,24,.65) 40%,rgba(10,14,24,.65) 60%,rgba(6,8,13,.78) 85%,#06080d 100%);z-index:1}
+.alicia-slideshow::before{content:'';position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse at center,transparent 40%,rgba(6,8,13,.5) 100%);pointer-events:none}
+.alicia-inner{text-align:center;max-width:800px;margin:0 auto;position:relative;z-index:2}
 .alicia-badge{display:inline-flex;align-items:center;gap:.75rem;padding:.5rem 1.5rem;border:1px solid rgba(201,165,78,.15);margin-bottom:2rem}
 .alicia-badge span{font-size:.55rem;letter-spacing:.35em;text-transform:uppercase;color:#c9a54e}
 .alicia-quote{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(1.4rem,3vw,2.4rem);font-weight:300;font-style:italic;color:#f0f3f8;line-height:1.4;margin-bottom:2rem}
@@ -373,6 +379,11 @@ nav{z-index:100}
 
 <!-- ALICIA -->
 <section class="alicia section-border-top" id="alicia">
+  <div class="alicia-slideshow" id="aliciaSlideshow">
+    <div class="alicia-slide active" style="background-image:url('https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689886356-personal_1742689886058_1742689886058_alicia_walton_alicia_the_sea_star_sanfrancisco_5-23-23_sarahfelker-7.jpeg')"></div>
+    <div class="alicia-slide" style="background-image:url('https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690105-1742689690105-1742689689772_alicia_walton_4f1a0534.jpeg')"></div>
+    <div class="alicia-slide" style="background-image:url('https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690106-1742689689772_alicia_walton_4f1a0498.jpeg')"></div>
+  </div>
   <div class="container"><div class="alicia-inner reveal">
     <div class="alicia-badge"><span>&#9733;</span><span>Meet the Mixologist</span><span>&#9733;</span></div>
     <p class="section-label">Alicia Walton</p>
@@ -380,6 +391,7 @@ nav{z-index:100}
     <div class="divider" style="margin:2rem auto"></div>
     <p class="alicia-quote">"We serve delicious drinks with cheeky names, hand-crafted with premium ingredients."</p>
     <p class="alicia-bio">From a small-town hostess in West Virginia to one of San Francisco's most decorated bartenders. Alicia's path to The Sea Star spans two decades and some of the city's most iconic bars: Martuni's, Elixir, Comstock Saloon, and Brass Tacks. She won the 2016 Speed Rack SF championship, was named a StarChefs Rising Star Mixologist, and earned SF Chronicle's Bar Star recognition. She doesn't just make cocktails. She makes you feel at home.</p>
+    <a href="https://canvasrebel.com/meet-alicia-walton/" target="_blank" rel="noopener" style="display:inline-block;font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:#c9a54e;text-decoration:none;padding:.65rem 1.25rem;border:1px solid rgba(201,165,78,.3);margin-bottom:2rem;transition:all .3s" onmouseover="this.style.borderColor='#c9a54e'" onmouseout="this.style.borderColor='rgba(201,165,78,.3)'">Read Her Story on CanvasRebel &rarr;</a>
     <div class="awards-grid">
       <div class="award-card"><div class="award-year">2015</div><div class="award-name">Speed Rack Finalist</div><div class="award-org">San Francisco</div></div>
       <div class="award-card"><div class="award-year">2016</div><div class="award-name">Speed Rack Champion</div><div class="award-org">Ms. Speed Rack SF</div></div>
@@ -604,6 +616,30 @@ const today=days[new Date().getDay()];
 document.querySelectorAll('.hours-table .day').forEach(td=>{
   if(td.textContent===today){td.classList.add('today');td.closest('tr').querySelector('.time').classList.add('today')}
 });
+
+// Alicia photo slideshow with Ken Burns
+(function(){
+  const slides=document.querySelectorAll('.alicia-slide');
+  if(slides.length<2)return;
+  let current=0;
+  const directions=[
+    'scale(1.08) translate(-1%,1%)',
+    'scale(1.06) translate(1%,-0.5%)',
+    'scale(1.07) translate(-0.5%,-1%)'
+  ];
+  setInterval(()=>{
+    slides[current].classList.remove('active');
+    slides[current].style.transform='scale(1)';
+    current=(current+1)%slides.length;
+    slides[current].style.transform='scale(1)';
+    slides[current].classList.add('active');
+    // Trigger Ken Burns with varied directions
+    requestAnimationFrame(()=>{
+      slides[current].style.transition='opacity 2.5s cubic-bezier(.22,1,.36,1), transform 12s ease-in-out';
+      slides[current].style.transform=directions[current%directions.length];
+    });
+  },6000);
+})();
 
 // Floating particles
 const pc=document.getElementById('particles');
