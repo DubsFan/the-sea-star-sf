@@ -8,6 +8,8 @@
 <meta property="og:title" content="The Sea Star SF | Booze Your Own Adventure">
 <meta property="og:description" content="Craft cocktails with soul. A 127-year-old Dogpatch legend run by award-winning mixologist Alicia Walton.">
 <meta property="og:type" content="website">
+<link rel="icon" type="image/png" sizes="32x32" href="https://static.wixstatic.com/media/caf58b_f3addf78f3924b39ab988450022a0e43%7Emv2.png/v1/fill/w_32%2Ch_32%2Clg_1%2Cusm_0.66_1.00_0.01/caf58b_f3addf78f3924b39ab988450022a0e43%7Emv2.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://static.wixstatic.com/media/caf58b_f3addf78f3924b39ab988450022a0e43%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/caf58b_f3addf78f3924b39ab988450022a0e43%7Emv2.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BarOrPub","name":"The Sea Star","url":"https://theseastarsf.com","telephone":"(415) 552-5330","email":"info@theseastarsf.com","address":{"@type":"PostalAddress","streetAddress":"2289 3rd Street","addressLocality":"San Francisco","addressRegion":"CA","postalCode":"94107","addressCountry":"US"},"geo":{"@type":"GeoCoordinates","latitude":37.7607,"longitude":-122.3883},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday"],"opens":"16:00","closes":"01:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Friday","opens":"16:00","closes":"02:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Saturday","opens":"14:00","closes":"02:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Sunday","opens":"14:00","closes":"01:00"}],"priceRange":"$","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.7","reviewCount":"328","bestRating":"5"},"sameAs":["https://www.instagram.com/seastarbarsf/","https://www.facebook.com/TheSeaStarSF","https://www.yelp.com/biz/the-sea-star-san-francisco","https://untappd.com/v/the-sea-star/1567898","https://www.tripadvisor.com/Restaurant_Review-g60713-d15106299-Reviews-The_Sea_Star-San_Francisco_California.html","https://foursquare.com/v/sea-star/53583898498e7059d4ce6206","https://www.exploretock.com/theseastar","https://www.tagvenue.com/us/venues/san-francisco/15777/the-sea-star"]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -221,12 +223,58 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
 .footer-brand{font-family:'Playfair Display',Georgia,serif;font-size:1.8rem;font-weight:700;color:#c9a54e;margin-bottom:.75rem}
 .footer-tagline{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:1rem;color:#8a9bb8;margin-bottom:1.5rem}
 .footer-social{display:flex;gap:.75rem}
-.footer-social a{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid #2d3a52;color:#8a9bb8;text-decoration:none;font-size:.65rem;transition:all .3s}
-.footer-social a:hover{border-color:#c9a54e;color:#c9a54e}
+.footer-social a{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid #2d3a52;color:#8a9bb8;text-decoration:none;transition:all .3s;border-radius:50%}
+.footer-social a:hover{border-color:#c9a54e;color:#c9a54e;transform:translateY(-2px)}
+.footer-social a svg{flex-shrink:0}
 .footer-col-title{font-size:.55rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:#c9a54e;margin-bottom:1.25rem}
 .footer-col a{display:block;font-size:.85rem;color:#8a9bb8;text-decoration:none;line-height:2;transition:color .3s}
 .footer-col a:hover{color:#c9a54e}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.03);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;font-size:.65rem;color:#2d3a52}
+
+/* ===== STARS CANVAS ===== */
+#starsCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+section,.cta-band,footer,.map-section{position:relative;z-index:2}
+nav{z-index:100}
+.hero{z-index:1}
+
+/* ===== NAV LOGO IMG ===== */
+.nav-logo img{height:32px;display:block;transition:opacity .3s}
+.nav-logo img:hover{opacity:.8}
+
+/* ===== STORY VISUAL ENHANCED ===== */
+.story-visual-star{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;opacity:.6;animation:starGlow 4s ease-in-out infinite alternate}
+.story-visual-star svg{width:100%;height:100%}
+@keyframes starGlow{0%{opacity:.4;filter:drop-shadow(0 0 8px rgba(201,165,78,.2))}100%{opacity:.8;filter:drop-shadow(0 0 30px rgba(201,165,78,.5))}}
+.story-visual-line{position:absolute;bottom:35%;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,165,78,.15),transparent)}
+.story-visual-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) translateY(80px);font-family:'Cormorant Garamond',Georgia,serif;font-size:1rem;font-style:italic;color:rgba(201,165,78,.25);letter-spacing:.2em;white-space:nowrap}
+
+/* ===== BLOG IMG ENHANCED ===== */
+.blog-img-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:.15;z-index:1}
+.blog-img-icon svg{width:80px;height:80px}
+
+/* ===== MENU NAV INTERNAL ===== */
+.menu-nav span{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;padding:.6rem 1.2rem;color:#8a9bb8;border:1px solid rgba(201,165,78,.1);transition:all .3s;cursor:default}
+.menu-nav span.active{border-color:#c9a54e;color:#c9a54e;background:rgba(201,165,78,.05)}
+
+/* ===== LOGIN ===== */
+.login-overlay{display:none;position:fixed;inset:0;background:rgba(6,8,13,.98);backdrop-filter:blur(24px);z-index:300;align-items:center;justify-content:center}
+.login-overlay.open{display:flex}
+.login-box{max-width:380px;width:90%;text-align:center;animation:fadeUp .5s ease-out}
+.login-box h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:2.4rem;font-weight:300;color:#f0f3f8;margin-bottom:.5rem}
+.login-box p{font-size:.85rem;color:#8a9bb8;margin-bottom:2.5rem}
+.login-field{display:block;width:100%;padding:.85rem 1.25rem;background:rgba(26,34,54,.5);border:1px solid rgba(201,165,78,.12);color:#d8e0ed;font-family:'Libre Franklin','Helvetica Neue',sans-serif;font-size:.85rem;margin-bottom:1rem;outline:none;transition:border-color .3s}
+.login-field:focus{border-color:#c9a54e}
+.login-field::placeholder{color:#2d3a52}
+.login-btn{width:100%;padding:.85rem;background:#c9a54e;color:#06080d;border:none;font-family:'Libre Franklin','Helvetica Neue',sans-serif;font-size:.6rem;font-weight:500;letter-spacing:.3em;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:.5rem}
+.login-btn:hover{background:#dfc06e}
+.login-error{color:#c47e7e;font-size:.75rem;margin-top:1rem;display:none}
+.login-close{position:absolute;top:2rem;right:2rem;background:none;border:1px solid #2d3a52;color:#c9a54e;font-size:1.2rem;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;z-index:301}
+.login-close:hover{border-color:#c9a54e}
+.welcome-screen{display:none;text-align:center;animation:fadeUp .5s ease-out}
+.welcome-screen.show{display:block}
+.welcome-screen h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(3rem,8vw,5rem);font-weight:300;color:#c9a54e;margin-bottom:1rem}
+.welcome-screen p{font-family:'Cormorant Garamond',Georgia,serif;font-size:1.3rem;font-style:italic;color:#d8e0ed;margin-bottom:2rem}
+.welcome-star{font-size:4rem;color:#c9a54e;margin-bottom:1.5rem;animation:starGlow 2s ease-in-out infinite alternate}
 
 /* ===== REVEAL ===== */
 .reveal{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.22,1,.36,1)}
@@ -242,7 +290,7 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
 
 <!-- NAV -->
 <nav id="nav">
-  <a href="#" class="nav-logo">The Sea Star</a>
+  <a href="#" class="nav-logo"><img src="https://static.wixstatic.com/media/caf58b_1639781b3f4044a18526c14dfb78c29e~mv2.png/v1/fill/w_390,h_78,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/caf58b_1639781b3f4044a18526c14dfb78c29e~mv2.png" alt="The Sea Star" style="height:32px;display:block"></a>
   <div class="nav-links">
     <a href="#story">Story</a>
     <a href="#alicia">Alicia</a>
@@ -251,6 +299,7 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
     <a href="#events">Events</a>
     <a href="#journal">Journal</a>
     <a href="#visit">Visit</a>
+    <a href="#" onclick="openLogin();return false" class="nav-links-login">Login</a>
     <a href="https://www.exploretock.com/theseastar" target="_blank" rel="noopener" class="nav-cta">Book Event</a>
   </div>
   <button class="hamburger" onclick="toggleMenu()" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -266,6 +315,7 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
   <a href="#events" onclick="toggleMenu()">Events</a>
   <a href="#journal" onclick="toggleMenu()">Journal</a>
   <a href="#visit" onclick="toggleMenu()">Visit Us</a>
+  <a href="#" onclick="toggleMenu();openLogin();return false" style="color:#8a9bb8">Login</a>
   <a href="https://www.exploretock.com/theseastar" target="_blank" rel="noopener" style="color:#c9a54e">Book an Event</a>
 </div>
 
@@ -299,6 +349,9 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
   <div class="container"><div class="story-grid">
     <div class="story-visual reveal">
       <div class="story-visual-tag">Since 1899</div>
+      <div class="story-visual-star"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M100 10 L118 75 L185 75 L130 115 L148 180 L100 145 L52 180 L70 115 L15 75 L82 75 Z" fill="none" stroke="#c9a54e" stroke-width="1" opacity="0.5"/><path d="M100 30 L113 78 L165 78 L123 108 L137 160 L100 133 L63 160 L77 108 L35 78 L87 78 Z" fill="none" stroke="#c9a54e" stroke-width="0.5" opacity="0.3"/><circle cx="100" cy="100" r="60" fill="none" stroke="rgba(201,165,78,0.08)" stroke-width="0.5"/><circle cx="100" cy="100" r="85" fill="none" stroke="rgba(92,184,196,0.06)" stroke-width="0.5"/></svg></div>
+      <div class="story-visual-line"></div>
+      <div class="story-visual-text">Dogpatch, San Francisco</div>
       <div class="story-visual-year">1899</div>
     </div>
     <div class="story-content reveal">
@@ -345,11 +398,11 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
       <p style="color:#8a9bb8;max-width:500px;margin:0 auto 2rem;font-size:.95rem">Creative, bold, and unapologetically fun. Every drink crafted with intention.</p>
     </div>
     <div class="menu-nav reveal">
-      <a href="https://www.theseastarsf.com/drinkmenu?menu=house-cocktails" target="_blank" class="active">House Cocktails</a>
-      <a href="https://www.theseastarsf.com/drinkmenu?menu=wine" target="_blank">Wine</a>
-      <a href="https://www.theseastarsf.com/drinkmenu?menu=beer" target="_blank">Beer</a>
-      <a href="https://www.theseastarsf.com/drinkmenu?menu=no-abv" target="_blank">No ABV</a>
-      <a href="https://www.theseastarsf.com/drinkmenu?menu=boilermakers" target="_blank">Boilermakers</a>
+      <span class="active">House Cocktails</span>
+      <span>Wine</span>
+      <span>Beer</span>
+      <span>No ABV</span>
+      <span>Boilermakers</span>
     </div>
     <div class="drinks-grid reveal">
       <div class="drink-card"><div class="drink-header"><div class="drink-name">Peanut Envy</div><div class="drink-price">$18</div></div><div class="drink-desc">Angel's Envy Bourbon, sherry, lime leaf, lemongrass, peanut, chili</div><div class="drink-note">Served with a snack!</div><div class="drink-tag">Frisky For Whiskey</div></div>
@@ -361,7 +414,7 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
       <div class="drink-card"><div class="drink-header"><div class="drink-name">Under The Stars</div><div class="drink-price">$16</div></div><div class="drink-desc">Argonaut Brandy, blood orange, Martinelli's cider, bitter, grenadine</div><div class="drink-note">Can serve two!</div><div class="drink-tag">Cane &amp; Grape</div></div>
       <div class="drink-card" style="background:rgba(196,126,126,.03)"><div class="drink-header"><div class="drink-name" style="color:#c47e7e">F*CK THE PATRIARCHY</div><div class="drink-price">$16</div></div><div class="drink-desc">Mal Bien or Tequile&ntilde;o with Modelo</div><div class="drink-note">$1 donated to Planned Parenthood per drink</div><div class="drink-tag" style="border-color:rgba(196,126,126,.35);color:#c47e7e">Boilermaker with a cause</div></div>
     </div>
-    <div class="menu-cta reveal"><a href="https://www.theseastarsf.com/drinkmenu?menu=house-cocktails" target="_blank" class="btn-primary">Full Menu on Our Site</a></div>
+    <div class="menu-cta reveal"><a href="https://www.theseastarsf.com" target="_blank" rel="noopener" class="btn-primary">Full Menu on Our Site</a></div>
   </div>
 </section>
 
@@ -409,9 +462,9 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
   <div class="container">
     <div class="reveal" style="text-align:center;margin-bottom:3rem"><p class="section-label">From the Bar</p><h2 class="section-title">The <em>Journal</em></h2></div>
     <div class="blog-grid reveal">
-      <div class="blog-card" onclick="openBlog(0)"><div class="blog-img"><div class="blog-img-num">01</div></div><div class="blog-body"><div class="blog-date">February 2026</div><div class="blog-title">Introducing the Spring Menu: Florals, Smoke &amp; a Little Chaos</div><div class="blog-excerpt">The new seasonal rotation brings sakura sake, celery root, and a mezcal-earl grey combination we've been obsessing over.</div><span class="blog-read">Read More &rarr;</span></div></div>
-      <div class="blog-card" onclick="openBlog(1)"><div class="blog-img"><div class="blog-img-num">02</div></div><div class="blog-body"><div class="blog-date">January 2026</div><div class="blog-title">Behind the Nitro Espresso Martini: Rebuilding a Classic</div><div class="blog-excerpt">Forget everything you know about espresso martinis. Our nitro-charged version with mezcal is entirely different.</div><span class="blog-read">Read More &rarr;</span></div></div>
-      <div class="blog-card" onclick="openBlog(2)"><div class="blog-img"><div class="blog-img-num">03</div></div><div class="blog-body"><div class="blog-date">December 2025</div><div class="blog-title">127 Years at 2289 3rd Street: The History Beneath Your Feet</div><div class="blog-excerpt">The trough. The fire maps. The five names this bar has carried. A walk through the oldest bar in Dogpatch.</div><span class="blog-read">Read More &rarr;</span></div></div>
+      <div class="blog-card" onclick="openBlog(0)"><div class="blog-img"><div class="blog-img-icon"><svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40 8L44 32L60 16L48 36L72 40L48 44L60 64L44 48L40 72L36 48L20 64L32 44L8 40L32 36L20 16L36 32Z" stroke="#c9a54e" stroke-width="1"/><circle cx="40" cy="40" r="12" stroke="#5cb8c4" stroke-width="0.5"/></svg></div><div class="blog-img-num">01</div></div><div class="blog-body"><div class="blog-date">February 2026</div><div class="blog-title">Introducing the Spring Menu: Florals, Smoke &amp; a Little Chaos</div><div class="blog-excerpt">The new seasonal rotation brings sakura sake, celery root, and a mezcal-earl grey combination we've been obsessing over.</div><span class="blog-read">Read More &rarr;</span></div></div>
+      <div class="blog-card" onclick="openBlog(1)"><div class="blog-img"><div class="blog-img-icon"><svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30 55V30C30 22 35 18 40 18C45 18 50 22 50 30V55" stroke="#c9a54e" stroke-width="1"/><ellipse cx="40" cy="55" rx="14" ry="4" stroke="#c9a54e" stroke-width="1"/><path d="M33 30C33 30 37 34 40 34C43 34 47 30 47 30" stroke="#5cb8c4" stroke-width="0.5"/><line x1="40" y1="55" x2="40" y2="68" stroke="#c9a54e" stroke-width="1"/><ellipse cx="40" cy="70" rx="8" ry="3" stroke="#c9a54e" stroke-width="0.5"/></svg></div><div class="blog-img-num">02</div></div><div class="blog-body"><div class="blog-date">January 2026</div><div class="blog-title">Behind the Nitro Espresso Martini: Rebuilding a Classic</div><div class="blog-excerpt">Forget everything you know about espresso martinis. Our nitro-charged version with mezcal is entirely different.</div><span class="blog-read">Read More &rarr;</span></div></div>
+      <div class="blog-card" onclick="openBlog(2)"><div class="blog-img"><div class="blog-img-icon"><svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="25" width="40" height="40" rx="2" stroke="#c9a54e" stroke-width="1"/><path d="M20 35h40" stroke="#c9a54e" stroke-width="0.5"/><path d="M30 25V18h20v7" stroke="#c9a54e" stroke-width="1"/><circle cx="40" cy="50" r="8" stroke="#5cb8c4" stroke-width="0.5"/><path d="M40 42v16M32 50h16" stroke="#5cb8c4" stroke-width="0.5"/></svg></div><div class="blog-img-num">03</div></div><div class="blog-body"><div class="blog-date">December 2025</div><div class="blog-title">127 Years at 2289 3rd Street: The History Beneath Your Feet</div><div class="blog-excerpt">The trough. The fire maps. The five names this bar has carried. A walk through the oldest bar in Dogpatch.</div><span class="blog-read">Read More &rarr;</span></div></div>
     </div>
   </div>
 </section>
@@ -474,10 +527,10 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
         <div class="footer-brand">The Sea Star</div>
         <div class="footer-tagline">Booze Your Own Adventure</div>
         <div class="footer-social">
-          <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" title="Instagram">IG</a>
-          <a href="https://www.facebook.com/TheSeaStarSF" target="_blank" rel="noopener" title="Facebook">FB</a>
-          <a href="https://www.yelp.com/biz/the-sea-star-san-francisco" target="_blank" rel="noopener" title="Yelp">Y!</a>
-          <a href="https://untappd.com/v/the-sea-star/1567898" target="_blank" rel="noopener" title="Untappd">UT</a>
+          <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" title="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+          <a href="https://www.facebook.com/TheSeaStarSF" target="_blank" rel="noopener" title="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2z"/></svg></a>
+          <a href="https://www.yelp.com/biz/the-sea-star-san-francisco" target="_blank" rel="noopener" title="Yelp"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.14 2C10.75 2 9.26 5.2 9.26 5.2L5.5 12.28c-.3.56.16 1.3.8 1.3h3.87s.18 0 .26.1c.08.1.06.24.06.24l-.9 4.2c-.1.46.26.88.7.88.22 0 .42-.1.56-.28l5.72-7.46c.34-.44.1-1.06-.44-1.2l-3.08-.8s-.16-.04-.22-.14c-.06-.1 0-.22 0-.22L14.56 3.2c.16-.52-.16-1.04-.66-1.16-.12-.02-.24-.04-.36-.04h-1.4z"/></svg></a>
+          <a href="https://untappd.com/v/the-sea-star/1567898" target="_blank" rel="noopener" title="Untappd"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4C10.34 4 9 5.34 9 7c0 .86.37 1.63.95 2.18L7.4 14.6a3 3 0 1 0 1.73 1l2.55-5.42c.1.01.21.02.32.02s.22-.01.32-.02l2.55 5.42a3 3 0 1 0 1.73-1l-2.55-5.42C14.63 8.63 15 7.86 15 7c0-1.66-1.34-3-3-3zm0 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM6 17a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm12 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg></a>
         </div>
       </div>
       <div class="footer-col">
@@ -511,6 +564,28 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
     </div>
   </div>
 </footer>
+
+<!-- STARS CANVAS -->
+<canvas id="starsCanvas"></canvas>
+
+<!-- LOGIN MODAL -->
+<div class="login-overlay" id="loginOverlay">
+  <button class="login-close" onclick="closeLogin()">&times;</button>
+  <div class="login-box" id="loginBox">
+    <h2>Welcome Back</h2>
+    <p>Staff access only</p>
+    <input type="text" class="login-field" id="loginUser" placeholder="Username" autocomplete="off">
+    <input type="password" class="login-field" id="loginPass" placeholder="Password">
+    <button class="login-btn" onclick="attemptLogin()">Sign In</button>
+    <div class="login-error" id="loginError">Invalid credentials. Try again.</div>
+  </div>
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-star">&#9733;</div>
+    <h1>Hi Alicia!</h1>
+    <p>Welcome to The Sea Star dashboard</p>
+    <button class="btn-primary" onclick="closeLogin()" style="margin-top:1rem">Back to Site</button>
+  </div>
+</div>
 
 <script>
 // Nav scroll
@@ -552,7 +627,162 @@ function closeBlog(){
   document.body.style.overflow='';
 }
 document.getElementById('blogOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeBlog()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeBlog()});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeBlog();closeLogin()}
+});
+
+// ===== SHOOTING STARS CANVAS =====
+(function(){
+  const canvas=document.getElementById('starsCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let w,h;
+  function resize(){w=canvas.width=window.innerWidth;h=canvas.height=document.documentElement.scrollHeight}
+  resize();
+  window.addEventListener('resize',resize);
+  // Re-measure on scroll settle (for dynamic content)
+  let resizeTimer;
+  const ro=new ResizeObserver(()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(resize,200)});
+  ro.observe(document.body);
+
+  // Static twinkling stars
+  const stars=[];
+  for(let i=0;i<150;i++){
+    stars.push({
+      x:Math.random()*w,
+      y:Math.random()*h,
+      r:Math.random()*1.5+0.3,
+      alpha:Math.random(),
+      speed:Math.random()*0.02+0.005,
+      dir:Math.random()>0.5?1:-1
+    });
+  }
+
+  // Shooting stars
+  const shooters=[];
+  function spawnShooter(){
+    shooters.push({
+      x:Math.random()*w,
+      y:Math.random()*h*0.6,
+      len:Math.random()*80+40,
+      speed:Math.random()*6+4,
+      angle:Math.PI/4+(Math.random()*0.5-0.25),
+      alpha:1,
+      life:0,
+      maxLife:Math.random()*40+30
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+
+    // Draw twinkling stars
+    for(const s of stars){
+      s.alpha+=s.speed*s.dir;
+      if(s.alpha>=1||s.alpha<=0.1)s.dir*=-1;
+      s.alpha=Math.max(0.1,Math.min(1,s.alpha));
+
+      // Gold-white color
+      const gold=Math.random()>0.7;
+      if(gold){
+        ctx.fillStyle=`rgba(201,165,78,${s.alpha*0.6})`;
+      }else{
+        ctx.fillStyle=`rgba(216,224,237,${s.alpha*0.4})`;
+      }
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+
+      // Occasional sparkle cross
+      if(s.alpha>0.85&&s.r>1){
+        ctx.strokeStyle=`rgba(201,165,78,${(s.alpha-0.85)*3})`;
+        ctx.lineWidth=0.5;
+        ctx.beginPath();
+        ctx.moveTo(s.x-s.r*3,s.y);ctx.lineTo(s.x+s.r*3,s.y);
+        ctx.moveTo(s.x,s.y-s.r*3);ctx.lineTo(s.x,s.y+s.r*3);
+        ctx.stroke();
+      }
+    }
+
+    // Draw shooting stars
+    for(let i=shooters.length-1;i>=0;i--){
+      const sh=shooters[i];
+      sh.life++;
+      const progress=sh.life/sh.maxLife;
+      sh.alpha=progress<0.5?1:(1-(progress-0.5)*2);
+
+      const dx=Math.cos(sh.angle)*sh.speed;
+      const dy=Math.sin(sh.angle)*sh.speed;
+      sh.x+=dx;
+      sh.y+=dy;
+
+      // Draw trail
+      const grad=ctx.createLinearGradient(
+        sh.x,sh.y,
+        sh.x-Math.cos(sh.angle)*sh.len,
+        sh.y-Math.sin(sh.angle)*sh.len
+      );
+      grad.addColorStop(0,`rgba(201,165,78,${sh.alpha*0.8})`);
+      grad.addColorStop(0.3,`rgba(223,192,110,${sh.alpha*0.4})`);
+      grad.addColorStop(1,'rgba(201,165,78,0)');
+
+      ctx.strokeStyle=grad;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(sh.x,sh.y);
+      ctx.lineTo(sh.x-Math.cos(sh.angle)*sh.len,sh.y-Math.sin(sh.angle)*sh.len);
+      ctx.stroke();
+
+      // Bright head
+      ctx.fillStyle=`rgba(240,243,248,${sh.alpha})`;
+      ctx.beginPath();
+      ctx.arc(sh.x,sh.y,1.5,0,Math.PI*2);
+      ctx.fill();
+
+      if(sh.life>=sh.maxLife)shooters.splice(i,1);
+    }
+
+    // Randomly spawn shooting stars
+    if(Math.random()<0.015)spawnShooter();
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===== LOGIN =====
+function openLogin(){
+  document.getElementById('loginOverlay').classList.add('open');
+  document.getElementById('loginBox').style.display='block';
+  document.getElementById('welcomeScreen').classList.remove('show');
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.body.style.overflow='hidden';
+  setTimeout(()=>document.getElementById('loginUser').focus(),100);
+}
+function closeLogin(){
+  document.getElementById('loginOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function attemptLogin(){
+  const u=document.getElementById('loginUser').value.toLowerCase().trim();
+  const p=document.getElementById('loginPass').value.toLowerCase().trim();
+  if(u==='sea'&&p==='star'){
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('welcomeScreen').classList.add('show');
+  }else{
+    document.getElementById('loginError').style.display='block';
+    document.getElementById('loginPass').value='';
+  }
+}
+// Allow Enter key to submit login
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.getElementById('loginOverlay').classList.contains('open')){
+    const ws=document.getElementById('welcomeScreen');
+    if(!ws.classList.contains('show'))attemptLogin();
+  }
+});
 
 </script>
 </body>
