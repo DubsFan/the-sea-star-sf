@@ -249,10 +249,8 @@ footer{background:#06080d;padding:4rem 0 2rem;border-top:1px solid rgba(201,165,
 .footer-bottom{border-top:1px solid rgba(255,255,255,.03);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;font-size:.65rem;color:#2d3a52}
 
 /* ===== STARS CANVAS ===== */
-#starsCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
-section,.cta-band,footer,.map-section{position:relative;z-index:2}
+#starsCanvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:50;pointer-events:none;opacity:.8}
 nav{z-index:100}
-.hero{z-index:1}
 
 /* ===== NAV LOGO IMG ===== */
 .nav-logo img{height:32px;display:block;transition:opacity .3s}
@@ -362,12 +360,11 @@ nav{z-index:100}
 <!-- STORY -->
 <section class="story" id="story">
   <div class="container"><div class="story-grid">
-    <div class="story-visual reveal">
-      <div class="story-visual-tag">Since 1899</div>
-      <div class="story-visual-star"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M100 10 L118 75 L185 75 L130 115 L148 180 L100 145 L52 180 L70 115 L15 75 L82 75 Z" fill="none" stroke="#c9a54e" stroke-width="1" opacity="0.5"/><path d="M100 30 L113 78 L165 78 L123 108 L137 160 L100 133 L63 160 L77 108 L35 78 L87 78 Z" fill="none" stroke="#c9a54e" stroke-width="0.5" opacity="0.3"/><circle cx="100" cy="100" r="60" fill="none" stroke="rgba(201,165,78,0.08)" stroke-width="0.5"/><circle cx="100" cy="100" r="85" fill="none" stroke="rgba(92,184,196,0.06)" stroke-width="0.5"/></svg></div>
-      <div class="story-visual-line"></div>
-      <div class="story-visual-text">Dogpatch, San Francisco</div>
-      <div class="story-visual-year">1899</div>
+    <div class="story-visual reveal" style="background:none;border:none">
+      <img src="https://www.opensfhistory.org/Image/700/wnp27.4067.jpg" alt="3rd Street Bridge, Dogpatch, San Francisco, circa 1940" style="width:100%;height:100%;object-fit:cover;opacity:.55;filter:sepia(.3) contrast(1.1);position:absolute;inset:0">
+      <div style="position:absolute;inset:0;background:linear-gradient(160deg,rgba(6,8,13,.4),rgba(12,45,58,.3))"></div>
+      <div class="story-visual-tag" style="z-index:1;position:relative">Since 1899</div>
+      <div class="story-visual-year" style="z-index:1;position:relative">1899</div>
     </div>
     <div class="story-content reveal">
       <p class="section-label">Our Story</p>
@@ -575,7 +572,7 @@ nav{z-index:100}
   <div class="container">
     <div class="footer-grid">
       <div>
-        <div class="footer-brand">The Sea Star</div>
+        <div class="footer-brand"><img src="https://static.wixstatic.com/media/caf58b_f3addf78f3924b39ab988450022a0e43%7Emv2.png/v1/fill/w_192%2Ch_192%2Clg_1%2Cusm_0.66_1.00_0.01/caf58b_f3addf78f3924b39ab988450022a0e43%7Emv2.png" alt="The Sea Star" style="width:100px;height:100px;mix-blend-mode:lighten;margin-bottom:.75rem;display:block"></div>
         <div class="footer-tagline">Booze Your Own Adventure</div>
         <div class="footer-social">
           <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" title="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
@@ -734,16 +731,13 @@ function filterMenu(cat,btn){
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
   let w,h;
-  function resize(){w=canvas.width=window.innerWidth;h=canvas.height=document.documentElement.scrollHeight}
+  function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight}
   resize();
   window.addEventListener('resize',resize);
-  let resizeTimer;
-  const ro=new ResizeObserver(()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(resize,200)});
-  ro.observe(document.body);
 
-  // Twinkling stars — more of them, varied sizes
+  // Twinkling stars — scattered across viewport
   const stars=[];
-  for(let i=0;i<200;i++){
+  for(let i=0;i<120;i++){
     const isGold=Math.random()>0.6;
     stars.push({
       x:Math.random()*w,y:Math.random()*h,
