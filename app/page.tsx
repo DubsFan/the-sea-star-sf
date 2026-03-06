@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
+import HarborConditions from './components/HarborConditions'
 
 interface MenuItem {
   id: string
@@ -554,6 +555,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* HARBOR CONDITIONS */}
+      <HarborConditions revealRef={addRevealRef} />
 
       {/* JOURNAL */}
       <section id="journal" className="py-32 bg-[#06080d]/80 border-t border-sea-gold/10">
