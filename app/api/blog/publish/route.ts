@@ -57,5 +57,18 @@ export async function POST(request: NextRequest) {
       .eq('id', id)
   }
 
+  // Fire social posting (non-blocking — don't delay the publish response)
+  const origin = request.headers.get('origin') || request.headers.get('referer')?.replace(/\/[^/]*$/, '') || ''
+  if (origin) {
+    fetch(`${origin}/api/blog/social`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: request.headers.get('cookie') || '',
+      },
+      body: JSON.stringify({ id }),
+    }).catch(() => {})
+  }
+
   return NextResponse.json({ success: true, post })
 }

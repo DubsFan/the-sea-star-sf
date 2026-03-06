@@ -12,16 +12,32 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: post } = await supabase
     .from('blog_posts')
-    .select('title, meta_description')
+    .select('title, meta_description, featured_image, published_at, created_at')
     .eq('slug', params.slug)
     .eq('is_published', true)
     .single()
 
   if (!post) return { title: 'Post Not Found' }
 
+  const url = `https://theseastarsf.com/blog/${params.slug}`
+
   return {
     title: `${post.title} | The Sea Star SF`,
     description: post.meta_description || '',
+    openGraph: {
+      title: post.title,
+      description: post.meta_description || '',
+      type: 'article',
+      url,
+      publishedTime: post.published_at || post.created_at,
+      authors: ['Alicia Walton'],
+      siteName: 'The Sea Star SF',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.meta_description || '',
+    },
   }
 }
 
@@ -35,8 +51,24 @@ export default async function BlogPostPage({ params }: Props) {
 
   if (!post) notFound()
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    datePublished: post.published_at || post.created_at,
+    ...(post.featured_image ? { image: post.featured_image } : {}),
+    author: { '@type': 'Person', name: 'Alicia Walton' },
+    publisher: {
+      '@type': 'BarOrPub',
+      name: 'The Sea Star',
+      address: { '@type': 'PostalAddress', streetAddress: '2289 3rd Street', addressLocality: 'San Francisco', addressRegion: 'CA', postalCode: '94107' },
+    },
+    url: `https://theseastarsf.com/blog/${post.slug}`,
+  }
+
   return (
     <div className="min-h-screen bg-[#06080d]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="max-w-[700px] mx-auto px-6 md:px-12 py-32">
         <Link href="/blog" className="text-[0.55rem] tracking-[0.25em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline mb-12 inline-block">
           &larr; All Posts

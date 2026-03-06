@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useSession } from '../layout'
 
 interface AdminUser {
   id: string
@@ -18,6 +19,8 @@ const ROLES = [
 ]
 
 export default function AdminUsers() {
+  const session = useSession()
+  const isSuperAdmin = session?.role === 'super_admin'
   const [users, setUsers] = useState<AdminUser[]>([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ username: '', password: '', display_name: '', role: 'crew' })
@@ -107,7 +110,9 @@ export default function AdminUsers() {
                 </td>
                 <td className="p-3 text-xs text-sea-blue font-dm">{new Date(u.created_at).toLocaleDateString()}</td>
                 <td className="p-3 text-right">
-                  <button onClick={() => handleDelete(u.id, u.username)} className="text-xs text-sea-rose hover:text-red-400 bg-transparent border-none cursor-pointer font-dm">Delete</button>
+                  {(isSuperAdmin || u.role === 'crew') && (
+                    <button onClick={() => handleDelete(u.id, u.username)} className="text-xs text-sea-rose hover:text-red-400 bg-transparent border-none cursor-pointer font-dm">Delete</button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -128,7 +133,9 @@ export default function AdminUsers() {
             </div>
             <div className="flex justify-between items-center mt-3">
               <span className="text-xs text-sea-blue font-dm">{new Date(u.created_at).toLocaleDateString()}</span>
-              <button onClick={() => handleDelete(u.id, u.username)} className="text-xs text-sea-rose bg-transparent border-none cursor-pointer font-dm">Delete</button>
+              {(isSuperAdmin || u.role === 'crew') && (
+                <button onClick={() => handleDelete(u.id, u.username)} className="text-xs text-sea-rose bg-transparent border-none cursor-pointer font-dm">Delete</button>
+              )}
             </div>
           </div>
         ))}
@@ -155,7 +162,10 @@ export default function AdminUsers() {
               <div>
                 <label className="block text-xs text-sea-blue mb-1 font-dm">Role</label>
                 <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold">
-                  {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  {isSuperAdmin
+                    ? ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)
+                    : <option value="crew">Crew</option>
+                  }
                 </select>
               </div>
               <div className="flex gap-3 pt-4">

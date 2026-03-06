@@ -38,12 +38,12 @@ const howItWorks = [
     ],
   },
   {
-    title: 'Weekly Blog + Newsletter',
+    title: 'Weekly Blog + Social + Newsletter',
     points: [
       'Type 5 sentences about what happened this week',
       'Upload 5 photos',
       'AI writes a full blog post, you review and publish',
-      'Publishing also emails your subscriber list automatically',
+      'Publishing emails subscribers AND auto-posts to Facebook + Instagram',
     ],
   },
 ]
@@ -62,8 +62,54 @@ const steps = [
   'Upload 5 photos from your camera roll',
   'Tap "Generate Post" — AI writes the blog post in 10 seconds',
   'Review, tweak if you want',
-  'Tap "Publish" — blog goes live AND emails your subscriber list',
+  'Tap "Publish" — blog goes live, emails subscribers, AND auto-posts to Facebook + Instagram',
 ]
+
+const socialRunbook = {
+  title: 'Social Media Auto-Posting',
+  subtitle: 'How your blog posts get to Facebook & Instagram automatically',
+  sections: [
+    {
+      heading: 'What Happens When You Tap "Publish"',
+      steps: [
+        'Your blog post goes live on the website',
+        'An email goes out to all your subscribers',
+        'AI writes a short, fun caption for Facebook and Instagram',
+        'The caption + your first photo get posted to your Facebook Page automatically',
+        'The same thing happens on your Instagram — photo, caption, and hashtags',
+        'Everything is logged so you can see what posted and when',
+      ],
+    },
+    {
+      heading: 'What You Need To Do',
+      steps: [
+        'Nothing extra — just keep doing what you already do',
+        'Write your 5 sentences, upload your photos, hit Publish',
+        'Social posts happen in the background, no extra taps',
+        'If you want to check what posted, look for the purple "Social" badge on your blog posts',
+      ],
+    },
+    {
+      heading: 'Tips For Better Social Posts',
+      steps: [
+        'Your first photo becomes the Instagram post — make it a good one',
+        'The AI uses your blog title and summary to write captions, so catchy titles = catchy social posts',
+        'Instagram captions automatically get hashtags like #DogpatchSF #CraftCocktails',
+        'Facebook posts include a clickable link back to the full blog post on your website',
+      ],
+    },
+    {
+      heading: 'If Something Goes Wrong',
+      steps: [
+        'Social posting failing does NOT stop your blog from publishing — your post is safe',
+        'If Facebook or Instagram didn\'t post, the blog post won\'t have the purple "Social" badge',
+        'Most common fix: the Meta tokens expired — ask GG to update them in Settings',
+        'You can always manually share the blog link to social from your phone as backup',
+      ],
+    },
+  ],
+  footer: 'Cost: $0/month. AI captions are free. Posting to your own Facebook & Instagram is free. No extra apps or subscriptions needed.',
+}
 
 export default function Dashboard() {
   const session = useSession()
@@ -166,6 +212,30 @@ export default function Dashboard() {
           <p className="text-sm text-sea-gold font-dm mt-5 pt-4 border-t border-sea-gold/10">Total time: about 15 minutes</p>
         </div>
       </div>
+
+      {/* SOCIAL MEDIA RUNBOOK */}
+      {!isCrew && (
+        <div className="mb-10 md:mb-14">
+          <h2 className="font-playfair text-xl md:text-2xl text-sea-white mb-4 md:mb-6">{socialRunbook.title}</h2>
+          <p className="text-sm text-sea-blue font-dm mb-4">{socialRunbook.subtitle}</p>
+          <div className="space-y-4">
+            {socialRunbook.sections.map((section) => (
+              <div key={section.heading} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-5">
+                <h3 className="font-playfair text-sm md:text-base text-sea-gold mb-3">{section.heading}</h3>
+                <ol className="space-y-2">
+                  {section.steps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-3 text-xs md:text-sm font-dm text-sea-blue">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-sea-gold/10 text-sea-gold flex items-center justify-center text-[0.6rem] font-medium mt-0.5">{i + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-sea-gold/60 font-dm mt-4 italic">{socialRunbook.footer}</p>
+        </div>
+      )}
 
       {/* NEED HELP */}
       <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-6 mb-8">

@@ -15,6 +15,7 @@ interface BlogPost {
   is_published: boolean
   published_at: string | null
   emailed_at: string | null
+  social_posted_at: string | null
   created_at: string
 }
 
@@ -134,7 +135,7 @@ export default function AdminBlog() {
       body: JSON.stringify({ id }),
     })
     if (res.ok) {
-      toast.success('Published & emailed!')
+      toast.success('Published & posted to social!')
       loadPosts()
     } else {
       toast.error('Publish failed')
@@ -146,6 +147,12 @@ export default function AdminBlog() {
     if (post.is_published) return 'Published'
     return 'Draft'
   }
+
+  const SocialBadge = ({ post }: { post: BlogPost }) => (
+    post.social_posted_at ? (
+      <span className="text-[0.55rem] font-dm px-1.5 py-0.5 rounded bg-purple-900/30 text-purple-400 ml-1" title="Posted to social">Social</span>
+    ) : null
+  )
 
   return (
     <div>
@@ -233,6 +240,7 @@ export default function AdminBlog() {
                   <span className={`text-xs font-dm px-2 py-1 rounded ${getStatus(post) === 'Draft' ? 'bg-yellow-900/30 text-yellow-400' : getStatus(post) === 'Published' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}`}>
                     {getStatus(post)}
                   </span>
+                  <SocialBadge post={post} />
                 </td>
                 <td className="p-3 text-xs text-sea-blue font-dm">{new Date(post.created_at).toLocaleDateString()}</td>
                 <td className="p-3 text-right space-x-3">
@@ -263,9 +271,12 @@ export default function AdminBlog() {
           <div key={post.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-sm text-sea-white font-dm font-medium flex-1 mr-2">{post.title}</h3>
-              <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${getStatus(post) === 'Draft' ? 'bg-yellow-900/30 text-yellow-400' : getStatus(post) === 'Published' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}`}>
-                {getStatus(post)}
-              </span>
+              <div className="flex gap-1 flex-shrink-0">
+                <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded ${getStatus(post) === 'Draft' ? 'bg-yellow-900/30 text-yellow-400' : getStatus(post) === 'Published' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                  {getStatus(post)}
+                </span>
+                <SocialBadge post={post} />
+              </div>
             </div>
             <p className="text-xs text-sea-blue font-dm mb-3">{new Date(post.created_at).toLocaleDateString()}</p>
             <div className="flex flex-wrap gap-3">
