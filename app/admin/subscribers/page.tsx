@@ -119,12 +119,12 @@ export default function AdminSubscribers() {
           </div>
         </div>
         {isAdminOrAbove && (
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <label className="px-5 py-2 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all text-center">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <label className="flex-1 sm:flex-none px-5 py-3 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all text-center min-h-[44px] flex items-center justify-center">
               {importing ? 'Importing...' : 'Import CSV'}
               <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" disabled={importing} />
             </label>
-            <button onClick={exportCSV} className="px-5 py-2 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+            <button onClick={exportCSV} className="flex-1 sm:flex-none px-5 py-3 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all min-h-[44px]">
               Export CSV
             </button>
           </div>
@@ -139,21 +139,23 @@ export default function AdminSubscribers() {
 
       {/* Selection bar */}
       {selected.size > 0 && isAdminOrAbove && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-sea-gold/5 border border-sea-gold/20 rounded">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 mb-4 px-4 py-3 bg-[#0d1220] border border-sea-gold/20 rounded">
           <span className="text-sm text-sea-gold font-dm">{selected.size} selected</span>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="px-4 py-1.5 bg-red-900/40 text-red-400 font-dm text-xs tracking-[0.15em] uppercase border border-red-400/30 rounded cursor-pointer hover:bg-red-900/60 transition-all disabled:opacity-50"
-          >
-            {deleting ? 'Deleting...' : 'Delete'}
-          </button>
-          <button
-            onClick={() => setSelected(new Set())}
-            className="text-xs text-sea-blue font-dm hover:text-sea-white transition-colors cursor-pointer"
-          >
-            Clear
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelected(new Set())}
+              className="px-4 py-2.5 min-h-[44px] text-xs text-sea-blue font-dm hover:text-sea-white transition-colors cursor-pointer border border-sea-gold/10 rounded"
+            >
+              Clear
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-5 py-2.5 min-h-[44px] bg-red-900/40 text-red-400 font-dm text-xs tracking-[0.15em] uppercase border border-red-400/30 rounded cursor-pointer hover:bg-red-900/60 transition-all disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -205,35 +207,45 @@ export default function AdminSubscribers() {
       </div>
 
       {/* Mobile Cards */}
-      <div className="md:hidden space-y-3">
-        {subscribers.map((sub) => (
-          <div
-            key={sub.id}
-            onClick={() => isAdminOrAbove && toggleSelect(sub.id)}
-            className={`bg-[#0a0e18] border rounded-lg p-4 ${isAdminOrAbove ? 'cursor-pointer' : ''} ${selected.has(sub.id) ? 'border-sea-gold/40 bg-sea-gold/5' : 'border-sea-gold/10'}`}
+      <div className="md:hidden">
+        {isAdminOrAbove && subscribers.length > 0 && (
+          <button
+            onClick={toggleAll}
+            className="w-full py-3 mb-3 text-xs text-sea-blue font-dm tracking-[0.15em] uppercase border border-sea-gold/10 rounded min-h-[44px]"
           >
-            <div className="flex justify-between items-start">
-              <div className="flex items-start gap-3 min-w-0 flex-1">
-                {isAdminOrAbove && (
-                  <input
-                    type="checkbox"
-                    checked={selected.has(sub.id)}
-                    onChange={() => toggleSelect(sub.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="accent-sea-gold cursor-pointer mt-0.5"
-                  />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-sea-white font-dm truncate">{sub.email}</p>
-                  {sub.name && <p className="text-xs text-sea-blue font-dm mt-0.5">{sub.name}</p>}
+            {selected.size === subscribers.length ? 'Deselect All' : 'Select All'}
+          </button>
+        )}
+        <div className="space-y-2">
+          {subscribers.map((sub) => (
+            <div
+              key={sub.id}
+              onClick={() => isAdminOrAbove && toggleSelect(sub.id)}
+              className={`bg-[#0a0e18] border rounded-lg p-4 min-h-[56px] active:bg-sea-gold/10 ${isAdminOrAbove ? 'cursor-pointer' : ''} ${selected.has(sub.id) ? 'border-sea-gold/40 bg-sea-gold/5' : 'border-sea-gold/10'}`}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {isAdminOrAbove && (
+                    <input
+                      type="checkbox"
+                      checked={selected.has(sub.id)}
+                      onChange={() => toggleSelect(sub.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="accent-sea-gold cursor-pointer w-5 h-5 flex-shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-sea-white font-dm truncate">{sub.email}</p>
+                    {sub.name && <p className="text-xs text-sea-blue font-dm mt-0.5">{sub.name}</p>}
+                  </div>
                 </div>
+                <span className={`text-[0.6rem] font-dm px-2 py-1 rounded ml-2 flex-shrink-0 ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                  {sub.is_active ? 'Active' : 'Off'}
+                </span>
               </div>
-              <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded ml-2 flex-shrink-0 ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
-                {sub.is_active ? 'Active' : 'Off'}
-              </span>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
         {subscribers.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No subscribers yet.</p>}
       </div>
     </div>

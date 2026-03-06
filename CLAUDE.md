@@ -100,6 +100,13 @@ vercel --prod            # deploy to production (Vercel CLI ONLY — NOT connect
 - NEVER run on port 3000. Always use port 3005: `npm run dev -- -p 3005`
 - Port 3000 has conflicts and causes stale CSS/cache issues on this machine.
 
+## Mobile First Rule
+- **Mobile users first. ALWAYS.** GG manages the site from her phone.
+- Design and test all UI for mobile BEFORE desktop.
+- Touch targets must be large enough (min 44px). Buttons, checkboxes, tap areas.
+- Tables should have mobile card alternatives. No horizontal scrolling.
+- All admin pages must be fully usable on a phone screen.
+
 ## GUARDRAILS
 - Never claim done without testing
 - Verify files exist before referencing
