@@ -65,7 +65,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Dashboard', href: '/admin/dashboard', icon: DashboardIcon },
     ...(!isSocialAdmin ? [
       { label: 'Menu', href: '/admin/menu', icon: MenuIcon },
-      { label: 'Wine', href: '/admin/wine', icon: WineIcon },
     ] : []),
     { label: 'Blog', href: '/admin/blog', icon: BlogIcon },
     { label: 'Media', href: '/admin/media', icon: MediaIcon },
