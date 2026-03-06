@@ -141,3 +141,33 @@ body {
   60% { opacity: 0.4; }
   100% { transform: translateX(105vw) translateY(30vh) rotate(-15deg); opacity: 0; }
 }
+
+/* Wildlife animations */
+@keyframes bird-fly {
+  0% { left: -5%; opacity: 0; }
+  5% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 105%; opacity: 0; }
+}
+
+@keyframes wing-flap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.6); }
+}
+
+@keyframes dog-trot {
+  0% { right: -40px; }
+  100% { right: calc(100% + 40px); }
+}
+
+@keyframes sealion-bob {
+  0% { transform: translateY(20px); opacity: 0; }
+  15% { transform: translateY(0); opacity: 0.35; }
+  25% { transform: translateY(5px); }
+  40% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+  65% { transform: translateY(-2px); }
+  75% { transform: translateY(5px); }
+  90% { transform: translateY(0); opacity: 0.35; }
+  100% { transform: translateY(20px); opacity: 0; }
+}

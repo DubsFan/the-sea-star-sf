@@ -8,6 +8,7 @@ import CelestialBody from './CelestialBody'
 import CloudLayer from './CloudLayer'
 import WeatherEffects from './WeatherEffects'
 import WaterReflection from './WaterReflection'
+import Wildlife from './Wildlife'
 import Stars from './Stars'
 
 const WEATHER_FETCH_INTERVAL = 30 * 60 * 1000 // 30 minutes
@@ -91,6 +92,10 @@ export default function LivingBackground() {
       <WaterReflection
         reflectionColor={skyData.reflectionColor}
         skyBottom={skyData.skyBottom}
+      />
+      <Wildlife
+        skyPhase={skyData.phase}
+        isMobile={isMobile}
       />
       <Stars
         opacity={skyData.starsOpacity}
