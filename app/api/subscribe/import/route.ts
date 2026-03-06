@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const email = cols[emailIdx]?.trim()
     const status = cols[statusIdx]?.trim()
 
-    if (!email || status !== 'Subscribed') {
+    if (!email) {
       skipped++
       continue
     }
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     rows.push({
       email,
       name,
-      is_active: true,
+      is_active: status !== 'Unsubscribed',
     })
   }
 
