@@ -9,8 +9,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        sea: {
+          dark: '#1a1118',
+          darker: '#06080d',
+          navy: '#0a0e18',
+          gold: '#c9a54e',
+          'gold-light': '#dfc06e',
+          'gold-dim': '#8f7333',
+          blue: '#8a9bb8',
+          teal: '#5cb8c4',
+          rose: '#c47e7e',
+          light: '#d8e0ed',
+          white: '#f0f3f8',
+          border: '#2d3a52',
+        },
+        orange: {
+          accent: '#e8732a',
+        },
+      },
+      fontFamily: {
+        playfair: ['Playfair Display', 'Georgia', 'serif'],
+        cormorant: ['Cormorant Garamond', 'Georgia', 'serif'],
+        dm: ['DM Sans', 'Helvetica Neue', 'sans-serif'],
       },
     },
   },
