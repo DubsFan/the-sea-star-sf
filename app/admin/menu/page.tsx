@@ -28,6 +28,14 @@ interface WineItem {
 const DRINK_CATEGORIES = ['Batched', 'Made To Order', 'Draft', 'NA Mocktails']
 const ALL_CATEGORIES = [...DRINK_CATEGORIES, 'Wine']
 
+const CATEGORY_LABELS: Record<string, string> = {
+  'Batched': 'Portside Classics',
+  'Made To Order': 'Starboard Select',
+  'Draft': 'The Swell',
+  'NA Mocktails': 'Safe Harbor',
+  'Wine': 'The Hold',
+}
+
 export default function AdminMenu() {
   const session = useSession()
   const [items, setItems] = useState<MenuItem[]>([])
@@ -183,7 +191,7 @@ export default function AdminMenu() {
       <div className="flex gap-2 mb-6 flex-wrap">
         <button onClick={() => setFilter('all')} className={`px-3 py-2 min-h-[44px] text-xs font-dm border cursor-pointer transition-all ${filter === 'all' ? 'border-sea-gold text-sea-gold bg-sea-gold/5' : 'border-sea-gold/10 text-sea-blue hover:border-sea-gold'}`}>All</button>
         {ALL_CATEGORIES.map((cat) => (
-          <button key={cat} onClick={() => setFilter(cat)} className={`px-3 py-2 min-h-[44px] text-xs font-dm border cursor-pointer transition-all ${filter === cat ? 'border-sea-gold text-sea-gold bg-sea-gold/5' : 'border-sea-gold/10 text-sea-blue hover:border-sea-gold'}`}>{cat}</button>
+          <button key={cat} onClick={() => setFilter(cat)} className={`px-3 py-2 min-h-[44px] text-xs font-dm border cursor-pointer transition-all ${filter === cat ? 'border-sea-gold text-sea-gold bg-sea-gold/5' : 'border-sea-gold/10 text-sea-blue hover:border-sea-gold'}`}>{CATEGORY_LABELS[cat] || cat}</button>
         ))}
       </div>
 
@@ -217,7 +225,7 @@ export default function AdminMenu() {
                       <div className="font-dm text-sm text-sea-white">{item.name}</div>
                       <div className="font-dm text-xs text-sea-blue truncate max-w-[200px]">{item.blurb}</div>
                     </td>
-                    <td className="p-3 text-xs text-sea-blue font-dm">{item.category}</td>
+                    <td className="p-3 text-xs text-sea-blue font-dm">{CATEGORY_LABELS[item.category] || item.category}</td>
                     <td className="p-3 text-sm text-sea-gold font-cormorant">${item.price}</td>
                     <td className="p-3">
                       <button onClick={() => toggleActive(item)} className={`px-2 py-1 text-xs font-dm border-none cursor-pointer rounded ${item.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
@@ -250,7 +258,7 @@ export default function AdminMenu() {
                       <span className="text-sm text-sea-gold font-cormorant ml-2">${item.price}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[0.6rem] text-sea-blue font-dm px-1.5 py-0.5 border border-sea-gold/10 rounded">{item.category}</span>
+                      <span className="text-[0.6rem] text-sea-blue font-dm px-1.5 py-0.5 border border-sea-gold/10 rounded">{CATEGORY_LABELS[item.category] || item.category}</span>
                       <span className={`text-[0.6rem] font-dm px-1.5 py-0.5 rounded ${item.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
                         {item.is_active ? 'Active' : 'Off'}
                       </span>
@@ -274,7 +282,7 @@ export default function AdminMenu() {
       {/* Wine items */}
       {filteredWines.length > 0 && (
         <>
-          {filter === 'all' && <h2 className="font-cormorant text-xl text-sea-white mb-4 mt-2">Wine</h2>}
+          {filter === 'all' && <h2 className="font-cormorant text-xl text-sea-white mb-4 mt-2">The Hold</h2>}
 
           {/* Desktop Table - Wine */}
           <div className="hidden md:block border border-sea-gold/10 rounded overflow-hidden mb-6">
@@ -358,7 +366,7 @@ export default function AdminMenu() {
               <div>
                 <label className="block text-xs text-sea-blue mb-1 font-dm">Category</label>
                 <select value={drinkForm.category} onChange={(e) => setDrinkForm({ ...drinkForm, category: e.target.value })} className="w-full px-4 py-3 min-h-[44px] bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded">
-                  {DRINK_CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                  {DRINK_CATEGORIES.map((cat) => <option key={cat} value={cat}>{CATEGORY_LABELS[cat] || cat}</option>)}
                 </select>
               </div>
               <div>

@@ -78,6 +78,15 @@ const BLOG_CONTENT = [
 
 const CATEGORIES = ['Batched', 'Made To Order', 'Draft', 'NA Mocktails', 'Beer', 'Wine'] as const
 
+const CATEGORY_LABELS: Record<string, string> = {
+  'Batched': 'Portside Classics',
+  'Made To Order': 'Starboard Select',
+  'Draft': 'The Swell',
+  'NA Mocktails': 'Safe Harbor',
+  'Wine': 'The Hold',
+  'Beer': 'The Vessel',
+}
+
 export default function Home() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
@@ -397,7 +406,7 @@ export default function Home() {
                 onClick={() => setActiveTab(cat)}
                 className={`font-dm text-[0.55rem] tracking-[0.2em] uppercase px-4 py-2.5 border cursor-pointer transition-all ${activeTab === cat ? 'border-sea-gold text-sea-gold bg-sea-gold/5' : 'border-sea-gold/10 text-sea-blue hover:border-sea-gold hover:text-sea-gold'}`}
               >
-                {cat === 'NA Mocktails' ? 'No ABV' : cat}
+                {CATEGORY_LABELS[cat] || cat}
               </button>
             ))}
           </div>

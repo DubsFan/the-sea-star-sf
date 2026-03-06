@@ -4,8 +4,7 @@ import Link from 'next/link'
 import { useSession } from '../layout'
 
 const quickActions = [
-  { title: 'Manage Menu', href: '/admin/menu', desc: 'Add, edit, or remove cocktails' },
-  { title: 'Wine List', href: '/admin/wine', desc: 'Manage your wine selection' },
+  { title: 'Manage Menu', href: '/admin/menu', desc: 'Cocktails, drafts, and wine — all in one place' },
   { title: 'Create Blog Post', href: '/admin/blog', desc: 'Write your weekly update with AI' },
   { title: 'Media Library', href: '/admin/media', desc: 'Browse and upload images' },
   { title: 'Subscribers', href: '/admin/subscribers', desc: 'View your mailing list' },
@@ -16,7 +15,7 @@ const howItWorks = [
   {
     title: 'Your Cocktail & Wine Menu',
     points: [
-      'You control it from the Menu and Wine pages',
+      'You control it all from the Menu page',
       'Add a new seasonal drink, change a price, update the blurb',
       'Changes go live on the website instantly',
     ],
