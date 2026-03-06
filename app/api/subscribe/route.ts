@@ -32,3 +32,21 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ success: true })
 }
+
+export async function DELETE(request: NextRequest) {
+  const admin = await requireAdmin(request)
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { ids } = await request.json()
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return NextResponse.json({ error: 'No IDs provided' }, { status: 400 })
+  }
+
+  const { error } = await supabase
+    .from('email_subscribers')
+    .delete()
+    .in('id', ids)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ deleted: ids.length })
+}

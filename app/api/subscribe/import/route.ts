@@ -48,17 +48,20 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  if (rows.length === 0) {
+  // Deduplicate by email (keep last occurrence)
+  const deduped = [...new Map(rows.map((r) => [r.email.toLowerCase(), r])).values()]
+
+  if (deduped.length === 0) {
     return NextResponse.json({ imported: 0, skipped })
   }
 
   const { error } = await supabase
     .from('email_subscribers')
-    .upsert(rows, { onConflict: 'email' })
+    .upsert(deduped, { onConflict: 'email' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ imported: rows.length, skipped })
+  return NextResponse.json({ imported: deduped.length, skipped: skipped + (rows.length - deduped.length) })
 }
 
 function parseCSVLine(line: string): string[] {
