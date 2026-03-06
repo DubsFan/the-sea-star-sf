@@ -1,0 +1,90 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth'
+
+export async function POST(request: NextRequest) {
+  const admin = await requireAdmin(request)
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const formData = await request.formData()
+  const file = formData.get('file') as File | null
+  if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+
+  const text = await file.text()
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  if (lines.length < 2) return NextResponse.json({ error: 'CSV is empty' }, { status: 400 })
+
+  const header = lines[0].split(',')
+  const firstNameIdx = header.indexOf('First Name')
+  const lastNameIdx = header.indexOf('Last Name')
+  const emailIdx = header.indexOf('Email 1')
+  const createdIdx = header.indexOf('Created At (UTC+0)')
+  const statusIdx = header.indexOf('Email subscriber status')
+
+  if (emailIdx === -1) {
+    return NextResponse.json({ error: 'CSV missing "Email 1" column' }, { status: 400 })
+  }
+
+  const rows: { email: string; name: string | null; is_active: boolean; created_at: string }[] = []
+  let skipped = 0
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i])
+    const email = cols[emailIdx]?.trim()
+    const status = cols[statusIdx]?.trim()
+
+    if (!email || status !== 'Subscribed') {
+      skipped++
+      continue
+    }
+
+    const firstName = cols[firstNameIdx]?.replace(/^""+$/, '').trim() || ''
+    const lastName = cols[lastNameIdx]?.trim() || ''
+    const name = [firstName, lastName].filter(Boolean).join(' ') || null
+    const createdAt = cols[createdIdx]?.trim()
+
+    rows.push({
+      email,
+      name,
+      is_active: true,
+      ...(createdAt ? { created_at: new Date(createdAt + ' UTC').toISOString() } : { created_at: new Date().toISOString() }),
+    })
+  }
+
+  if (rows.length === 0) {
+    return NextResponse.json({ imported: 0, skipped })
+  }
+
+  const { error } = await supabase
+    .from('email_subscribers')
+    .upsert(rows, { onConflict: 'email' })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ imported: rows.length, skipped })
+}
+
+function parseCSVLine(line: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"'
+        i++
+      } else {
+        inQuotes = !inQuotes
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current)
+      current = ''
+    } else {
+      current += char
+    }
+  }
+  result.push(current)
+  return result
+}

@@ -14,15 +14,43 @@ interface Subscriber {
 export default function AdminSubscribers() {
   const session = useSession()
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<string | null>(null)
 
   const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin' || session?.role === 'social_admin'
 
-  useEffect(() => {
+  const loadSubscribers = () => {
     fetch('/api/subscribe')
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setSubscribers(data) })
       .catch(() => {})
-  }, [])
+  }
+
+  useEffect(() => { loadSubscribers() }, [])
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/subscribe/import', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (res.ok) {
+        setImportResult(`Imported ${data.imported}, skipped ${data.skipped}`)
+        loadSubscribers()
+      } else {
+        setImportResult(`Error: ${data.error}`)
+      }
+    } catch {
+      setImportResult('Import failed')
+    } finally {
+      setImporting(false)
+      e.target.value = ''
+    }
+  }
 
   const exportCSV = () => {
     const header = 'Email,Name,Date,Active\n'
@@ -46,9 +74,20 @@ export default function AdminSubscribers() {
           <p className="text-sm text-sea-blue font-dm mt-1">{subscribers.length} total</p>
         </div>
         {isAdminOrAbove && (
-          <button onClick={exportCSV} className="w-full sm:w-auto px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
-            Export CSV
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <label className="w-full sm:w-auto px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all text-center">
+              {importing ? 'Importing...' : 'Import CSV'}
+              <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" disabled={importing} />
+            </label>
+            <button onClick={exportCSV} className="w-full sm:w-auto px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+              Export CSV
+            </button>
+          </div>
+        )}
+        {importResult && (
+          <p className={`text-xs font-dm mt-1 ${importResult.startsWith('Error') || importResult === 'Import failed' ? 'text-red-400' : 'text-green-400'}`}>
+            {importResult}
+          </p>
         )}
       </div>
 
