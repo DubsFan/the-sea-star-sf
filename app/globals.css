@@ -92,6 +92,22 @@ body {
   50% { background-position: 100% 50%; }
 }
 
+@keyframes cloud-drift {
+  0% { left: -20%; }
+  100% { left: 110%; }
+}
+
+@keyframes fog-roll {
+  0% { transform: translateX(-30%) scaleX(1.5); }
+  50% { transform: translateX(10%) scaleX(1.8); }
+  100% { transform: translateX(-30%) scaleX(1.5); }
+}
+
+@keyframes rain-fall {
+  0% { transform: translateY(-100vh) rotate(5deg); }
+  100% { transform: translateY(100vh) rotate(5deg); }
+}
+
 @keyframes starGlow {
   0% { opacity: 0.4; filter: drop-shadow(0 0 8px rgba(201,165,78,0.2)); }
   100% { opacity: 0.8; filter: drop-shadow(0 0 30px rgba(201,165,78,0.5)); }
