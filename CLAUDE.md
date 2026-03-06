@@ -82,7 +82,19 @@ ADMIN_COOKIE_SECRET=
 ```bash
 npm run dev -- -p 3005   # local development (NEVER use port 3000 — it conflicts with other services)
 npm run build            # production build
+vercel --prod            # deploy to production (Vercel CLI ONLY — NOT connected to GitHub)
 ```
+
+## Deployment Rules
+- **Vercel is NOT connected to GitHub.** Deploy via `vercel --prod` ONLY.
+- **Git push does NOT trigger deploys.** GitHub is for version control/backup only.
+- Vercel project: `the-sea-star-sf-sobk` (GG's projects, Hobby tier, account: dubsfan)
+- Live URL: https://the-sea-star.vercel.app/
+
+## Institutional Memory Rule
+- **After EVERY commit and/or deploy (even mid-session), save institutional and task memory** to `/Users/liltroy/.claude/projects/-Volumes-Sam4T-External-Project-the-sea-star/memory/`
+- Update MEMORY.md with any new learnings about the codebase, DB schema, gotchas, or patterns
+- This ensures knowledge persists across sessions and prevents repeated mistakes
 
 ## Dev Server Rule
 - NEVER run on port 3000. Always use port 3005: `npm run dev -- -p 3005`
