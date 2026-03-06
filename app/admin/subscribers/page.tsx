@@ -8,7 +8,6 @@ interface Subscriber {
   email: string
   name: string | null
   is_active: boolean
-  created_at: string
 }
 
 export default function AdminSubscribers() {
@@ -53,9 +52,9 @@ export default function AdminSubscribers() {
   }
 
   const exportCSV = () => {
-    const header = 'Email,Name,Date,Active\n'
+    const header = 'Email,Name,Active\n'
     const rows = subscribers.map((s) =>
-      `${s.email},${s.name || ''},${new Date(s.created_at).toLocaleDateString()},${s.is_active}`
+      `${s.email},${s.name || ''},${s.is_active}`
     ).join('\n')
     const blob = new Blob([header + rows], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
@@ -98,7 +97,6 @@ export default function AdminSubscribers() {
             <tr className="border-b border-sea-gold/10">
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Email</th>
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Name</th>
-              <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Date</th>
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Active</th>
             </tr>
           </thead>
@@ -107,7 +105,6 @@ export default function AdminSubscribers() {
               <tr key={sub.id} className="border-b border-sea-gold/5">
                 <td className="p-3 text-sm text-sea-white font-dm">{sub.email}</td>
                 <td className="p-3 text-sm text-sea-blue font-dm">{sub.name || '-'}</td>
-                <td className="p-3 text-xs text-sea-blue font-dm">{new Date(sub.created_at).toLocaleDateString()}</td>
                 <td className="p-3">
                   <span className={`text-xs font-dm px-2 py-1 rounded ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
                     {sub.is_active ? 'Active' : 'Inactive'}
@@ -133,7 +130,6 @@ export default function AdminSubscribers() {
                 {sub.is_active ? 'Active' : 'Off'}
               </span>
             </div>
-            <p className="text-xs text-sea-blue/60 font-dm mt-2">{new Date(sub.created_at).toLocaleDateString()}</p>
           </div>
         ))}
         {subscribers.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No subscribers yet.</p>}
