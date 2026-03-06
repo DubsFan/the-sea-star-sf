@@ -78,3 +78,21 @@ export async function PUT(request: NextRequest) {
   }
   return NextResponse.json(data)
 }
+
+export async function DELETE(request: NextRequest) {
+  const admin = await requireAdmin(request)
+  if (!admin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (admin.role === 'crew') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { id } = await request.json()
+  const { error } = await supabase.from('blog_posts').delete().eq('id', id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+  return NextResponse.json({ success: true })
+}

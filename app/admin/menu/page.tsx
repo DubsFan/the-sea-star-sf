@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useSession } from '../layout'
 
 interface MenuItem {
   id: string
@@ -17,12 +18,15 @@ interface MenuItem {
 const CATEGORIES = ['Batched', 'Made To Order', 'Draft', 'NA Mocktails']
 
 export default function AdminMenu() {
+  const session = useSession()
   const [items, setItems] = useState<MenuItem[]>([])
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MenuItem | null>(null)
   const [form, setForm] = useState({ name: '', price: '', blurb: '', image_url: '', category: 'Batched', sort_order: '0' })
   const [uploading, setUploading] = useState(false)
+
+  const canDelete = session?.role === 'super_admin' || session?.role === 'admin'
 
   const loadItems = async () => {
     const res = await fetch('/api/menu')
@@ -113,9 +117,9 @@ export default function AdminMenu() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="font-cormorant text-3xl font-light text-sea-white">Menu Items</h1>
-        <button onClick={() => openForm()} className="px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer">
+        <button onClick={() => openForm()} className="px-4 md:px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer">
           + Add Drink
         </button>
       </div>
@@ -127,7 +131,8 @@ export default function AdminMenu() {
         ))}
       </div>
 
-      <div className="border border-sea-gold/10 rounded overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block border border-sea-gold/10 rounded overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-sea-gold/10">
@@ -162,7 +167,7 @@ export default function AdminMenu() {
                 </td>
                 <td className="p-3 text-right">
                   <button onClick={() => openForm(item)} className="text-xs text-sea-gold hover:text-sea-gold-light mr-3 bg-transparent border-none cursor-pointer font-dm">Edit</button>
-                  <button onClick={() => handleDelete(item.id)} className="text-xs text-sea-rose hover:text-red-400 bg-transparent border-none cursor-pointer font-dm">Delete</button>
+                  {canDelete && <button onClick={() => handleDelete(item.id)} className="text-xs text-sea-rose hover:text-red-400 bg-transparent border-none cursor-pointer font-dm">Delete</button>}
                 </td>
               </tr>
             ))}
@@ -171,10 +176,46 @@ export default function AdminMenu() {
         {filtered.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No items found.</p>}
       </div>
 
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.map((item) => (
+          <div key={item.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+            <div className="flex gap-3">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.name} className="w-14 h-14 object-cover rounded flex-shrink-0" />
+              ) : (
+                <div className="w-14 h-14 bg-sea-gold/10 rounded flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-sm text-sea-white font-dm font-medium">{item.name}</h3>
+                  <span className="text-sm text-sea-gold font-cormorant ml-2">${item.price}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[0.6rem] text-sea-blue font-dm px-1.5 py-0.5 border border-sea-gold/10 rounded">{item.category}</span>
+                  <span className={`text-[0.6rem] font-dm px-1.5 py-0.5 rounded ${item.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                    {item.is_active ? 'Active' : 'Off'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {item.blurb && <p className="text-xs text-sea-blue font-dm mt-2 line-clamp-2">{item.blurb}</p>}
+            <div className="flex gap-3 mt-3 pt-3 border-t border-sea-gold/5">
+              <button onClick={() => openForm(item)} className="text-xs text-sea-gold bg-transparent border-none cursor-pointer font-dm">Edit</button>
+              <button onClick={() => toggleActive(item)} className="text-xs text-sea-blue bg-transparent border-none cursor-pointer font-dm">
+                {item.is_active ? 'Deactivate' : 'Activate'}
+              </button>
+              {canDelete && <button onClick={() => handleDelete(item.id)} className="text-xs text-sea-rose bg-transparent border-none cursor-pointer font-dm">Delete</button>}
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No items found.</p>}
+      </div>
+
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-[#06080d]/90 backdrop-blur z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg max-w-lg w-full p-6 md:p-8 max-h-[90vh] overflow-y-auto">
             <h2 className="font-cormorant text-2xl text-sea-white mb-6">{editing ? 'Edit Drink' : 'Add New Drink'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

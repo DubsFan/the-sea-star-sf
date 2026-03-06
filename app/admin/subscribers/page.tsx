@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSession } from '../layout'
 
 interface Subscriber {
   id: string
@@ -11,7 +12,10 @@ interface Subscriber {
 }
 
 export default function AdminSubscribers() {
+  const session = useSession()
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+
+  const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin'
 
   useEffect(() => {
     fetch('/api/subscribe')
@@ -36,17 +40,20 @@ export default function AdminSubscribers() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="font-cormorant text-3xl font-light text-sea-white">Subscribers</h1>
           <p className="text-sm text-sea-blue font-dm mt-1">{subscribers.length} total</p>
         </div>
-        <button onClick={exportCSV} className="px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
-          Export CSV
-        </button>
+        {isAdminOrAbove && (
+          <button onClick={exportCSV} className="w-full sm:w-auto px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+            Export CSV
+          </button>
+        )}
       </div>
 
-      <div className="border border-sea-gold/10 rounded overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block border border-sea-gold/10 rounded overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-sea-gold/10">
@@ -71,6 +78,25 @@ export default function AdminSubscribers() {
             ))}
           </tbody>
         </table>
+        {subscribers.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No subscribers yet.</p>}
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {subscribers.map((sub) => (
+          <div key={sub.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-sea-white font-dm truncate">{sub.email}</p>
+                {sub.name && <p className="text-xs text-sea-blue font-dm mt-0.5">{sub.name}</p>}
+              </div>
+              <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded ml-2 flex-shrink-0 ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                {sub.is_active ? 'Active' : 'Off'}
+              </span>
+            </div>
+            <p className="text-xs text-sea-blue/60 font-dm mt-2">{new Date(sub.created_at).toLocaleDateString()}</p>
+          </div>
+        ))}
         {subscribers.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No subscribers yet.</p>}
       </div>
     </div>

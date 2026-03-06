@@ -42,13 +42,13 @@ export default function AdminMessages() {
         {unread > 0 && <p className="text-sm text-sea-rose font-dm mt-1">{unread} unread</p>}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {messages.map((msg) => (
-          <div key={msg.id} className={`border rounded-lg p-6 transition-all ${msg.is_read ? 'border-sea-gold/5 bg-[#0a0e18]' : 'border-sea-gold/20 bg-sea-gold/[0.02]'}`}>
-            <div className="flex justify-between items-start mb-3">
+          <div key={msg.id} className={`border rounded-lg p-4 md:p-6 transition-all ${msg.is_read ? 'border-sea-gold/5 bg-[#0a0e18]' : 'border-sea-gold/20 bg-sea-gold/[0.02]'}`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0 mb-3">
               <div>
                 <span className="font-dm text-sm text-sea-white font-medium">{msg.name}</span>
-                <span className="text-xs text-sea-blue font-dm ml-3">{msg.email}</span>
+                <span className="text-xs text-sea-blue font-dm block sm:inline sm:ml-3">{msg.email}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-sea-blue font-dm">{new Date(msg.created_at).toLocaleDateString()}</span>

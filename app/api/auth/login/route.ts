@@ -25,6 +25,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
   }
 
-  await createSession(username)
-  return NextResponse.json({ success: true })
+  await createSession(username, user.role || 'crew', user.display_name || username)
+  return NextResponse.json({ success: true, role: user.role, displayName: user.display_name })
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useSession } from '../layout'
 
 interface BlogPost {
   id: string
@@ -18,6 +19,7 @@ interface BlogPost {
 }
 
 export default function AdminBlog() {
+  const session = useSession()
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [rawInput, setRawInput] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
@@ -26,6 +28,9 @@ export default function AdminBlog() {
   const [preview, setPreview] = useState<{ title: string; body: string; excerpt: string; meta_description: string } | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editBody, setEditBody] = useState('')
+  const [editingPostId, setEditingPostId] = useState<string | null>(null)
+
+  const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin'
 
   const loadPosts = async () => {
     const res = await fetch('/api/blog')
@@ -66,6 +71,7 @@ export default function AdminBlog() {
         setPreview(data)
         setEditTitle(data.title)
         setEditBody(data.body)
+        setEditingPostId(null)
         toast.success('Post generated!')
       } else {
         toast.error(data.error || 'Generation failed')
@@ -78,10 +84,12 @@ export default function AdminBlog() {
   }
 
   const handleSaveDraft = async () => {
+    const isUpdate = !!editingPostId
     const res = await fetch('/api/blog', {
-      method: 'POST',
+      method: isUpdate ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        ...(isUpdate ? { id: editingPostId } : {}),
         title: editTitle,
         body: editBody,
         excerpt: preview?.excerpt || '',
@@ -90,12 +98,33 @@ export default function AdminBlog() {
       }),
     })
     if (res.ok) {
-      toast.success('Draft saved')
+      toast.success(isUpdate ? 'Draft updated' : 'Draft saved')
       setPreview(null)
+      setEditingPostId(null)
       setRawInput('')
       setPhotos([])
       loadPosts()
     }
+  }
+
+  const handleEditPost = (post: BlogPost) => {
+    setEditingPostId(post.id)
+    setEditTitle(post.title)
+    setEditBody(post.body)
+    setPhotos(post.images || [])
+    setPreview({ title: post.title, body: post.body, excerpt: post.excerpt, meta_description: post.meta_description })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleDeletePost = async (id: string) => {
+    if (!confirm('Delete this post?')) return
+    const res = await fetch('/api/blog', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    if (res.ok) { toast.success('Deleted'); loadPosts() }
+    else toast.error('Delete failed')
   }
 
   const handlePublish = async (id: string) => {
@@ -122,7 +151,7 @@ export default function AdminBlog() {
     <div>
       <h1 className="font-cormorant text-3xl font-light text-sea-white mb-8">Blog Creator</h1>
 
-      <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-6 mb-8">
+      <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-6 mb-8">
         <label className="block text-xs text-sea-blue mb-2 font-dm">What happened this week?</label>
         <textarea
           value={rawInput}
@@ -137,20 +166,22 @@ export default function AdminBlog() {
           <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="text-sm text-sea-blue font-dm" />
           {uploading && <p className="text-xs text-sea-gold mt-1">Uploading...</p>}
           {photos.length > 0 && (
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 flex-wrap">
               {photos.map((url, i) => <img key={i} src={url} alt="" className="w-16 h-16 object-cover rounded" />)}
             </div>
           )}
         </div>
 
-        <button onClick={handleGenerate} disabled={generating || !rawInput.trim()} className="px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
+        <button onClick={handleGenerate} disabled={generating || !rawInput.trim()} className="w-full sm:w-auto px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
           {generating ? 'Generating...' : 'Generate Post'}
         </button>
       </div>
 
       {preview && (
-        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-6 mb-8">
-          <h2 className="font-cormorant text-2xl text-sea-white mb-4">Preview</h2>
+        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-6 mb-8">
+          <h2 className="font-cormorant text-2xl text-sea-white mb-4">
+            {editingPostId ? 'Editing Draft' : 'Preview'}
+          </h2>
           <div className="space-y-4">
             <div>
               <label className="block text-xs text-sea-blue mb-1 font-dm">Title</label>
@@ -162,20 +193,29 @@ export default function AdminBlog() {
             </div>
             <div>
               <label className="block text-xs text-sea-blue mb-1 font-dm">Rendered Preview</label>
-              <div className="bg-[#06080d] border border-sea-gold/5 rounded p-6">
+              <div className="bg-[#06080d] border border-sea-gold/5 rounded p-4 md:p-6">
                 <h3 className="font-cormorant text-2xl text-sea-white mb-4">{editTitle}</h3>
                 <div className="text-sm text-sea-blue font-dm leading-relaxed space-y-3" dangerouslySetInnerHTML={{ __html: editBody }} />
               </div>
             </div>
-            <div className="flex gap-3">
-              <button onClick={handleSaveDraft} className="px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">Save Draft</button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button onClick={handleSaveDraft} className="px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                {editingPostId ? 'Update Draft' : 'Save Draft'}
+              </button>
+              {editingPostId && (
+                <button onClick={() => { setPreview(null); setEditingPostId(null); setPhotos([]) }} className="px-6 py-2.5 bg-transparent text-sea-blue font-dm text-xs tracking-[0.2em] uppercase border border-sea-border cursor-pointer hover:border-sea-gold transition-all">
+                  Cancel Edit
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
       <h2 className="font-cormorant text-2xl text-sea-white mb-4">Past Posts</h2>
-      <div className="border border-sea-gold/10 rounded overflow-hidden">
+
+      {/* Desktop Table */}
+      <div className="hidden md:block border border-sea-gold/10 rounded overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-sea-gold/10">
@@ -195,17 +235,54 @@ export default function AdminBlog() {
                   </span>
                 </td>
                 <td className="p-3 text-xs text-sea-blue font-dm">{new Date(post.created_at).toLocaleDateString()}</td>
-                <td className="p-3 text-right">
+                <td className="p-3 text-right space-x-3">
                   {!post.is_published && (
-                    <button onClick={() => handlePublish(post.id)} className="text-xs text-sea-gold hover:text-sea-gold-light bg-transparent border-none cursor-pointer font-dm">
-                      Publish + Email
-                    </button>
+                    <>
+                      <button onClick={() => handleEditPost(post)} className="text-xs text-sea-blue hover:text-sea-gold bg-transparent border-none cursor-pointer font-dm">Edit</button>
+                      {isAdminOrAbove && (
+                        <button onClick={() => handlePublish(post.id)} className="text-xs text-sea-gold hover:text-sea-gold-light bg-transparent border-none cursor-pointer font-dm">
+                          Publish + Email
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {isAdminOrAbove && (
+                    <button onClick={() => handleDeletePost(post.id)} className="text-xs text-sea-rose hover:text-red-400 bg-transparent border-none cursor-pointer font-dm">Delete</button>
                   )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {posts.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No posts yet.</p>}
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {posts.map((post) => (
+          <div key={post.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-sm text-sea-white font-dm font-medium flex-1 mr-2">{post.title}</h3>
+              <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${getStatus(post) === 'Draft' ? 'bg-yellow-900/30 text-yellow-400' : getStatus(post) === 'Published' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                {getStatus(post)}
+              </span>
+            </div>
+            <p className="text-xs text-sea-blue font-dm mb-3">{new Date(post.created_at).toLocaleDateString()}</p>
+            <div className="flex flex-wrap gap-3">
+              {!post.is_published && (
+                <>
+                  <button onClick={() => handleEditPost(post)} className="text-xs text-sea-blue hover:text-sea-gold bg-transparent border-none cursor-pointer font-dm">Edit</button>
+                  {isAdminOrAbove && (
+                    <button onClick={() => handlePublish(post.id)} className="text-xs text-sea-gold bg-transparent border-none cursor-pointer font-dm">Publish + Email</button>
+                  )}
+                </>
+              )}
+              {isAdminOrAbove && (
+                <button onClick={() => handleDeletePost(post.id)} className="text-xs text-sea-rose bg-transparent border-none cursor-pointer font-dm">Delete</button>
+              )}
+            </div>
+          </div>
+        ))}
         {posts.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No posts yet.</p>}
       </div>
     </div>
