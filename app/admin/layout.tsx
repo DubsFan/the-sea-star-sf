@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-type UserRole = 'super_admin' | 'admin' | 'crew'
+type UserRole = 'super_admin' | 'admin' | 'social_admin' | 'crew'
 
 interface SessionData {
   username: string
@@ -58,14 +58,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isSuperAdmin = session?.role === 'super_admin'
   const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin'
+  const isSocialAdmin = session?.role === 'social_admin'
+  const canSeeContent = isAdminOrAbove || isSocialAdmin
 
   const navItems = [
     { label: 'Dashboard', href: '/admin/dashboard', icon: DashboardIcon },
-    { label: 'Menu', href: '/admin/menu', icon: MenuIcon },
-    { label: 'Wine', href: '/admin/wine', icon: WineIcon },
+    ...(!isSocialAdmin ? [
+      { label: 'Menu', href: '/admin/menu', icon: MenuIcon },
+      { label: 'Wine', href: '/admin/wine', icon: WineIcon },
+    ] : []),
     { label: 'Blog', href: '/admin/blog', icon: BlogIcon },
     { label: 'Media', href: '/admin/media', icon: MediaIcon },
-    { label: 'Subscribers', href: '/admin/subscribers', icon: SubsIcon },
+    ...(canSeeContent ? [{ label: 'Subscribers', href: '/admin/subscribers', icon: SubsIcon }] : []),
     { label: 'Messages', href: '/admin/messages', icon: MsgIcon },
     ...(isAdminOrAbove ? [{ label: 'Users', href: '/admin/users', icon: UsersIcon }] : []),
     ...(isSuperAdmin ? [{ label: 'Settings', href: '/admin/settings', icon: SettingsIcon }] : []),
@@ -88,7 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="mb-6 pb-4 border-b border-sea-gold/10">
               <p className="text-sm text-sea-white font-dm">Hi, {session.displayName}</p>
               <span className="text-[0.6rem] tracking-[0.15em] uppercase text-sea-gold/60 font-dm">
-                {session.role === 'super_admin' ? 'Super Admin' : session.role === 'admin' ? 'El Jefe' : 'Crew'}
+                {session.role === 'super_admin' ? 'Super Admin' : session.role === 'admin' ? 'El Jefe' : session.role === 'social_admin' ? 'Social Admin' : 'Crew'}
               </span>
             </div>
           )}

@@ -15,7 +15,7 @@ export default function AdminSubscribers() {
   const session = useSession()
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
 
-  const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin'
+  const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin' || session?.role === 'social_admin'
 
   useEffect(() => {
     fetch('/api/subscribe')

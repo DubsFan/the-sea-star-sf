@@ -15,6 +15,7 @@ interface AdminUser {
 const ROLES = [
   { value: 'super_admin', label: 'Super Admin' },
   { value: 'admin', label: 'El Jefe' },
+  { value: 'social_admin', label: 'Social Admin' },
   { value: 'crew', label: 'Crew' },
 ]
 
@@ -72,6 +73,7 @@ export default function AdminUsers() {
   const getRoleBadge = (role: string) => {
     if (role === 'super_admin') return 'bg-purple-900/30 text-purple-400'
     if (role === 'admin') return 'bg-sea-gold/10 text-sea-gold'
+    if (role === 'social_admin') return 'bg-emerald-900/30 text-emerald-400'
     return 'bg-blue-900/30 text-blue-400'
   }
 

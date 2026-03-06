@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server'
 const secret = new TextEncoder().encode(process.env.ADMIN_COOKIE_SECRET!)
 const COOKIE_NAME = 'sea-star-session'
 
-export type UserRole = 'super_admin' | 'admin' | 'crew'
+export type UserRole = 'super_admin' | 'admin' | 'social_admin' | 'crew'
 
 export interface SessionPayload {
   username: string

@@ -31,7 +31,7 @@ export default function AdminBlog() {
   const [editBody, setEditBody] = useState('')
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
 
-  const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin'
+  const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin' || session?.role === 'social_admin'
 
   const loadPosts = async () => {
     const res = await fetch('/api/blog')
