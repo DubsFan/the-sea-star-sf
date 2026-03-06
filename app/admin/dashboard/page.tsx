@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useSession } from '../layout'
+import { useSession } from '../session-context'
 
 const quickActions = [
   { title: 'Manage Menu', href: '/admin/menu', desc: 'Cocktails, drafts, and wine — all in one place' },
