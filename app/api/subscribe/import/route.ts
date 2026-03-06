@@ -49,7 +49,9 @@ export async function POST(request: NextRequest) {
   }
 
   // Deduplicate by email (keep last occurrence)
-  const deduped = [...new Map(rows.map((r) => [r.email.toLowerCase(), r])).values()]
+  const emailMap = new Map<string, typeof rows[number]>()
+  for (const r of rows) emailMap.set(r.email.toLowerCase(), r)
+  const deduped = Array.from(emailMap.values())
 
   if (deduped.length === 0) {
     return NextResponse.json({ imported: 0, skipped })
