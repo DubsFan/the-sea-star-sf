@@ -262,7 +262,7 @@ export default function WaterReflection({
 
       <svg
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full"
+        className="absolute top-0 bottom-0 left-[-10%] h-full w-[120%] max-w-none"
         preserveAspectRatio="none"
         viewBox="0 0 1000 260"
       >

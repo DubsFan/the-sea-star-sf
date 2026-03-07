@@ -1,5 +1,6 @@
 'use client'
 
+import type { CSSProperties } from 'react'
 import type { SkyPhase } from '../../lib/sky-phases'
 
 interface SkylineProps {
@@ -8,132 +9,106 @@ interface SkylineProps {
   mode?: 'back' | 'front'
 }
 
+interface SkylineLayer {
+  blur: string
+  color: string
+  opacity: number
+  scale: number
+  size: string
+  translateX: string
+  translateY: string
+}
+
+function maskStyles(size: string): CSSProperties {
+  return {
+    WebkitMaskImage: 'url(/SS_skyline_city.png)',
+    maskImage: 'url(/SS_skyline_city.png)',
+    WebkitMaskPosition: 'bottom center',
+    maskPosition: 'bottom center',
+    WebkitMaskRepeat: 'no-repeat',
+    maskRepeat: 'no-repeat',
+    WebkitMaskSize: size,
+    maskSize: size,
+  }
+}
+
 export default function Skyline({ skyPhase, skyBottom, mode = 'back' }: SkylineProps) {
   const isNight = ['night', 'astronomicalDawn', 'astronomicalDusk'].includes(skyPhase)
   const isDusk = ['dusk', 'nauticalDusk', 'sunset', 'nauticalDawn'].includes(skyPhase)
   const isGolden = ['goldenEvening', 'goldenMorning'].includes(skyPhase)
   const isFront = mode === 'front'
-  const phaseOpacity = isNight ? 0.76 : isDusk ? 0.66 : isGolden ? 0.54 : 0.4
-  const tint = isNight
-    ? 'rgba(198, 214, 237, 0.16)'
-    : isDusk
-      ? 'rgba(201, 165, 78, 0.18)'
-      : isGolden
-        ? 'rgba(201, 165, 78, 0.14)'
-        : 'rgba(10, 16, 23, 0.2)'
-  const shorelineGlow = isNight
-    ? 'rgba(158, 184, 220, 0.12)'
-    : isDusk
-      ? 'rgba(216, 151, 79, 0.18)'
-      : isGolden
-        ? 'rgba(202, 182, 134, 0.12)'
-        : 'rgba(116, 156, 186, 0.08)'
 
-  const layers = [
+  const backLayers: SkylineLayer[] = [
     {
-      opacity: phaseOpacity * 0.32,
-      translateX: '-1.8%',
-      translateY: '-11%',
-      scale: 1.008,
-      blur: '0.35px',
-      brightness: isNight ? 1.26 : 1.12,
-      contrast: 1.16,
-      size: '102% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.01) 12%, rgba(0,0,0,0.5) 48%, rgba(0,0,0,0.94) 100%)',
+      color: isNight ? 'rgba(182, 194, 226, 1)' : isDusk ? 'rgba(126, 98, 122, 1)' : 'rgba(124, 122, 134, 1)',
+      opacity: isNight ? 0.18 : 0.16,
+      translateX: '-1.5%',
+      translateY: '-9%',
+      scale: 1.01,
+      blur: '1.4px',
+      size: '103% auto',
     },
     {
-      opacity: phaseOpacity * 0.56,
-      translateX: '-0.7%',
-      translateY: '-5%',
-      scale: 1.016,
-      blur: '0px',
-      brightness: isNight ? 1.18 : 1,
-      contrast: 1.22,
-      size: '104% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.03) 12%, rgba(0,0,0,0.66) 52%, rgba(0,0,0,1) 100%)',
-    },
-    {
-      opacity: phaseOpacity * 0.74,
-      translateX: '0.45%',
-      translateY: '0%',
-      scale: 1.02,
-      blur: '0px',
-      brightness: isNight ? 1.08 : 0.88,
-      contrast: 1.26,
-      size: '104.5% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.06) 12%, rgba(0,0,0,0.8) 48%, rgba(0,0,0,1) 100%)',
-    },
-    {
-      opacity: 0.96,
-      translateX: '0.8%',
-      translateY: '0%',
+      color: isNight ? 'rgba(134, 148, 186, 1)' : isDusk ? 'rgba(86, 64, 84, 1)' : 'rgba(88, 86, 96, 1)',
+      opacity: isNight ? 0.28 : 0.24,
+      translateX: '-0.35%',
+      translateY: '-4%',
       scale: 1.018,
-      blur: '0px',
-      brightness: 0,
-      contrast: 1,
-      size: '101.5% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.06) 22%, rgba(0,0,0,1) 56%, rgba(0,0,0,1) 100%)',
+      blur: '0.7px',
+      size: '105% auto',
     },
   ]
-  const visibleLayers = isFront ? [layers[3]] : layers.slice(0, 3)
+
+  const frontColor = isNight ? 'rgba(26, 30, 40, 0.98)' : 'rgba(28, 20, 30, 0.96)'
 
   return (
     <div
       className={`absolute left-0 right-0 pointer-events-none ${isFront ? 'z-[6]' : 'z-[5]'}`}
       style={{
-        bottom: isFront ? 'calc(18vh - 0.15vh)' : 'calc(18vh + 1.2vh)',
-        height: isFront ? '2.5vh' : '8.6vh',
+        bottom: isFront ? 'calc(18vh + 0.9vh)' : 'calc(18vh + 1.2vh)',
+        height: isFront ? '4.8vh' : '5.4vh',
       }}
     >
       {!isFront && (
-        <div
-          className="absolute inset-x-0 bottom-[10%]"
-          style={{
-            height: '24%',
-            background: `radial-gradient(ellipse 62% 60% at 50% 100%, ${shorelineGlow} 0%, transparent 72%)`,
-            filter: 'blur(3px)',
-            opacity: isNight ? 0.24 : 0.16,
-          }}
-        />
+        <>
+          {backLayers.map((layer, index) => (
+            <div
+              key={`back-${index}`}
+              className="absolute inset-0 transition-all duration-[10000ms] ease-linear"
+              style={{
+                ...maskStyles(layer.size),
+                background: layer.color,
+                opacity: layer.opacity,
+                transform: `translate3d(${layer.translateX}, ${layer.translateY}, 0) scale(${layer.scale})`,
+                filter: `blur(${layer.blur})`,
+              }}
+            />
+          ))}
+
+          <div
+            className="absolute inset-0"
+            style={{
+              ...maskStyles('106% auto'),
+              background: `linear-gradient(180deg, transparent 0%, transparent 62%, ${skyBottom} 100%)`,
+              opacity: isNight ? 0.08 : 0.06,
+            }}
+          />
+        </>
       )}
 
-      {visibleLayers.map((layer, index) => (
-        <div
-          key={`${mode}-${index}`}
-          className="absolute inset-0 transition-all duration-[10000ms] ease-linear"
-          style={{
-            backgroundImage: 'url(/SS_skyline_long.png)',
-            backgroundSize: layer.size,
-            backgroundPosition: 'bottom center',
-            backgroundRepeat: 'no-repeat',
-            opacity: layer.opacity,
-            transform: `translate3d(${layer.translateX}, ${layer.translateY}, 0) scale(${layer.scale})`,
-            filter: `brightness(${layer.brightness}) contrast(${layer.contrast}) saturate(0.7) blur(${layer.blur})`,
-            WebkitMaskImage: layer.mask,
-            maskImage: layer.mask,
-          }}
-        />
-      ))}
-
-      {!isFront && (
-        <div
-          className="absolute inset-0 transition-all duration-[10000ms] ease-linear"
-          style={{
-            background: `linear-gradient(180deg, transparent 0%, transparent 52%, ${tint} 100%)`,
-            mixBlendMode: isNight ? 'screen' : 'multiply',
-            opacity: 0.55,
-          }}
-        />
-      )}
-
-      {!isFront && (
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(180deg, transparent 0%, transparent 56%, ${skyBottom} 100%)`,
-            opacity: isNight ? 0.03 : 0.04,
-          }}
-        />
+      {isFront && (
+        <>
+          <div
+            className="absolute inset-0"
+            style={{
+              ...maskStyles('108% auto'),
+              background: frontColor,
+              opacity: 1,
+              transform: 'translate3d(0, 0, 0) scale(1.02)',
+              filter: 'contrast(1.15)',
+            }}
+          />
+        </>
       )}
     </div>
   )
