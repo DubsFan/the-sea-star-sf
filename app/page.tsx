@@ -105,7 +105,6 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [blogModalOpen, setBlogModalOpen] = useState(false)
   const [activeBlogIndex, setActiveBlogIndex] = useState(0)
-  const [aliciaSlide, setAliciaSlide] = useState(0)
   const [subscribeEmail, setSubscribeEmail] = useState('')
   const [subscribeName, setSubscribeName] = useState('')
   const [loginOpen, setLoginOpen] = useState(false)
@@ -115,13 +114,11 @@ export default function Home() {
   const revealRefs = useRef<(HTMLDivElement | null)[]>([])
   const [demoMode, setDemoMode] = useState(false)
   const [demoMinutes, setDemoMinutes] = useState(0)
-  const [sunsetPreviewMode, setSunsetPreviewMode] = useState(false)
 
   // Check for ?demo=1 on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('live') === '1') {
-      setSunsetPreviewMode(false)
       return
     }
 
@@ -129,12 +126,7 @@ export default function Home() {
       setDemoMode(true)
       const now = new Date()
       setDemoMinutes(now.getHours() * 60 + now.getMinutes())
-      return
     }
-
-    // Keep the isolated test branch on a stable golden-hour state by default.
-    setSunsetPreviewMode(true)
-    setDemoMinutes(18 * 60 + 12)
   }, [])
 
   useEffect(() => {
@@ -172,12 +164,6 @@ export default function Home() {
     return () => observer.disconnect()
   }, [menuItems, blogPosts])
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAliciaSlide((prev) => (prev + 1) % 3)
-    }, 6000)
-    return () => clearInterval(timer)
-  }, [])
 
   const addRevealRef = (el: HTMLDivElement | null) => {
     if (el && !revealRefs.current.includes(el)) {
@@ -241,7 +227,7 @@ export default function Home() {
 
   const blogDisplayPosts = blogPosts.length > 0 ? blogPosts.slice(0, 3) : null
 
-  const backgroundOverrideDate = demoMode || sunsetPreviewMode
+  const backgroundOverrideDate = demoMode
     ? (() => {
         const d = new Date()
         d.setHours(Math.floor(demoMinutes / 60), demoMinutes % 60, 0, 0)
@@ -378,7 +364,7 @@ export default function Home() {
               <img src="https://www.opensfhistory.org/Image/700/wnp27.4067.jpg" alt="3rd Street Bridge, Dogpatch, circa 1940" className="w-full h-full object-cover opacity-50" style={{ filter: 'sepia(0.3) contrast(1.1)' }} />
               <div className="absolute inset-0 bg-gradient-to-br from-[#06080d]/40 to-[#0c2d3a]/30" />
               <div className="absolute top-8 left-8 text-[0.5rem] tracking-[0.4em] uppercase text-sea-teal px-3 py-1.5 border border-sea-teal/20 z-10">Since 1899</div>
-              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/10 z-10">1899</div>
+              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/25 z-10">1899</div>
             </div>
             <div ref={addRevealRef} className="opacity-0 translate-y-10 transition-all duration-700">
               <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">Our Story</p>
@@ -401,9 +387,7 @@ export default function Home() {
       {/* ALICIA */}
       <section id="alicia" className="py-32 relative overflow-hidden border-t border-sea-gold/10">
         <div className="absolute inset-0 z-0">
-          {aliciaPhotos.map((photo, i) => (
-            <div key={i} className={`absolute inset-[-20px] bg-cover bg-[center_20%] transition-opacity duration-[2500ms] ${i === aliciaSlide ? 'opacity-100' : 'opacity-0'}`} style={{ backgroundImage: `url('${photo}')`, filter: 'saturate(0.6)', ...(i === aliciaSlide ? { animation: 'kenBurns 12s ease-in-out forwards' } : {}) }} />
-          ))}
+          <div className="absolute inset-[-20px] bg-cover bg-[center_20%]" style={{ backgroundImage: `url('${aliciaPhotos[0]}')`, filter: 'saturate(0.6)' }} />
           <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(180deg, #06080d 0%, rgba(6,8,13,0.78) 15%, rgba(10,14,24,0.65) 40%, rgba(10,14,24,0.65) 60%, rgba(6,8,13,0.78) 85%, #06080d 100%)' }} />
         </div>
         <div className="max-w-[800px] mx-auto px-6 md:px-12 text-center relative z-[2]" ref={addRevealRef}>
@@ -739,7 +723,7 @@ export default function Home() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
-              <div className="font-playfair text-3xl font-bold text-sea-gold mb-3">The Sea Star</div>
+              <img src="/SeaStarWhiteLogo_2x.png" alt="The Sea Star" className="w-24 mb-4" />
               <div className="font-cormorant italic text-base text-sea-blue mb-6">Booze Your Own Adventure</div>
               <div className="flex gap-3">
                 <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
