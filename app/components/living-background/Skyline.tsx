@@ -63,13 +63,13 @@ export default function Skyline({ skyPhase, skyBottom }: SkylineProps) {
       mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.92) 60%, rgba(0,0,0,1) 100%)',
     },
     {
-      opacity: phaseOpacity * 0.8,
+      opacity: 0.94,
       translateX: '1.1%',
       translateY: '3%',
       scale: 1.06,
-      blur: '0.35px',
-      brightness: isNight ? 0.74 : 0.52,
-      contrast: 1.12,
+      blur: '0px',
+      brightness: 0,
+      contrast: 1,
       size: '112% auto',
       mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.18) 16%, rgba(0,0,0,1) 54%, rgba(0,0,0,1) 100%)',
     },
@@ -98,7 +98,7 @@ export default function Skyline({ skyPhase, skyBottom }: SkylineProps) {
         style={{
           height: '22%',
           background: `linear-gradient(180deg, transparent 0%, ${horizonShadow} 100%)`,
-          opacity: 0.56,
+          opacity: 0.68,
         }}
       />
 
