@@ -8,63 +8,60 @@ import CelestialBody from './CelestialBody'
 import CloudLayer from './CloudLayer'
 import WeatherEffects from './WeatherEffects'
 import WaterReflection from './WaterReflection'
+import Skyline from './Skyline'
 import Wildlife from './Wildlife'
-import Stars from './Stars'
+import Starfield from '../Starfield'
 
 const WEATHER_FETCH_INTERVAL = 30 * 60 * 1000 // 30 minutes
 
-export default function LivingBackground() {
+interface LivingBackgroundProps {
+  overrideDate?: Date | null // For demo slider — when set, sky uses this instead of real time
+}
+
+export default function LivingBackground({ overrideDate }: LivingBackgroundProps) {
   const [mounted, setMounted] = useState(false)
   const [skyData, setSkyData] = useState<SkyData | null>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [isMobile, setIsMobile] = useState(false)
 
-  // Initialize on mount (client only)
   useEffect(() => {
     setMounted(true)
-    setSkyData(getSkyData(new Date()))
     setIsMobile(window.innerWidth < 768)
-
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Update sky every 60 seconds
+  // Sky from override date or real time
   useEffect(() => {
     if (!mounted) return
-    const interval = setInterval(() => {
+    if (overrideDate) {
+      setSkyData(getSkyData(overrideDate))
+    } else {
       setSkyData(getSkyData(new Date()))
-    }, 60000)
-    return () => clearInterval(interval)
-  }, [mounted])
+      const interval = setInterval(() => setSkyData(getSkyData(new Date())), 60000)
+      return () => clearInterval(interval)
+    }
+  }, [mounted, overrideDate])
 
-  // Fetch weather on mount + every 30 minutes
+  // Weather
   useEffect(() => {
     if (!mounted) return
-
     const fetchWeather = async () => {
       try {
         const res = await fetch('/api/weather')
-        if (res.ok) {
-          const data = await res.json()
-          setWeather(data)
-        }
-      } catch {
-        // Silently fail — background degrades gracefully without weather
-      }
+        if (res.ok) setWeather(await res.json())
+      } catch { /* graceful fail */ }
     }
-
     fetchWeather()
     const interval = setInterval(fetchWeather, WEATHER_FETCH_INTERVAL)
     return () => clearInterval(interval)
   }, [mounted])
 
-  // Don't render on server
   if (!mounted || !skyData) return null
 
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
       <SkyGradient
         skyTop={skyData.skyTop}
         skyMid={skyData.skyMid}
@@ -92,15 +89,19 @@ export default function LivingBackground() {
       <WaterReflection
         reflectionColor={skyData.reflectionColor}
         skyBottom={skyData.skyBottom}
+        sunX={skyData.sunPosition.x}
+        sunAltitude={skyData.sunPosition.altitude}
+        sunColor={skyData.sunPosition.color}
+      />
+      <Skyline
+        skyPhase={skyData.phase}
+        skyBottom={skyData.skyBottom}
       />
       <Wildlife
         skyPhase={skyData.phase}
         isMobile={isMobile}
       />
-      <Stars
-        opacity={skyData.starsOpacity}
-        isMobile={isMobile}
-      />
+      <Starfield opacity={skyData.starsOpacity} />
     </div>
   )
 }

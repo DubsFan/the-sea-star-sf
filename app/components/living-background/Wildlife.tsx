@@ -15,7 +15,9 @@ interface BirdData {
   duration: number  // seconds
   delay: number
   size: number     // px
-  flipY: boolean
+  reverse: boolean  // fly right-to-left
+  soar: boolean     // vertical sine-wave wobble
+  flapSpeed: number // seconds per flap cycle
 }
 
 interface EasterEggData {
@@ -26,8 +28,14 @@ interface EasterEggData {
 const isDaytime = (phase: SkyPhase) =>
   ['goldenMorning', 'day', 'goldenEvening', 'sunrise'].includes(phase)
 
+const isDawnDusk = (phase: SkyPhase) =>
+  ['dawn', 'dusk', 'nauticalDawn', 'nauticalDusk', 'sunset'].includes(phase)
+
 const isGoldenHour = (phase: SkyPhase) =>
   ['goldenEvening', 'sunset'].includes(phase)
+
+const isNight = (phase: SkyPhase) =>
+  ['night', 'astronomicalDawn', 'astronomicalDusk'].includes(phase)
 
 function seededRandom(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 49297
@@ -46,30 +54,51 @@ export default function Wildlife({ skyPhase, isMobile }: WildlifeProps) {
     setEasterEggs(prev => prev.filter(e => e.id !== id))
   }, [])
 
-  // Spawn birds during daytime
+  // Spawn birds during daytime (and reduced at dawn/dusk)
   useEffect(() => {
-    if (!isDaytime(skyPhase) && !isGoldenHour(skyPhase)) {
+    if (isNight(skyPhase)) {
+      setBirds([])
+      return
+    }
+
+    const active = isDaytime(skyPhase) || isGoldenHour(skyPhase)
+    const reduced = isDawnDusk(skyPhase)
+    if (!active && !reduced) {
       setBirds([])
       return
     }
 
     const spawnBirds = () => {
       const now = Date.now()
-      const isPelican = isGoldenHour(skyPhase)
-      const count = isMobile ? 1 : (isPelican ? 1 : Math.floor(seededRandom(now % 1000) * 3) + 1)
+      const goldenHour = isGoldenHour(skyPhase)
+
+      // Fewer birds at dawn/dusk
+      const maxCount = reduced
+        ? (isMobile ? 1 : 2)
+        : (isMobile ? Math.floor(seededRandom(now % 1000) * 2) + 1 : Math.floor(seededRandom(now % 1000) * 3) + 2)
 
       const newBirds: BirdData[] = []
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < maxCount; i++) {
+        const isPelican = goldenHour && seededRandom(now + i * 31) > 0.4
+        const reverse = seededRandom(now + i * 23) > 0.6 // 40% R to L
+        const soar = seededRandom(now + i * 29) > 0.5
+
         newBirds.push({
           id: now + i,
           type: isPelican ? 'pelican' : 'seagull',
           top: isPelican
             ? 55 + seededRandom(now + i * 7) * 15  // Pelicans fly low near water
-            : 10 + seededRandom(now + i * 13) * 35, // Seagulls higher up
-          duration: isPelican ? 40 + seededRandom(now + i * 3) * 20 : 25 + seededRandom(now + i * 5) * 20,
-          delay: i * 2,
-          size: isPelican ? 24 : 10 + seededRandom(now + i * 11) * 8,
-          flipY: seededRandom(now + i * 17) > 0.5,
+            : 10 + seededRandom(now + i * 13) * 40, // Seagulls varied heights
+          duration: isPelican
+            ? 35 + seededRandom(now + i * 3) * 20
+            : 20 + seededRandom(now + i * 5) * 18,
+          delay: i * 1.5,
+          size: isPelican
+            ? 40 + seededRandom(now + i * 11) * 15   // 40-55px
+            : 20 + seededRandom(now + i * 11) * 12,  // 20-32px
+          reverse,
+          soar,
+          flapSpeed: isPelican ? 1.2 + seededRandom(now + i * 37) * 0.6 : 0.6 + seededRandom(now + i * 41) * 0.4,
         })
       }
 
@@ -77,12 +106,16 @@ export default function Wildlife({ skyPhase, isMobile }: WildlifeProps) {
     }
 
     // Initial spawn after short delay
-    const initialTimeout = setTimeout(spawnBirds, 5000)
+    const initialTimeout = setTimeout(spawnBirds, 3000)
 
-    // Subsequent spawns
+    // Frequent spawns: 8-15s desktop, 15-25s mobile (reduced phases: 2x interval)
+    const baseMin = isMobile ? 15000 : 8000
+    const baseRange = isMobile ? 10000 : 7000
+    const multiplier = reduced ? 2 : 1
+
     const interval = setInterval(
       spawnBirds,
-      (isMobile ? 90000 : 45000) + Math.random() * 45000
+      (baseMin + Math.random() * baseRange) * multiplier
     )
 
     return () => {
@@ -91,23 +124,35 @@ export default function Wildlife({ skyPhase, isMobile }: WildlifeProps) {
     }
   }, [skyPhase, isMobile])
 
-  // Easter eggs — desktop only, one-time on mount
+  // Easter eggs — repeating during daytime
   useEffect(() => {
-    if (isMobile) return
-
-    const roll = Math.random()
-    if (roll < 0.02) {
-      // Sea lion: 2% chance
-      setTimeout(() => {
-        setEasterEggs([{ type: 'sealion', id: Date.now() }])
-      }, 15000 + Math.random() * 30000)
-    } else if (roll < 0.12) {
-      // Dog: 10% chance
-      setTimeout(() => {
-        setEasterEggs([{ type: 'dog', id: Date.now() }])
-      }, 20000 + Math.random() * 40000)
+    if (isNight(skyPhase)) {
+      setEasterEggs([])
+      return
     }
-  }, [isMobile])
+    if (!isDaytime(skyPhase) && !isGoldenHour(skyPhase)) return
+
+    const spawnEasterEgg = () => {
+      const roll = Math.random()
+      if (roll < 0.12) {
+        setEasterEggs(prev => [...prev, { type: 'sealion', id: Date.now() }])
+      } else if (roll < 0.47) {
+        setEasterEggs(prev => [...prev, { type: 'dog', id: Date.now() }])
+      }
+    }
+
+    const initialTimeout = setTimeout(spawnEasterEgg, 10000 + Math.random() * 10000)
+
+    const interval = setInterval(
+      spawnEasterEgg,
+      isMobile ? (180000 + Math.random() * 120000) : (120000 + Math.random() * 60000)
+    )
+
+    return () => {
+      clearTimeout(initialTimeout)
+      clearInterval(interval)
+    }
+  }, [skyPhase, isMobile])
 
   return (
     <div className="absolute inset-0 z-[5] overflow-hidden">
@@ -118,44 +163,68 @@ export default function Wildlife({ skyPhase, isMobile }: WildlifeProps) {
           className="absolute"
           style={{
             top: `${bird.top}%`,
-            left: '-5%',
+            ...(bird.reverse
+              ? { right: '-5%' }
+              : { left: '-5%' }),
             width: `${bird.size}px`,
-            height: `${bird.size * 0.6}px`,
-            animation: `bird-fly ${bird.duration}s linear ${bird.delay}s forwards`,
-            transform: bird.flipY ? 'scaleY(-1)' : undefined,
+            height: `${bird.size * 0.5}px`,
+            animation: bird.reverse
+              ? `bird-fly-reverse ${bird.duration}s linear ${bird.delay}s forwards`
+              : `bird-fly ${bird.duration}s linear ${bird.delay}s forwards`,
           }}
           onAnimationEnd={() => removeBird(bird.id)}
         >
-          {/* Bird silhouette using CSS */}
-          <svg
-            viewBox="0 0 40 20"
-            fill="none"
-            className="w-full h-full"
-            style={{ opacity: bird.type === 'pelican' ? 0.5 : 0.4 }}
+          <div
+            style={{
+              animation: bird.soar ? 'bird-soar 3s ease-in-out infinite' : undefined,
+              width: '100%',
+              height: '100%',
+            }}
           >
             {bird.type === 'seagull' ? (
-              <path
-                d="M0 10 Q5 2 10 8 Q15 2 20 10 Q25 2 30 8 Q35 2 40 10"
-                stroke="currentColor"
-                strokeWidth="1.5"
+              /* Seagull: elegant thin V with gentle wing flap */
+              <svg
+                viewBox="-1 -1 22 12"
                 fill="none"
-                className="text-sea-dark"
-                style={{ animation: 'wing-flap 0.8s ease-in-out infinite' }}
-              />
-            ) : (
-              // Pelican: larger body, distinct beak
-              <>
+                className="w-full h-full"
+                style={{
+                  opacity: 0.6,
+                  transform: bird.reverse ? 'scaleX(-1)' : undefined,
+                }}
+              >
                 <path
-                  d="M0 12 Q4 4 10 8 L15 6 Q20 3 25 8 Q30 4 35 8 Q38 5 40 10"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  d="M0,8 Q4,1 10,5 Q16,1 20,8"
+                  stroke="#1a1a2e"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
                   fill="none"
-                  className="text-sea-dark"
+                  style={{ animation: `wing-flap ${bird.flapSpeed}s ease-in-out infinite` }}
                 />
-                <circle cx="37" cy="9" r="1" fill="currentColor" className="text-sea-dark" />
-              </>
+              </svg>
+            ) : (
+              /* Pelican: wider, heavier stroke, slight body mass */
+              <svg
+                viewBox="-1 -1 32 14"
+                fill="none"
+                className="w-full h-full"
+                style={{
+                  opacity: 0.65,
+                  transform: bird.reverse ? 'scaleX(-1)' : undefined,
+                }}
+              >
+                <path
+                  d="M0,10 Q6,1 15,7 Q24,1 30,9"
+                  stroke="#1a1a2e"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  fill="none"
+                  style={{ animation: `wing-flap ${bird.flapSpeed}s ease-in-out infinite` }}
+                />
+                {/* Slight body bulge at center */}
+                <ellipse cx="15" cy="7.5" rx="3" ry="1.5" fill="#1a1a2e" opacity="0.3" />
+              </svg>
             )}
-          </svg>
+          </div>
         </div>
       ))}
 
@@ -165,29 +234,32 @@ export default function Wildlife({ skyPhase, isMobile }: WildlifeProps) {
           key={egg.id}
           className="absolute"
           style={{
-            bottom: '15.5vh', // Just above water line
-            right: '-40px',
-            width: '30px',
-            height: '20px',
-            animation: 'dog-trot 20s linear forwards',
+            bottom: '15.5vh',
+            right: '-60px',
+            width: '50px',
+            height: '30px',
+            animation: 'dog-trot 18s linear forwards',
           }}
           onAnimationEnd={() => removeEasterEgg(egg.id)}
         >
-          <svg viewBox="0 0 40 25" className="w-full h-full opacity-30">
-            {/* Simple dog silhouette */}
+          <svg viewBox="0 0 50 28" className="w-full h-full" style={{ opacity: 0.4 }}>
+            {/* Smooth dog silhouette — body, legs, head, ears, tail */}
             <path
-              d="M5 15 L5 10 Q5 5 10 5 L25 5 Q30 5 30 8 L35 5 L35 10 L32 10 Q30 10 30 12 L30 15 L27 15 L27 12 L15 12 L15 15 L12 15 L12 12 L8 12 L8 15 Z"
-              fill="currentColor"
-              className="text-sea-dark"
+              d="M8,24 L8,17 C8,13 10,10 14,10 L32,10 C36,10 38,12 38,14
+                 L42,9 C43,8 44,9 43,11 L41,14 C40,15 39,16 38,17 L38,24
+                 M34,17 L34,24
+                 M18,17 L18,24
+                 M12,17 L12,24"
+              fill="#1a1a2e"
             />
             {/* Tail */}
             <path
-              d="M5 8 Q2 3 4 2"
-              stroke="currentColor"
-              strokeWidth="1.5"
+              d="M8,12 Q4,6 6,4"
+              stroke="#1a1a2e"
+              strokeWidth="1.8"
+              strokeLinecap="round"
               fill="none"
-              className="text-sea-dark"
-              style={{ animation: 'wing-flap 0.4s ease-in-out infinite' }}
+              style={{ animation: 'tail-wag 0.5s ease-in-out infinite alternate' }}
             />
           </svg>
         </div>
@@ -199,19 +271,23 @@ export default function Wildlife({ skyPhase, isMobile }: WildlifeProps) {
           key={egg.id}
           className="absolute"
           style={{
-            bottom: '14vh', // At water line
-            left: `${30 + Math.random() * 40}%`,
-            width: '15px',
-            height: '20px',
+            bottom: '14vh',
+            left: `${30 + seededRandom(egg.id) * 40}%`,
+            width: '25px',
+            height: '33px',
             animation: 'sealion-bob 4s ease-in-out forwards',
           }}
           onAnimationEnd={() => removeEasterEgg(egg.id)}
         >
-          <svg viewBox="0 0 15 25" className="w-full h-full opacity-35">
-            {/* Sea lion head */}
-            <ellipse cx="7.5" cy="8" rx="5" ry="7" fill="currentColor" className="text-sea-dark" />
-            <circle cx="5" cy="5" r="0.8" fill="#0a0e18" /> {/* Eye */}
-            <path d="M3 9 Q5 11 7.5 9" stroke="#0a0e18" strokeWidth="0.5" fill="none" /> {/* Nose */}
+          <svg viewBox="0 0 20 28" className="w-full h-full" style={{ opacity: 0.35 }}>
+            {/* Smooth sea lion head + neck silhouette */}
+            <path
+              d="M10,4 C6,4 4,7 4,11 C4,15 6,18 8,20 L12,20 C14,18 16,15 16,11 C16,7 14,4 10,4 Z"
+              fill="#1a1a2e"
+            />
+            {/* Whisker dots */}
+            <circle cx="6" cy="10" r="0.6" fill="#2a2a3e" />
+            <circle cx="14" cy="10" r="0.6" fill="#2a2a3e" />
           </svg>
         </div>
       ))}

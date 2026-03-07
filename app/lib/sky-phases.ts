@@ -127,15 +127,14 @@ function getSunGlowSize(altitudeDeg: number): number {
 function celestialToViewport(altitude: number, azimuth: number): { x: number; y: number } {
   // Azimuth: 0 = south, PI/2 = west, PI = north, -PI/2 = east (SunCalc convention)
   // Map to viewport: east (left) to west (right)
-  // Normalize azimuth to 0-2PI
   const az = ((azimuth + Math.PI) / (2 * Math.PI)) * 100 // 0-100% left to right
 
   // Altitude: 0 = horizon, PI/2 = zenith
-  // Map to viewport: horizon at 85%, zenith at 5%
+  // Keep celestial bodies in the upper portion (5%-45%) so they don't overlap hero text
   const altDeg = altitude * (180 / Math.PI)
-  const y = Math.max(5, 85 - (altDeg / 90) * 80)
+  const y = Math.max(5, 45 - (altDeg / 90) * 40)
 
-  return { x: Math.max(0, Math.min(100, az)), y: Math.max(5, Math.min(95, y)) }
+  return { x: Math.max(5, Math.min(95, az)), y: Math.max(5, Math.min(50, y)) }
 }
 
 export function getSkyData(date: Date): SkyData {

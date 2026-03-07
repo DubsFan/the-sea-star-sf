@@ -160,6 +160,47 @@ body {
   100% { right: calc(100% + 40px); }
 }
 
+@keyframes water-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@keyframes wave-breathe {
+  0%, 100% { transform: scaleY(1) translateY(0); }
+  50% { transform: scaleY(1.02) translateY(-1px); }
+}
+
+@keyframes haze-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.08; }
+  50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.14; }
+}
+
+@keyframes bird-fly-reverse {
+  0% { right: -5%; opacity: 0; }
+  5% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { right: 105%; opacity: 0; }
+}
+
+@keyframes bird-soar {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-8px); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(6px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes sparkle-dance {
+  0% { transform: translateX(-3%) scaleX(0.95); opacity: 0.4; }
+  50% { transform: translateX(2%) scaleX(1.05); opacity: 1; }
+  100% { transform: translateX(-1%) scaleX(0.98); opacity: 0.6; }
+}
+
+@keyframes tail-wag {
+  0% { transform: rotate(-8deg); }
+  100% { transform: rotate(8deg); }
+}
+
 @keyframes sealion-bob {
   0% { transform: translateY(20px); opacity: 0; }
   15% { transform: translateY(0); opacity: 0.35; }

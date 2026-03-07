@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
-import HarborConditions from './components/HarborConditions'
+import WeatherBar from './components/WeatherBar'
+import LivingBackground from './components/living-background/LivingBackground'
 
 interface MenuItem {
   id: string
@@ -88,6 +89,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   'Beer': 'The Vessel',
 }
 
+function minutesToLabel(mins: number): string {
+  const h = Math.floor(mins / 60) % 24
+  const m = Math.floor(mins % 60)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`
+}
+
 export default function Home() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
@@ -104,6 +113,18 @@ export default function Home() {
   const [loginPass, setLoginPass] = useState('')
   const [loginError, setLoginError] = useState(false)
   const revealRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [demoMode, setDemoMode] = useState(false)
+  const [demoMinutes, setDemoMinutes] = useState(0)
+
+  // Check for ?demo=1 on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('demo') === '1') {
+      setDemoMode(true)
+      const now = new Date()
+      setDemoMinutes(now.getHours() * 60 + now.getMinutes())
+    }
+  }, [])
 
   useEffect(() => {
     fetch('/api/menu')
@@ -213,11 +234,14 @@ export default function Home() {
     <>
       {/* NAV */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-500 ${scrolled ? 'bg-[#06080d]/95 backdrop-blur-xl py-3 border-b border-sea-gold/10' : ''}`}>
-        <a href="#" className="nav-logo no-underline">
-          <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
-        </a>
+        <div className="flex items-center gap-4">
+          <a href="#" className="nav-logo no-underline">
+            <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
+          </a>
+          <WeatherBar />
+        </div>
         <div className="hidden md:flex gap-9 items-center">
-          {['Story', 'Alicia', 'Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
+          {['Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
             <a key={item} href={`#${item.toLowerCase()}`} className="text-[0.65rem] font-dm tracking-[0.2em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline">
               {item}
             </a>
@@ -225,7 +249,7 @@ export default function Home() {
           <a href="#" onClick={(e) => { e.preventDefault(); setLoginOpen(true) }} className="text-[0.65rem] font-dm tracking-[0.2em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline">
             Login
           </a>
-          <a href="https://app.perfectvenue.com/venues/sea-star/hello" target="_blank" rel="noopener" className="text-[0.6rem] font-dm tracking-[0.2em] uppercase px-5 py-2 border border-sea-gold text-sea-gold hover:bg-sea-gold hover:text-[#06080d] transition-all no-underline">
+          <a href="https://app.perfectvenue.com/venues/sea-star/hello" target="_blank" rel="noopener" className="text-[0.6rem] font-dm tracking-[0.2em] uppercase px-3.5 py-1.5 border border-sea-gold/30 text-sea-gold hover:border-sea-gold hover:bg-sea-gold/5 transition-all no-underline">
             Book Event
           </a>
         </div>
@@ -240,8 +264,8 @@ export default function Home() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-[#06080d]/98 backdrop-blur-xl z-[99] flex flex-col items-center justify-center gap-8">
           <button className="absolute top-6 right-8 bg-transparent border-none text-sea-gold text-3xl cursor-pointer font-light" onClick={() => setMobileMenuOpen(false)}>&times;</button>
-          {['Our Story', 'Alicia Walton', 'Menu', 'Reviews', 'Events', 'Journal', 'Visit Us'].map((item, i) => {
-            const targets = ['story', 'alicia', 'menu', 'reviews', 'events', 'journal', 'visit']
+          {['Menu', 'Reviews', 'Events', 'Journal', 'Visit Us'].map((item, i) => {
+            const targets = ['menu', 'reviews', 'events', 'journal', 'visit']
             return (
               <a key={item} href={`#${targets[i]}`} onClick={() => setMobileMenuOpen(false)} className="font-cormorant text-3xl font-light text-sea-light hover:text-sea-gold transition-colors no-underline">
                 {item}
@@ -296,8 +320,9 @@ export default function Home() {
 
       {/* HERO */}
       <section className="h-screen min-h-[750px] flex items-center justify-center relative overflow-hidden">
+        {/* Static fallback gradient — visible instantly, LivingBackground layers on top once mounted */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#06080d] via-[#0a3847] to-[#0a0e18]" />
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 100% 70% at 30% 60%, rgba(58,125,140,0.08) 0%, transparent 50%), radial-gradient(ellipse 80% 50% at 70% 40%, rgba(92,184,196,0.05) 0%, transparent 50%)', animation: 'caustic-shift 8s ease-in-out infinite alternate' }} />
+        <LivingBackground overrideDate={demoMode ? (() => { const d = new Date(); d.setHours(Math.floor(demoMinutes / 60), demoMinutes % 60, 0, 0); return d })() : null} />
         <div className="text-center relative z-10 px-8">
           <p className="font-dm text-[0.6rem] font-normal tracking-[0.6em] uppercase text-sea-gold mb-12 opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.4s forwards' }}>
             Dogpatch, San Francisco &bull; Est. 1899
@@ -556,9 +581,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* HARBOR CONDITIONS */}
-      <HarborConditions revealRef={addRevealRef} />
-
       {/* JOURNAL */}
       <section id="journal" className="py-32 bg-[#06080d]/80 border-t border-sea-gold/10">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
@@ -741,6 +763,47 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Demo sky slider — ?demo=1 to activate. Works on phone. */}
+      {demoMode && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-[300] pointer-events-auto"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)' }}
+        >
+          <div className="max-w-2xl mx-auto px-5 pt-6 pb-8">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-dm text-[0.65rem] tracking-[0.2em] uppercase text-sea-gold/60">Sky Demo</span>
+              <span className="font-cormorant text-2xl text-sea-white">{minutesToLabel(demoMinutes)}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1439}
+              value={demoMinutes}
+              onChange={(e) => setDemoMinutes(Number(e.target.value))}
+              className="w-full cursor-pointer"
+              style={{
+                height: '44px',
+                WebkitAppearance: 'none',
+                appearance: 'none',
+                background: `linear-gradient(to right,
+                  #0a0e18 0%, #1a1030 4%, #c47060 6%, #e8a050 8%,
+                  #4090d0 15%, #70b8e8 30%, #4090d0 70%,
+                  #e8732a 80%, #c47060 83%, #2a2050 87%, #0a0e18 92%, #0a0e18 100%
+                )`,
+                borderRadius: '8px',
+              }}
+            />
+            <div className="flex justify-between mt-1">
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">12 AM</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">6 AM</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">NOON</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">6 PM</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">12 AM</span>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
