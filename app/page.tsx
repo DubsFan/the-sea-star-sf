@@ -198,9 +198,10 @@ export default function Home() {
     '/bright-drinks.png',
     'https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690106-1742689689772_alicia_walton_4f1a0644.jpeg',
     'https://thetasteedit.com/wp-content/uploads/2016/04/the-sea-star-san-francisco-thetastesf-alicia-walton-cynar-DSC08610.jpg',
+    'https://drinkfellows.com/cdn/shop/articles/sea_star_interior_2_1100x.jpg?v=1647980521',
   ]
 
-  const blogDisplayPosts = blogPosts.length > 0 ? blogPosts.slice(0, 3) : null
+  const blogDisplayPosts = blogPosts.length > 0 ? blogPosts.slice(0, 4) : null
 
   return (
     <>
@@ -210,7 +211,6 @@ export default function Home() {
           <a href="#" className="nav-logo no-underline">
             <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
           </a>
-          <WeatherBar />
         </div>
         <div className="hidden md:flex gap-9 items-center">
           {['Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
@@ -293,7 +293,6 @@ export default function Home() {
       {/* HERO */}
       <section className="h-screen min-h-[750px] flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#06080d] via-[#0a3847] to-[#0a0e18]" />
-        <LivingBackground overrideDate={backgroundOverrideDate} />
         <div className="text-center relative z-10 px-8">
           <p className="font-dm text-[0.6rem] font-normal tracking-[0.6em] uppercase text-sea-gold mb-12 opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.4s forwards' }}>
             Dogpatch, San Francisco &bull; Est. 1899
@@ -557,14 +556,14 @@ export default function Home() {
             <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">From the Bar</p>
             <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">The <em className="text-sea-gold">Journal</em></h2>
           </div>
-          <div ref={addRevealRef} className="grid md:grid-cols-3 gap-6 opacity-0 translate-y-10 transition-all duration-700">
-            {(blogDisplayPosts || BLOG_CONTENT.map((b, i) => ({ ...b, slug: (b as any).slug || '', excerpt: b.content.slice(0, 120).replace(/<[^>]*>/g, ''), featured_image: blogImages[i], published_at: '', id: String(i), created_at: '' }))).map((post, i) => (
+          <div ref={addRevealRef} className="grid grid-cols-2 md:grid-cols-4 gap-6 opacity-0 translate-y-10 transition-all duration-700">
+            {BLOG_CONTENT.map((post, i) => (
               <div
-                key={post.id || i}
+                key={i}
                 className="border border-sea-gold/5 overflow-hidden hover:border-sea-gold/15 hover:-translate-y-1 transition-all cursor-pointer"
                 onClick={() => {
-                  if (post.slug) {
-                    window.location.href = `/blog/${post.slug}`
+                  if ((post as any).slug) {
+                    window.location.href = `/blog/${(post as any).slug}`
                   } else {
                     setActiveBlogIndex(i)
                     setBlogModalOpen(true)
@@ -572,15 +571,15 @@ export default function Home() {
                 }}
               >
                 <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-[#0c2d3a] to-[#0f1523]">
-                  <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url('${post.featured_image || blogImages[i]}')` }} />
+                  <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url('${blogImages[i]}')` }} />
                   <div className="absolute bottom-3 left-4 font-playfair text-5xl font-extrabold text-sea-gold/15">{String(i + 1).padStart(2, '0')}</div>
                 </div>
                 <div className="p-6">
                   <div className="text-[0.55rem] tracking-[0.25em] uppercase text-sea-gold mb-3">
-                    {blogDisplayPosts ? new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : (post as typeof BLOG_CONTENT[number] & { slug: string; featured_image: string; published_at: string; id: string; created_at: string }).date}
+                    {post.date}
                   </div>
                   <h3 className="font-cormorant text-xl font-normal text-sea-white leading-tight mb-3">{post.title}</h3>
-                  <p className="text-[0.85rem] text-sea-blue leading-relaxed font-dm line-clamp-2">{post.excerpt}</p>
+                  <p className="text-[0.85rem] text-sea-blue leading-relaxed font-dm line-clamp-2">{post.content.slice(0, 120).replace(/<[^>]*>/g, '')}</p>
                   <span className="inline-block mt-4 text-[0.55rem] tracking-[0.25em] uppercase text-sea-gold">Read More &rarr;</span>
                 </div>
               </div>
