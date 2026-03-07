@@ -23,13 +23,21 @@ export default function LivingBackground({ overrideDate }: LivingBackgroundProps
   const [skyData, setSkyData] = useState<SkyData | null>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
     setMounted(true)
     setIsMobile(window.innerWidth < 768)
+    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
     const handleResize = () => setIsMobile(window.innerWidth < 768)
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handleMotionChange = () => setReducedMotion(mediaQuery.matches)
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    mediaQuery.addEventListener('change', handleMotionChange)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      mediaQuery.removeEventListener('change', handleMotionChange)
+    }
   }, [])
 
   // Sky from override date or real time
@@ -89,9 +97,18 @@ export default function LivingBackground({ overrideDate }: LivingBackgroundProps
       <WaterReflection
         reflectionColor={skyData.reflectionColor}
         skyBottom={skyData.skyBottom}
+        skyPhase={skyData.phase}
         sunX={skyData.sunPosition.x}
         sunAltitude={skyData.sunPosition.altitude}
         sunColor={skyData.sunPosition.color}
+        moonX={skyData.moonPosition.x}
+        moonAltitude={skyData.moonPosition.altitude}
+        moonVisible={skyData.moonPosition.visible}
+        moonGlowColor={skyData.moonPosition.glowColor}
+        windSpeed={weather?.wind}
+        cloudCoverage={weather?.clouds}
+        quality={isMobile ? 'low' : 'high'}
+        reducedMotion={reducedMotion}
       />
       <Skyline
         skyPhase={skyData.phase}

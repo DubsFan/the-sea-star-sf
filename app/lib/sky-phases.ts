@@ -23,7 +23,7 @@ export interface SkyData {
   skyMid: string
   skyBottom: string
   sunPosition: { x: number; y: number; visible: boolean; altitude: number; color: string; glowSize: number }
-  moonPosition: { x: number; y: number; visible: boolean; phase: number; illumination: number }
+  moonPosition: { x: number; y: number; visible: boolean; altitude: number; phase: number; illumination: number; glowColor: string }
   starsOpacity: number
   reflectionColor: string
 }
@@ -123,6 +123,13 @@ function getSunGlowSize(altitudeDeg: number): number {
   return 60
 }
 
+function getMoonGlowColor(illumination: number, sunAltitudeDeg: number): string {
+  if (sunAltitudeDeg > -4) return '#d8d1c0'
+  if (illumination > 0.75) return '#dfe7f8'
+  if (illumination > 0.35) return '#c9d5ec'
+  return '#b3bfd8'
+}
+
 // Convert altitude/azimuth to viewport x/y percentages
 function celestialToViewport(altitude: number, azimuth: number): { x: number; y: number } {
   // Azimuth: 0 = south, PI/2 = west, PI = north, -PI/2 = east (SunCalc convention)
@@ -204,8 +211,10 @@ export function getSkyData(date: Date): SkyData {
       x: moonVP.x,
       y: moonVP.y,
       visible: moonVisible,
+      altitude: moonAltDeg,
       phase: moonIllum.phase,
       illumination: moonIllum.fraction,
+      glowColor: getMoonGlowColor(moonIllum.fraction, sunAltDeg),
     },
     starsOpacity,
     reflectionColor,

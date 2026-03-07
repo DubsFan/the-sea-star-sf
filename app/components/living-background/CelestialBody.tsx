@@ -2,7 +2,7 @@
 
 interface CelestialBodyProps {
   sunPosition: { x: number; y: number; visible: boolean; altitude: number; color: string; glowSize: number }
-  moonPosition: { x: number; y: number; visible: boolean; phase: number; illumination: number }
+  moonPosition: { x: number; y: number; visible: boolean; altitude: number; phase: number; illumination: number; glowColor: string }
 }
 
 function getSunSize(altitude: number): number {
@@ -23,6 +23,8 @@ export default function CelestialBody({ sunPosition, moonPosition }: CelestialBo
   const sunSize = getSunSize(sunPosition.altitude)
   const sunOpacity = getSunOpacity(sunPosition.altitude)
   const showHorizonGlow = sunPosition.visible && sunPosition.altitude < 5
+  const moonSize = 44 + moonPosition.illumination * 16
+  const moonOpacity = moonPosition.visible ? 0.4 + moonPosition.illumination * 0.55 : 0
 
   // Atmospheric haze ring: bigger and more diffuse near horizon
   const hazeScale = sunPosition.altitude < 5 ? 4 : sunPosition.altitude < 10 ? 3 : 2
@@ -86,15 +88,17 @@ export default function CelestialBody({ sunPosition, moonPosition }: CelestialBo
       <div
         className="absolute transition-opacity duration-[10000ms] ease-linear"
         style={{
-          left: '15%',
-          top: '10%',
-          width: '52px',
-          height: '52px',
-          opacity: moonPosition.visible ? 1 : 0,
+          left: `${moonPosition.x}%`,
+          top: `${moonPosition.y}%`,
+          width: `${moonSize}px`,
+          height: `${moonSize}px`,
+          transform: 'translate(-50%, -50%)',
+          opacity: moonOpacity,
+          filter: `drop-shadow(0 0 10px ${moonPosition.glowColor}33) drop-shadow(0 0 28px ${moonPosition.glowColor}22)`,
         }}
       >
         {/* Moon SVG with surface detail */}
-        <svg viewBox="0 0 100 100" width="52" height="52">
+        <svg viewBox="0 0 100 100" width={moonSize} height={moonSize}>
           <defs>
             {/* Moon surface gradient — warm off-white */}
             <radialGradient id="moonSurface" cx="40%" cy="38%" r="55%">
@@ -106,7 +110,7 @@ export default function CelestialBody({ sunPosition, moonPosition }: CelestialBo
             {/* Outer glow */}
             <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
               <stop offset="70%" stopColor="transparent" />
-              <stop offset="85%" stopColor="rgba(200,196,184,0.12)" />
+              <stop offset="85%" stopColor={moonPosition.glowColor} stopOpacity="0.22" />
               <stop offset="100%" stopColor="transparent" />
             </radialGradient>
             {/* Phase shadow mask */}
