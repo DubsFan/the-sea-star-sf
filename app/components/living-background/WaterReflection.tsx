@@ -162,7 +162,7 @@ export default function WaterReflection({
     <div
       className="absolute bottom-0 left-0 right-0 h-[18vh] z-[4] overflow-hidden"
       style={{
-        animation: motion('wave-breathe', '11s'),
+        animation: motion('wave-breathe', '6s'),
         transformOrigin: 'bottom',
       }}
     >
@@ -245,7 +245,7 @@ export default function WaterReflection({
 
         <g
           style={{
-            animation: motion('ripple-shift-a', '18s', 'linear', 'infinite'),
+            animation: motion('ripple-shift-a', '9s', 'linear', 'infinite'),
             transformBox: 'fill-box',
             transformOrigin: 'center',
           }}
@@ -266,7 +266,7 @@ export default function WaterReflection({
 
         <g
           style={{
-            animation: motion('ripple-shift-b', '24s', 'linear', 'infinite'),
+            animation: motion('ripple-shift-b', '12s', 'linear', 'infinite'),
             opacity: 0.76,
             transformBox: 'fill-box',
             transformOrigin: 'center',
@@ -290,8 +290,8 @@ export default function WaterReflection({
 
         <g
           style={{
-            animation: motion('ripple-shift-c', '13s', 'ease-in-out', 'infinite alternate'),
-            opacity: 0.34,
+            animation: motion('ripple-shift-c', '7s', 'ease-in-out', 'infinite'),
+            opacity: 0.42,
             transformBox: 'fill-box',
             transformOrigin: 'center',
           }}
@@ -312,7 +312,7 @@ export default function WaterReflection({
         {showSunReflection && (
           <g
             style={{
-              animation: motion('reflection-shimmer', '9s', 'ease-in-out', 'infinite'),
+              animation: motion('reflection-shimmer', '4.5s', 'ease-in-out', 'infinite'),
               transformBox: 'fill-box',
               transformOrigin: 'center',
             }}
@@ -335,7 +335,7 @@ export default function WaterReflection({
         {showMoonReflection && (
           <g
             style={{
-              animation: motion('reflection-shimmer', '11s', 'ease-in-out', 'infinite'),
+              animation: motion('reflection-shimmer', '5.5s', 'ease-in-out', 'infinite'),
               transformBox: 'fill-box',
               transformOrigin: 'center',
             }}
