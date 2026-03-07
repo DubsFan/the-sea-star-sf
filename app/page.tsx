@@ -209,7 +209,7 @@ export default function Home() {
           <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
         </a>
         <div className="hidden md:flex gap-9 items-center">
-          {['Story', 'Alicia', 'Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
+          {['Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
             <a key={item} href={`#${item.toLowerCase()}`} className="text-[0.65rem] font-dm tracking-[0.2em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline">
               {item}
             </a>
@@ -232,8 +232,8 @@ export default function Home() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-[#06080d]/98 backdrop-blur-xl z-[99] flex flex-col items-center justify-center gap-8">
           <button className="absolute top-6 right-8 bg-transparent border-none text-sea-gold text-3xl cursor-pointer font-light" onClick={() => setMobileMenuOpen(false)}>&times;</button>
-          {['Our Story', 'Alicia Walton', 'Menu', 'Reviews', 'Events', 'Journal', 'Visit Us'].map((item, i) => {
-            const targets = ['story', 'alicia', 'menu', 'reviews', 'events', 'journal', 'visit']
+          {['Menu', 'Reviews', 'Events', 'Journal', 'Visit Us'].map((item, i) => {
+            const targets = ['menu', 'reviews', 'events', 'journal', 'visit']
             return (
               <a key={item} href={`#${targets[i]}`} onClick={() => setMobileMenuOpen(false)} className="font-cormorant text-3xl font-light text-sea-light hover:text-sea-gold transition-colors no-underline">
                 {item}
