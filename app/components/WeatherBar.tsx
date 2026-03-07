@@ -37,6 +37,15 @@ function formatTimeDate(d: Date): string {
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
+function getHarborMood(condition: string, wind: number): string {
+  if (condition === 'storm') return 'Electric'
+  if (condition === 'fog') return 'Moody'
+  if (wind > 16) return 'Windy'
+  if (condition === 'rain' || condition === 'drizzle') return 'Restless'
+  if (condition === 'clouds') return 'Soft'
+  return 'Open'
+}
+
 function WeatherIcon({ condition, size = 20 }: { condition: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="flex-shrink-0 opacity-85">
@@ -141,6 +150,7 @@ function VisibilityIcon({ size = 20 }: { size?: number }) {
 export default function WeatherBar() {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [open, setOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [sunTimes, setSunTimes] = useState<{ sunrise: Date; sunset: Date } | null>(null)
   const [moonData, setMoonData] = useState<{ phase: number; fraction: number } | null>(null)
 
@@ -154,9 +164,82 @@ export default function WeatherBar() {
     const times = getSunTimes(now)
     setSunTimes({ sunrise: times.sunrise, sunset: times.sunset })
     setMoonData(getMoonIllumination(now))
+
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   if (!weather) return null
+
+  const statItems: Array<{ icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string }> = isMobile
+    ? [
+        {
+          icon: <WeatherIcon condition={weather.condition} size={20} />,
+          label: 'Temp',
+          value: <>{weather.temp}<U>&deg;F</U></>,
+        },
+        {
+          icon: <WeatherIcon condition={weather.condition} size={20} />,
+          label: 'Sky',
+          value: <span className="text-[0.9rem]">{weather.description.split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')}</span>,
+        },
+        {
+          icon: <SunsetIcon size={20} />,
+          label: 'Sunset',
+          value: sunTimes ? <>{formatTimeDate(sunTimes.sunset)}</> : <>—</>,
+        },
+        {
+          icon: <MoonIcon size={20} />,
+          label: 'Mood',
+          value: <span className="text-[0.9rem]">{getHarborMood(weather.condition, weather.wind)}</span>,
+        },
+      ]
+    : [
+        {
+          icon: <WeatherIcon condition={weather.condition} size={20} />,
+          label: 'Temp',
+          value: <>{weather.temp}<U>&deg;F</U></>,
+        },
+        {
+          icon: <WeatherIcon condition={weather.condition} size={20} />,
+          label: 'Sky',
+          value: <span className="text-[0.9rem]">{weather.description.split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')}</span>,
+        },
+        {
+          icon: <WindIcon size={20} />,
+          label: 'Wind',
+          value: <>{toKnots(weather.wind)} <U>kts</U></>,
+          sub: compassDirection(weather.windDeg),
+        },
+        {
+          icon: <VisibilityIcon size={20} />,
+          label: 'Visibility',
+          value: <>{toNauticalMiles(weather.visibility)} <U>nm</U></>,
+        },
+        {
+          icon: <BarometerIcon size={20} />,
+          label: 'Pressure',
+          value: <>{toInHg(weather.pressure)} <U>inHg</U></>,
+        },
+        {
+          icon: <HumidityIcon size={20} />,
+          label: 'Humidity',
+          value: <>{weather.humidity}<U>%</U></>,
+        },
+        {
+          icon: <SunsetIcon size={20} />,
+          label: 'Sunset',
+          value: sunTimes ? <>{formatTimeDate(sunTimes.sunset)}</> : <>—</>,
+        },
+        {
+          icon: <MoonIcon size={20} />,
+          label: 'Moon',
+          value: <span className="text-[0.8rem]">{moonData ? moonPhaseName(moonData.phase) : '—'}</span>,
+          sub: moonData ? `${Math.round(moonData.fraction * 100)}%` : undefined,
+        },
+      ]
 
   return (
     <>
@@ -188,7 +271,7 @@ export default function WeatherBar() {
         className="fixed left-0 right-0 z-[98] overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{
           top: '56px',
-          maxHeight: open ? '120px' : '0',
+          maxHeight: open ? (isMobile ? '168px' : '120px') : '0',
           opacity: open ? 1 : 0,
         }}
       >
@@ -203,65 +286,15 @@ export default function WeatherBar() {
           <div className="absolute top-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-sea-gold/30 to-transparent" />
 
           <div className="flex items-center justify-center gap-0 py-2.5 px-4 md:px-6 max-w-[1100px] mx-auto flex-wrap">
-
-            {/* Temp */}
-            <Stat
-              icon={<WeatherIcon condition={weather.condition} size={20} />}
-              label="Temp"
-              value={<>{weather.temp}<U>&deg;F</U></>}
-            />
-
-            {/* Conditions */}
-            <Stat
-              icon={<WeatherIcon condition={weather.condition} size={20} />}
-              label="Sky"
-              value={<span className="text-[0.9rem]">{weather.description.split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')}</span>}
-            />
-
-            {/* Wind */}
-            <Stat
-              icon={<WindIcon size={20} />}
-              label="Wind"
-              value={<>{toKnots(weather.wind)} <U>kts</U></>}
-              sub={compassDirection(weather.windDeg)}
-            />
-
-            {/* Visibility */}
-            <Stat
-              icon={<VisibilityIcon size={20} />}
-              label="Visibility"
-              value={<>{toNauticalMiles(weather.visibility)} <U>nm</U></>}
-            />
-
-            {/* Pressure */}
-            <Stat
-              icon={<BarometerIcon size={20} />}
-              label="Pressure"
-              value={<>{toInHg(weather.pressure)} <U>inHg</U></>}
-            />
-
-            {/* Humidity */}
-            <Stat
-              icon={<HumidityIcon size={20} />}
-              label="Humidity"
-              value={<>{weather.humidity}<U>%</U></>}
-            />
-
-            {/* Sunset */}
-            <Stat
-              icon={<SunsetIcon size={20} />}
-              label="Sunset"
-              value={sunTimes ? <>{formatTimeDate(sunTimes.sunset).replace(' ', ' ')}<U>{formatTimeDate(sunTimes.sunset).includes('PM') ? '' : ''}</U></> : <>—</>}
-            />
-
-            {/* Moon */}
-            <Stat
-              icon={<MoonIcon size={20} />}
-              label="Moon"
-              value={<span className="text-[0.8rem]">{moonData ? moonPhaseName(moonData.phase) : '—'}</span>}
-              sub={moonData ? `${Math.round(moonData.fraction * 100)}%` : undefined}
-            />
-
+            {statItems.map((item) => (
+              <Stat
+                key={item.label}
+                icon={item.icon}
+                label={item.label}
+                value={item.value}
+                sub={item.sub}
+              />
+            ))}
           </div>
         </div>
       </div>

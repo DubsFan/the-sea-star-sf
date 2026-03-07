@@ -142,6 +142,18 @@ body {
   100% { transform: translateX(105vw) translateY(30vh) rotate(-15deg); opacity: 0; }
 }
 
+@keyframes wing-flap-left {
+  0%, 100% { transform: rotate(2deg) translate3d(0, 0, 0) scaleY(1); }
+  35% { transform: rotate(-8deg) translate3d(-1px, -1px, 0) scaleY(0.94); }
+  70% { transform: rotate(5deg) translate3d(0, 0.5px, 0) scaleY(1.02); }
+}
+
+@keyframes wing-flap-right {
+  0%, 100% { transform: rotate(-2deg) translate3d(0, 0, 0) scaleY(1); }
+  35% { transform: rotate(8deg) translate3d(1px, -1px, 0) scaleY(0.94); }
+  70% { transform: rotate(-5deg) translate3d(0, 0.5px, 0) scaleY(1.02); }
+}
+
 /* Wildlife animations */
 @keyframes bird-fly {
   0% { left: -5%; opacity: 0; }
@@ -166,8 +178,8 @@ body {
 }
 
 @keyframes wave-breathe {
-  0%, 100% { transform: scaleY(1) translateY(0); }
-  50% { transform: scaleY(1.02) translateY(-1px); }
+  0%, 100% { transform: scaleY(1.04) translateY(-0.5vh); }
+  50% { transform: scaleY(1.08) translateY(-1.3vh); }
 }
 
 @keyframes surface-swell {
@@ -218,6 +230,51 @@ body {
 @keyframes ripple-shift-b {
   0% { transform: translate3d(9%, -0.8%, 0); }
   100% { transform: translate3d(-9%, 1.6%, 0); }
+}
+
+@keyframes bird-drift-ltr {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { transform: translate3d(122vw, 0, 0); opacity: 0; }
+}
+
+@keyframes bird-drift-rtl {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { transform: translate3d(-122vw, 0, 0); opacity: 0; }
+}
+
+@keyframes bird-arc-high {
+  0% { transform: translate3d(0, 10px, 0); }
+  24% { transform: translate3d(0, -6px, 0); }
+  58% { transform: translate3d(0, -16px, 0); }
+  100% { transform: translate3d(0, 8px, 0); }
+}
+
+@keyframes bird-arc-mid {
+  0% { transform: translate3d(0, 8px, 0); }
+  32% { transform: translate3d(0, -8px, 0); }
+  62% { transform: translate3d(0, -12px, 0); }
+  100% { transform: translate3d(0, 6px, 0); }
+}
+
+@keyframes bird-arc-low {
+  0% { transform: translate3d(0, 4px, 0); }
+  40% { transform: translate3d(0, -4px, 0); }
+  72% { transform: translate3d(0, -7px, 0); }
+  100% { transform: translate3d(0, 3px, 0); }
+}
+
+@keyframes bird-bank-soft {
+  0%, 100% { transform: rotate(calc(var(--bird-bank-tilt, 2deg) * -0.18)); }
+  50% { transform: rotate(var(--bird-bank-tilt, 2deg)); }
+}
+
+@keyframes moon-turn {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes ripple-shift-c {

@@ -28,14 +28,13 @@ export default function CelestialBody({ sunPosition, moonPosition }: CelestialBo
 
   // Atmospheric haze ring: bigger and more diffuse near horizon
   const hazeScale = sunPosition.altitude < 5 ? 4 : sunPosition.altitude < 10 ? 3 : 2
-  const hazeOpacity = sunPosition.altitude < 0 ? 0.15 : sunPosition.altitude < 5 ? 0.12 : 0.06
 
   return (
     <div className="absolute inset-0 z-[1]">
       {/* Sun — positioned by SunCalc data */}
       {sunPosition.visible && (
         <div
-          className="absolute transition-all duration-[120000ms] ease-linear"
+          className="absolute transition-[left,top,opacity] duration-[120000ms] ease-linear"
           style={{
             left: `${sunPosition.x}%`,
             top: `${sunPosition.y}%`,
@@ -86,7 +85,7 @@ export default function CelestialBody({ sunPosition, moonPosition }: CelestialBo
 
       {/* Moon — upper-left, solid with craters */}
       <div
-        className="absolute transition-opacity duration-[10000ms] ease-linear"
+        className="absolute transition-[left,top,opacity] duration-[120000ms] ease-linear"
         style={{
           left: `${moonPosition.x}%`,
           top: `${moonPosition.y}%`,
@@ -97,7 +96,7 @@ export default function CelestialBody({ sunPosition, moonPosition }: CelestialBo
           filter: `drop-shadow(0 0 10px ${moonPosition.glowColor}33) drop-shadow(0 0 28px ${moonPosition.glowColor}22)`,
         }}
       >
-        {/* Moon SVG with surface detail */}
+        <div style={{ animation: 'moon-turn 110s linear infinite' }}>
         <svg viewBox="0 0 100 100" width={moonSize} height={moonSize}>
           <defs>
             {/* Moon surface gradient — warm off-white */}
@@ -175,6 +174,7 @@ export default function CelestialBody({ sunPosition, moonPosition }: CelestialBo
             }}
           />
         </svg>
+        </div>
       </div>
     </div>
   )

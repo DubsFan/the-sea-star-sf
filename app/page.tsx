@@ -125,6 +125,12 @@ export default function Home() {
 
     if (params.get('demo') === '1') {
       setDemoMode(true)
+      const minuteParam = Number(params.get('minute'))
+      if (Number.isFinite(minuteParam) && minuteParam >= 0 && minuteParam <= 1439) {
+        setDemoMinutes(Math.floor(minuteParam))
+        return
+      }
+
       const now = new Date()
       setDemoMinutes(now.getHours() * 60 + now.getMinutes())
     }

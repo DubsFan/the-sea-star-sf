@@ -123,6 +123,8 @@ export default function LivingBackground({ overrideDate }: LivingBackgroundProps
       <Wildlife
         skyPhase={skyData.phase}
         isMobile={isMobile}
+        reducedMotion={reducedMotion}
+        starsOpacity={skyData.starsOpacity}
       />
       <Starfield opacity={skyData.starsOpacity} />
     </div>

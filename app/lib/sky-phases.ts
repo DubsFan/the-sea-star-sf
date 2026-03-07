@@ -28,6 +28,10 @@ export interface SkyData {
   reflectionColor: string
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
+}
+
 // Map solar altitude (radians) to a 0-1 progress through the day
 function altitudeToSkyColors(altitudeDeg: number): { top: string; mid: string; bottom: string } {
   // Below -18: full night
@@ -130,18 +134,25 @@ function getMoonGlowColor(illumination: number, sunAltitudeDeg: number): string 
   return '#b3bfd8'
 }
 
-// Convert altitude/azimuth to viewport x/y percentages
-function celestialToViewport(altitude: number, azimuth: number): { x: number; y: number } {
-  // Azimuth: 0 = south, PI/2 = west, PI = north, -PI/2 = east (SunCalc convention)
-  // Map to viewport: east (left) to west (right)
-  const az = ((azimuth + Math.PI) / (2 * Math.PI)) * 100 // 0-100% left to right
+function progressBetween(now: number, start: number, end: number) {
+  if (end <= start) return 0.5
+  return clamp((now - start) / (end - start), 0, 1)
+}
 
-  // Altitude: 0 = horizon, PI/2 = zenith
-  // Keep celestial bodies in the upper portion (5%-45%) so they don't overlap hero text
-  const altDeg = altitude * (180 / Math.PI)
-  const y = Math.max(5, 45 - (altDeg / 90) * 40)
+function getSunViewport(now: number, sunrise: number, sunset: number): { x: number; y: number } {
+  const progress = progressBetween(now, sunrise, sunset)
+  return {
+    x: 108 - progress * 116,
+    y: -8 + Math.sin(progress * Math.PI) * 26,
+  }
+}
 
-  return { x: Math.max(5, Math.min(95, az)), y: Math.max(5, Math.min(50, y)) }
+function getMoonViewport(azimuth: number): { x: number; y: number } {
+  const normalized = ((azimuth + Math.PI) / (2 * Math.PI) + 1) % 1
+  return {
+    x: 14 + normalized * 72,
+    y: 18 - Math.sin(normalized * Math.PI) * 6,
+  }
 }
 
 export function getSkyData(date: Date): SkyData {
@@ -177,13 +188,13 @@ export function getSkyData(date: Date): SkyData {
   colors = applySunsetWarmth(colors, sunAltDeg, isSetting)
 
   // Sun viewport position
-  const sunVP = celestialToViewport(sunPos.altitude, sunPos.azimuth)
-  const sunVisible = sunAltDeg > -2 // Show sun just below horizon for dramatic effect
+  const sunVP = getSunViewport(now, times.sunrise.getTime(), times.sunset.getTime())
+  const sunVisible = sunAltDeg > -4
 
   // Moon viewport position
   const moonAltDeg = moonPos.altitude * (180 / Math.PI)
-  const moonVP = celestialToViewport(moonPos.altitude, moonPos.azimuth)
-  const moonVisible = moonAltDeg > 0 && sunAltDeg < 5 // Moon visible when sun is low/down
+  const moonVP = getMoonViewport(moonPos.azimuth)
+  const moonVisible = moonAltDeg > -2 && sunAltDeg < 5
 
   // Stars opacity: full at night, fade during twilight
   let starsOpacity = 0
@@ -223,16 +234,16 @@ export function getSkyData(date: Date): SkyData {
 
 // Utility: linearly interpolate between two hex colors
 function lerpColor(a: string, b: string, t: number): string {
-  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)))
+  const clampChannel = (v: number) => Math.max(0, Math.min(255, Math.round(v)))
   const ar = parseInt(a.slice(1, 3), 16)
   const ag = parseInt(a.slice(3, 5), 16)
   const ab = parseInt(a.slice(5, 7), 16)
   const br = parseInt(b.slice(1, 3), 16)
   const bg = parseInt(b.slice(3, 5), 16)
   const bb = parseInt(b.slice(5, 7), 16)
-  const r = clamp(ar + (br - ar) * t)
-  const g = clamp(ag + (bg - ag) * t)
-  const bl = clamp(ab + (bb - ab) * t)
+  const r = clampChannel(ar + (br - ar) * t)
+  const g = clampChannel(ag + (bg - ag) * t)
+  const bl = clampChannel(ab + (bb - ab) * t)
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`
 }
 

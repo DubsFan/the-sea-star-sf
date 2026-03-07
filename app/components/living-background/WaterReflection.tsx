@@ -202,8 +202,10 @@ export default function WaterReflection({
 
   return (
     <div
-      className="absolute bottom-0 left-0 right-0 h-[18vh] z-[4] overflow-hidden"
+      className="absolute left-0 right-0 z-[4] overflow-hidden"
       style={{
+        bottom: '-1.1vh',
+        height: '20.5vh',
         animation: motion('wave-breathe', '6s'),
         transformOrigin: 'bottom',
       }}
@@ -434,7 +436,7 @@ export default function WaterReflection({
       </svg>
 
       <div
-        className="absolute inset-x-0 bottom-0 h-[26%]"
+        className="absolute inset-x-0 bottom-0 h-[30%]"
         style={{
           background: 'linear-gradient(180deg, transparent 0%, rgba(2, 4, 7, 0.24) 42%, rgba(2, 3, 6, 0.45) 100%)',
         }}

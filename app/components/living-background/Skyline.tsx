@@ -9,14 +9,17 @@ interface SkylineProps {
 }
 
 export default function Skyline({ mode = 'front' }: SkylineProps) {
-  if (mode === 'back') return null
+  const isBack = mode === 'back'
 
   return (
     <div
       className="absolute left-0 right-0 z-[6] pointer-events-none"
       style={{
-        bottom: 'calc(18vh + 0.25vh)',
-        height: '10.5vh',
+        bottom: isBack ? 'calc(18vh + 0.45vh)' : 'calc(18vh + 0.15vh)',
+        height: isBack ? '11.5vh' : '10.8vh',
+        opacity: isBack ? 0.55 : 1,
+        filter: isBack ? 'blur(3px)' : 'none',
+        transform: isBack ? 'scale(1.02)' : 'none',
       }}
     >
       <div
@@ -26,7 +29,6 @@ export default function Skyline({ mode = 'front' }: SkylineProps) {
           backgroundSize: '100% auto',
           backgroundPosition: 'bottom center',
           backgroundRepeat: 'no-repeat',
-          opacity: 1,
         }}
       />
     </div>
