@@ -54,15 +54,18 @@ function isWarmSky(skyBottom: string): boolean {
   return r > 150 && r > g * 1.3
 }
 
-function buildWavePath(line: WaveLine): string {
+function buildWavePath(line: WaveLine, phaseOffset = 0, amplitudeScale = 1, verticalShift = 0): string {
   const points: Array<{ x: number; y: number }> = []
+  const amplitude = line.amplitude * amplitudeScale
+  const phase = line.phase + phaseOffset
 
   for (let x = -80; x <= 1080; x += 70) {
     const nx = x / 1000
     const y =
       line.baseline +
-      Math.sin(nx * Math.PI * line.frequency + line.phase) * line.amplitude +
-      Math.sin(nx * Math.PI * (line.frequency * 0.45) + line.phase * 1.7) * line.amplitude * 0.45
+      verticalShift +
+      Math.sin(nx * Math.PI * line.frequency + phase) * amplitude +
+      Math.sin(nx * Math.PI * (line.frequency * 0.45) + phase * 1.7) * amplitude * 0.45
 
     points.push({ x, y })
   }
@@ -251,7 +254,21 @@ export default function WaterReflection({
               strokeLinejoin="round"
               strokeOpacity={0.46 + index / (lineCount * 2.4)}
               strokeWidth={line.strokeWidth}
-            />
+            >
+              {!reducedMotion && (
+                <animate
+                  attributeName="d"
+                  dur={`${11 + index * 0.8}s`}
+                  repeatCount="indefinite"
+                  values={[
+                    buildWavePath(line, 0, 1, 0),
+                    buildWavePath(line, 0.35 + index * 0.03, 1.08, -0.6),
+                    buildWavePath(line, -0.22 - index * 0.02, 0.94, 0.5),
+                    buildWavePath(line, 0, 1, 0),
+                  ].join(';')}
+                />
+              )}
+            </path>
           ))}
         </g>
 
@@ -267,15 +284,27 @@ export default function WaterReflection({
               d={buildWavePath({
                 ...line,
                 baseline: line.baseline + 3.5,
-                phase: line.phase + 0.9,
-                amplitude: line.amplitude * 0.82,
               })}
               fill="none"
               stroke={index % 2 === 0 ? alpha('#20313f', 0.42) : alpha('#d7e0ea', 0.08)}
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={Math.max(0.7, line.strokeWidth - 0.1)}
-            />
+            >
+              {!reducedMotion && (
+                <animate
+                  attributeName="d"
+                  dur={`${13 + index * 0.7}s`}
+                  repeatCount="indefinite"
+                  values={[
+                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 0.7, 0.82, 0),
+                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 1.02 + index * 0.02, 0.9, -0.4),
+                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 0.44, 0.78, 0.55),
+                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 0.7, 0.82, 0),
+                  ].join(';')}
+                />
+              )}
+            </path>
           ))}
         </g>
 
@@ -290,7 +319,21 @@ export default function WaterReflection({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={line.strokeWidth + 0.35}
-              />
+              >
+                {!reducedMotion && (
+                  <animate
+                    attributeName="d"
+                    dur={`${11 + index * 0.8}s`}
+                    repeatCount="indefinite"
+                    values={[
+                      buildWavePath(line, 0, 1, 0),
+                      buildWavePath(line, 0.35 + index * 0.03, 1.08, -0.6),
+                      buildWavePath(line, -0.22 - index * 0.02, 0.94, 0.5),
+                      buildWavePath(line, 0, 1, 0),
+                    ].join(';')}
+                  />
+                )}
+              </path>
             ))}
           </g>
         )}
@@ -302,15 +345,27 @@ export default function WaterReflection({
                 key={`moon-${index}`}
                 d={buildWavePath({
                   ...line,
-                  phase: line.phase + 0.25,
-                  amplitude: line.amplitude * 0.9,
                 })}
                 fill="none"
                 stroke={`url(#${gradientId}-moon-${index})`}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={line.strokeWidth + 0.18}
-              />
+              >
+                {!reducedMotion && (
+                  <animate
+                    attributeName="d"
+                    dur={`${12 + index * 0.9}s`}
+                    repeatCount="indefinite"
+                    values={[
+                      buildWavePath(line, 0.18, 0.9, 0),
+                      buildWavePath(line, 0.54 + index * 0.02, 0.96, -0.35),
+                      buildWavePath(line, -0.08, 0.84, 0.3),
+                      buildWavePath(line, 0.18, 0.9, 0),
+                    ].join(';')}
+                  />
+                )}
+              </path>
             ))}
           </g>
         )}
