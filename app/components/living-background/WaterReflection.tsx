@@ -80,8 +80,8 @@ export default function WaterReflection({
 
   const sunReflectionWidth = sunAltitude < 5 ? 24 : sunAltitude < 15 ? 18 : 12
   const moonReflectionOpacity = (0.1 + clamp(moonAltitude / 50, 0, 0.12)) * cloudSoftener
-  const waveLineOpacity = isNight ? 0.12 : isDay ? 0.16 : 0.14
-  const surfaceTopGlow = skyPhase === 'sunset' || skyPhase === 'goldenEvening' ? 0.18 : isNight ? 0.08 : 0.12
+  const waveLineOpacity = isNight ? 0.08 : isDay ? 0.12 : 0.1
+  const surfaceTopGlow = skyPhase === 'sunset' || skyPhase === 'goldenEvening' ? 0.14 : isNight ? 0.06 : 0.1
   const motion = (name: string, duration: string, timing = 'ease-in-out', extras = 'infinite alternate') =>
     reducedMotion ? 'none' : `${name} ${duration} ${timing} ${extras}`
 
@@ -122,9 +122,9 @@ export default function WaterReflection({
         className="absolute inset-0 transition-all duration-[120000ms] ease-linear"
         style={{
           background: `linear-gradient(180deg,
-            ${alpha(reflectionColor, 0.42)} 0%,
-            ${alpha(reflectionColor, 0.78)} 22%,
-            ${alpha(reflectionColor, 0.92)} 56%,
+            ${alpha(reflectionColor, 0.28)} 0%,
+            ${alpha(reflectionColor, 0.62)} 20%,
+            ${alpha(reflectionColor, 0.86)} 54%,
             ${reflectionColor} 100%)`,
         }}
       />
@@ -143,59 +143,61 @@ export default function WaterReflection({
         style={{
           opacity: waveLineOpacity,
           background: `repeating-linear-gradient(
-            178deg,
-            transparent 0 4px,
-            rgba(255,255,255,0.12) 4px 5px,
-            transparent 5px 12px
+            180deg,
+            transparent 0 6px,
+            rgba(255,255,255,0.08) 6px 7px,
+            transparent 7px 16px
           )`,
-          backgroundSize: highQuality ? '220% 130%' : '180% 100%',
-          animation: motion('surface-swell', highQuality ? '22s' : '30s', 'linear', 'infinite'),
+          backgroundSize: highQuality ? '160% 115%' : '140% 100%',
+          animation: motion('surface-swell', highQuality ? '26s' : '34s', 'linear', 'infinite'),
         }}
       />
 
       <div
         className="absolute inset-0"
         style={{
-          opacity: isNight ? 0.08 : 0.12,
+          opacity: isNight ? 0.05 : 0.08,
           background: `repeating-linear-gradient(
-            92deg,
-            transparent 0 42px,
-            rgba(255,255,255,0.06) 42px 44px,
-            transparent 44px 92px
+            180deg,
+            transparent 0 18px,
+            rgba(255,255,255,0.05) 18px 19px,
+            transparent 19px 36px
           )`,
-          animation: motion('wave-drift', '24s', 'linear', 'infinite'),
+          transform: `translateX(${windFactor * 2 - 1}%)`,
+          animation: motion('wave-drift', '36s', 'linear', 'infinite'),
         }}
       />
 
-      {/* Distorted editorial shimmer */}
+      {/* Low, narrow crest sheen */}
       <div
         className="absolute inset-0"
         style={{
-          opacity: isNight ? 0.12 : 0.18 * cloudSoftener,
-          background: `linear-gradient(165deg,
-            transparent 18%,
-            rgba(255,255,255,0.06) 34%,
-            rgba(255,255,255,0.18) 48%,
-            rgba(255,255,255,0.08) 58%,
-            transparent 74%)`,
-          backgroundSize: '260% 100%',
+          opacity: isNight ? 0.04 : 0.08 * cloudSoftener,
+          background: `linear-gradient(180deg,
+            transparent 0%,
+            transparent 28%,
+            rgba(255,255,255,0.04) 36%,
+            rgba(255,255,255,0.08) 42%,
+            rgba(255,255,255,0.03) 48%,
+            transparent 62%)`,
+          backgroundSize: '100% 140%',
           filter: highQuality ? 'url(#water-distortion-filter)' : undefined,
-          animation: motion('specular-scan', highQuality ? '12s' : '18s'),
+          animation: motion('specular-scan', highQuality ? '18s' : '24s'),
         }}
       />
 
-      {/* Counter-glint band */}
+      {/* Secondary soft sweep */}
       <div
         className="absolute inset-0"
         style={{
-          opacity: isNight ? 0.09 : 0.13,
-          background: `linear-gradient(192deg,
-            transparent 24%,
-            rgba(255,255,255,0.09) 46%,
-            rgba(255,255,255,0.03) 58%,
-            transparent 78%)`,
-          backgroundSize: '240% 100%',
-          animation: motion('specular-scan', highQuality ? '16s' : '22s', 'ease-in-out', 'infinite alternate-reverse'),
+          opacity: isNight ? 0.03 : 0.05,
+          background: `linear-gradient(180deg,
+            transparent 0%,
+            transparent 44%,
+            rgba(255,255,255,0.03) 52%,
+            transparent 64%)`,
+          backgroundSize: '100% 160%',
+          animation: motion('specular-scan', highQuality ? '24s' : '30s', 'ease-in-out', 'infinite alternate-reverse'),
         }}
       />
 
@@ -214,28 +216,44 @@ export default function WaterReflection({
             style={{
               opacity: sunReflectionOpacity,
               background: `linear-gradient(180deg,
-                ${alpha(sunColor, 0.8)} 0%,
-                ${alpha(sunColor, 0.46)} 14%,
-                ${alpha(sunColor, 0.2)} 34%,
-                ${alpha(sunColor, 0.12)} 58%,
+                ${alpha(sunColor, 0.62)} 0%,
+                ${alpha(sunColor, 0.3)} 18%,
+                ${alpha(sunColor, 0.12)} 42%,
+                ${alpha(sunColor, 0.08)} 62%,
                 transparent 100%)`,
-              maskImage: 'linear-gradient(180deg, transparent 0%, black 16%, black 100%)',
+              maskImage: `linear-gradient(180deg, transparent 0%, black 14%, black 100%),
+                repeating-linear-gradient(
+                  180deg,
+                  black 0 12px,
+                  rgba(0,0,0,0.3) 12px 16px,
+                  black 16px 28px,
+                  transparent 28px 34px
+                )`,
+              maskComposite: 'intersect',
+              WebkitMaskImage: `linear-gradient(180deg, transparent 0%, black 14%, black 100%),
+                repeating-linear-gradient(
+                  180deg,
+                  black 0 12px,
+                  rgba(0,0,0,0.3) 12px 16px,
+                  black 16px 28px,
+                  transparent 28px 34px
+                )`,
               animation: motion('reflection-breakup', '7s'),
             }}
           />
           <div
             className="absolute inset-0"
             style={{
-              opacity: sunReflectionOpacity * 0.92,
-              background: `
-                radial-gradient(ellipse 18px 4px at 28% 16%, ${alpha(sunColor, 0.92)} 0%, transparent 100%),
-                radial-gradient(ellipse 12px 3px at 58% 24%, ${alpha(sunColor, 0.85)} 0%, transparent 100%),
-                radial-gradient(ellipse 22px 5px at 35% 38%, ${alpha(sunColor, 0.72)} 0%, transparent 100%),
-                radial-gradient(ellipse 16px 4px at 62% 52%, ${alpha(sunColor, 0.58)} 0%, transparent 100%),
-                radial-gradient(ellipse 12px 3px at 40% 66%, ${alpha(sunColor, 0.42)} 0%, transparent 100%),
-                radial-gradient(ellipse 20px 4px at 54% 82%, ${alpha(sunColor, 0.32)} 0%, transparent 100%)
-              `,
-              animation: motion('reflection-breakup', '5s'),
+              opacity: sunReflectionOpacity * 0.5,
+              background: `repeating-linear-gradient(
+                180deg,
+                ${alpha(sunColor, 0.5)} 0 2px,
+                transparent 2px 12px,
+                ${alpha(sunColor, 0.28)} 12px 13px,
+                transparent 13px 26px
+              )`,
+              filter: 'blur(0.4px)',
+              animation: motion('reflection-breakup', '8s'),
             }}
           />
         </div>
@@ -256,24 +274,42 @@ export default function WaterReflection({
             style={{
               opacity: moonReflectionOpacity,
               background: `linear-gradient(180deg,
-                ${alpha(moonGlowColor, 0.48)} 0%,
-                ${alpha(moonGlowColor, 0.24)} 24%,
-                ${alpha(moonGlowColor, 0.12)} 52%,
+                ${alpha(moonGlowColor, 0.3)} 0%,
+                ${alpha(moonGlowColor, 0.16)} 24%,
+                ${alpha(moonGlowColor, 0.08)} 52%,
                 transparent 100%)`,
+              maskImage: `linear-gradient(180deg, transparent 0%, black 16%, black 100%),
+                repeating-linear-gradient(
+                  180deg,
+                  black 0 10px,
+                  transparent 10px 16px,
+                  black 16px 25px,
+                  transparent 25px 34px
+                )`,
+              WebkitMaskImage: `linear-gradient(180deg, transparent 0%, black 16%, black 100%),
+                repeating-linear-gradient(
+                  180deg,
+                  black 0 10px,
+                  transparent 10px 16px,
+                  black 16px 25px,
+                  transparent 25px 34px
+                )`,
               animation: motion('moon-glint', '9s'),
             }}
           />
           <div
             className="absolute inset-0"
             style={{
-              opacity: moonReflectionOpacity * 0.9,
-              background: `
-                radial-gradient(ellipse 12px 3px at 50% 20%, ${alpha(moonGlowColor, 0.6)} 0%, transparent 100%),
-                radial-gradient(ellipse 10px 3px at 40% 38%, ${alpha(moonGlowColor, 0.45)} 0%, transparent 100%),
-                radial-gradient(ellipse 14px 3px at 56% 60%, ${alpha(moonGlowColor, 0.36)} 0%, transparent 100%),
-                radial-gradient(ellipse 10px 2px at 48% 82%, ${alpha(moonGlowColor, 0.26)} 0%, transparent 100%)
-              `,
-              animation: motion('reflection-breakup', '6s'),
+              opacity: moonReflectionOpacity * 0.35,
+              background: `repeating-linear-gradient(
+                180deg,
+                ${alpha(moonGlowColor, 0.3)} 0 1px,
+                transparent 1px 11px,
+                ${alpha(moonGlowColor, 0.16)} 11px 12px,
+                transparent 12px 23px
+              )`,
+              filter: 'blur(0.5px)',
+              animation: motion('reflection-breakup', '10s'),
             }}
           />
         </div>
@@ -285,29 +321,13 @@ export default function WaterReflection({
           <div
             className="absolute inset-0"
             style={{
-              opacity: 0.18,
+              opacity: 0.1,
               background: `linear-gradient(180deg,
-                rgba(180,190,220,0.18) 0%,
-                rgba(140,150,180,0.09) 40%,
+                rgba(180,190,220,0.1) 0%,
+                rgba(140,150,180,0.05) 40%,
                 transparent 80%)`,
               animation: motion('specular-scan', '14s'),
               backgroundSize: '200% 100%',
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              opacity: 0.22,
-              background: `
-                radial-gradient(ellipse 12px 4px at 10% 25%, rgba(200,196,184,0.5) 0%, transparent 100%),
-                radial-gradient(ellipse 8px 3px at 25% 55%, rgba(200,196,184,0.4) 0%, transparent 100%),
-                radial-gradient(ellipse 15px 5px at 40% 20%, rgba(200,196,184,0.45) 0%, transparent 100%),
-                radial-gradient(ellipse 10px 4px at 55% 45%, rgba(200,196,184,0.4) 0%, transparent 100%),
-                radial-gradient(ellipse 12px 4px at 70% 30%, rgba(200,196,184,0.5) 0%, transparent 100%),
-                radial-gradient(ellipse 8px 3px at 85% 50%, rgba(200,196,184,0.35) 0%, transparent 100%),
-                radial-gradient(ellipse 10px 4px at 95% 20%, rgba(200,196,184,0.4) 0%, transparent 100%)
-              `,
-              animation: motion('sparkle-dance', '6s'),
             }}
           />
         </>
@@ -335,14 +355,11 @@ export default function WaterReflection({
         <div
           className="absolute inset-0"
           style={{
-            opacity: 0.18 * cloudSoftener,
+            opacity: 0.1 * cloudSoftener,
             background: `
-              radial-gradient(ellipse 30px 12px at 25% 30%, rgba(255,180,60,0.35) 0%, transparent 70%),
-              radial-gradient(ellipse 40px 15px at 50% 45%, rgba(255,160,40,0.3) 0%, transparent 70%),
-              radial-gradient(ellipse 25px 10px at 70% 25%, rgba(255,200,80,0.25) 0%, transparent 70%),
-              radial-gradient(ellipse 35px 14px at 85% 55%, rgba(255,170,50,0.2) 0%, transparent 70%)
+              linear-gradient(180deg, transparent 0%, rgba(255,180,60,0.08) 42%, transparent 64%)
             `,
-            animation: motion('sparkle-dance', '7s'),
+            animation: motion('specular-scan', '20s'),
           }}
         />
       )}
