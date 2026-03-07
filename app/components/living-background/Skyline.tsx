@@ -59,16 +59,23 @@ export default function Skyline({ skyPhase, skyBottom, mode = 'back' }: SkylineP
 
   const backLayers: SkylineLayer[] = [
     {
-      opacity: 0.7,
-      translateX: '-0.2%',
-      translateY: '-1.8%',
+      opacity: 0.55,
+      translateX: '-0.3%',
+      translateY: '-14%',
+      scale: 1.02,
+      size: '108% auto',
+    },
+    {
+      opacity: 0.42,
+      translateX: '-0.6%',
+      translateY: '-28%',
       scale: 1.014,
       size: '107% auto',
     },
     {
-      opacity: 0.6,
-      translateX: '-0.5%',
-      translateY: '-3.2%',
+      opacity: 0.3,
+      translateX: '-0.9%',
+      translateY: '-42%',
       scale: 1.008,
       size: '106% auto',
     },
@@ -81,7 +88,7 @@ export default function Skyline({ skyPhase, skyBottom, mode = 'back' }: SkylineP
       className={`absolute left-0 right-0 pointer-events-none ${isFront ? 'z-[6]' : 'z-[5]'}`}
       style={{
         bottom: isFront ? 'calc(18vh + 0.85vh)' : 'calc(18vh + 1.05vh)',
-        height: isFront ? '5.2vh' : '5.4vh',
+        height: isFront ? '5.2vh' : '9.8vh',
       }}
     >
       {layers.map((layer, index) => (
