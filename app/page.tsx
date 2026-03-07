@@ -71,6 +71,7 @@ const WINE_ITEMS = [
 ]
 
 const BLOG_CONTENT = [
+  { date: 'March 2026', title: 'Discover the Most Inclusive Bars in Bay Area: Your Guide to Safe Space Bars', slug: 'inclusive-bars-bay-area', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">When it comes to finding a spot where everyone feels welcome, the Bay Area stands out.</p><p>Whether you\'re winding down after a long day or searching for a place to meet new people, the inclusive bars in the Bay Area offer a vibrant, safe, and inviting atmosphere.</p>' },
   { date: 'February 2026', title: 'Introducing the Spring Menu: Florals, Smoke & a Little Chaos', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">Every season, we tear up the menu and start fresh. Spring 2026 is no exception.</p><p>The Gypsy Tailwind is the cocktail we\'re proudest of this round. Aqar\u00e1 Agave and sakura sake with celery root syrup for earthiness and Liquid Alchemist peach for sweetness.</p><p>Spill The Tea is the sleeper hit. Mezcal plus earl grey sounds strange until you taste it. The bergamot in the tea amplifies the smoke.</p><p>The full spring menu is live now. Come taste it before we change it again.</p>' },
   { date: 'January 2026', title: 'Behind the Nitro Espresso Martini: Rebuilding a Classic', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">The espresso martini is everywhere. We wanted to make one worth talking about.</p><p>Step one: ditch the vodka. We use Caff\u00e8 Borghetti, and split the base between mezcal and tequila.</p><p>Step two: nitrogen. We charge the cocktail with nitro for that cascading pour and dense, creamy head.</p><p>The result is darker, more complex, and honestly more fun to drink.</p>' },
   { date: 'December 2025', title: '127 Years at 2289 3rd Street: The History Beneath Your Feet', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">There\'s a trough under the bar. A real, century-old trough that once served as a urinal and tobacco spittoon.</p><p>The building first appeared as a saloon on Sanborn fire insurance maps from 1899. It\'s had at least five different names since then.</p><p>The Victorian tin ceilings are original. The long bar has been in the same spot for over a century.</p><p>We don\'t take that lightly. Every cocktail we serve is part of a story that started 127 years ago.</p>' },
@@ -194,9 +195,9 @@ export default function Home() {
   ]
 
   const blogImages = [
+    '/bright-drinks.png',
     'https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690106-1742689689772_alicia_walton_4f1a0644.jpeg',
     'https://thetasteedit.com/wp-content/uploads/2016/04/the-sea-star-san-francisco-thetastesf-alicia-walton-cynar-DSC08610.jpg',
-    'https://drinkfellows.com/cdn/shop/articles/sea_star_interior_2_1100x.jpg?v=1647980521',
   ]
 
   const blogDisplayPosts = blogPosts.length > 0 ? blogPosts.slice(0, 3) : null
@@ -205,9 +206,12 @@ export default function Home() {
     <>
       {/* NAV */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-500 ${scrolled ? 'bg-[#06080d]/95 backdrop-blur-xl py-3 border-b border-sea-gold/10' : ''}`}>
-        <a href="#" className="nav-logo no-underline">
-          <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
-        </a>
+        <div className="flex items-center gap-4">
+          <a href="#" className="nav-logo no-underline">
+            <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
+          </a>
+          <WeatherBar />
+        </div>
         <div className="hidden md:flex gap-9 items-center">
           {['Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
             <a key={item} href={`#${item.toLowerCase()}`} className="text-[0.65rem] font-dm tracking-[0.2em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline">
@@ -289,7 +293,7 @@ export default function Home() {
       {/* HERO */}
       <section className="h-screen min-h-[750px] flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#06080d] via-[#0a3847] to-[#0a0e18]" />
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 100% 70% at 30% 60%, rgba(58,125,140,0.08) 0%, transparent 50%), radial-gradient(ellipse 80% 50% at 70% 40%, rgba(92,184,196,0.05) 0%, transparent 50%)', animation: 'caustic-shift 8s ease-in-out infinite alternate' }} />
+        <LivingBackground overrideDate={backgroundOverrideDate} />
         <div className="text-center relative z-10 px-8">
           <p className="font-dm text-[0.6rem] font-normal tracking-[0.6em] uppercase text-sea-gold mb-12 opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.4s forwards' }}>
             Dogpatch, San Francisco &bull; Est. 1899
@@ -554,12 +558,12 @@ export default function Home() {
             <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">The <em className="text-sea-gold">Journal</em></h2>
           </div>
           <div ref={addRevealRef} className="grid md:grid-cols-3 gap-6 opacity-0 translate-y-10 transition-all duration-700">
-            {(blogDisplayPosts || BLOG_CONTENT.map((b, i) => ({ ...b, slug: '', excerpt: b.content.slice(0, 120).replace(/<[^>]*>/g, ''), featured_image: blogImages[i], published_at: '', id: String(i), created_at: '' }))).map((post, i) => (
+            {(blogDisplayPosts || BLOG_CONTENT.map((b, i) => ({ ...b, slug: (b as any).slug || '', excerpt: b.content.slice(0, 120).replace(/<[^>]*>/g, ''), featured_image: blogImages[i], published_at: '', id: String(i), created_at: '' }))).map((post, i) => (
               <div
                 key={post.id || i}
                 className="border border-sea-gold/5 overflow-hidden hover:border-sea-gold/15 hover:-translate-y-1 transition-all cursor-pointer"
                 onClick={() => {
-                  if (blogDisplayPosts && post.slug) {
+                  if (post.slug) {
                     window.location.href = `/blog/${post.slug}`
                   } else {
                     setActiveBlogIndex(i)
