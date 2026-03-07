@@ -339,26 +339,26 @@ export default function Home() {
           <p className="font-dm text-[0.6rem] font-normal tracking-[0.6em] uppercase text-sea-gold mb-12 opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.4s forwards' }}>
             Dogpatch, San Francisco &bull; Est. 1899
           </p>
-          <div className="mb-4 opacity-0" style={{ animation: 'fadeUp 1.2s ease-out 0.6s forwards' }}>
-            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-blue tracking-[0.4em] block mb-1">the</span>
+          <div className="mb-4 opacity-0 relative inline-block" style={{ animation: 'fadeUp 1.2s ease-out 0.6s forwards' }}>
+            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-white tracking-[0.2em] absolute left-0 -top-[clamp(1.2rem,2.5vw,1.8rem)]">the</span>
             <h1 className="font-playfair text-[clamp(5rem,14vw,12rem)] font-extrabold leading-[0.85] tracking-tight text-sea-gold uppercase" style={{ textShadow: '0 2px 40px rgba(201,165,78,0.3), 0 0 80px rgba(201,165,78,0.1)' }}>
               Sea Star
             </h1>
           </div>
-          <p className="font-cormorant text-[clamp(1.1rem,2.5vw,1.7rem)] font-light italic text-sea-blue/80 mt-6 mb-14 tracking-wide opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.9s forwards' }}>
-            <span className="text-sea-gold">Booze</span> Your Own Adventure
+          <p className="font-cormorant text-[clamp(1.1rem,2.5vw,1.7rem)] font-light italic text-sea-white mt-6 mb-14 tracking-wide opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.9s forwards' }}>
+            <span className="text-sea-gold">Booze</span> <span className="text-sea-white">Your Own Adventure</span>
           </p>
           <div className="flex gap-6 justify-center flex-wrap opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.1s forwards' }}>
-            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold text-[#06080d] hover:bg-sea-gold-light hover:-translate-y-0.5 hover:shadow-[0_8px_40px_rgba(201,165,78,0.25)] transition-all no-underline">
+            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/45 hover:bg-sea-gold/28 hover:border-sea-gold hover:-translate-y-0.5 transition-all no-underline">
               Explore the Menu
             </a>
-            <a href="#visit" className="font-dm text-[0.6rem] font-normal tracking-[0.3em] uppercase px-10 py-4 bg-transparent text-sea-light border border-sea-border hover:border-sea-gold hover:text-sea-gold transition-all no-underline">
+            <a href="#visit" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/45 hover:bg-sea-gold/28 hover:border-sea-gold hover:-translate-y-0.5 transition-all no-underline">
               Plan Your Visit
             </a>
           </div>
         </div>
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3 opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.5s forwards' }}>
-          <span className="text-[0.55rem] tracking-[0.4em] uppercase text-sea-blue">Discover</span>
+          <span className="text-[0.55rem] tracking-[0.4em] uppercase text-sea-white">Discover</span>
           <div className="w-[1px] h-10 bg-gradient-to-b from-sea-gold to-transparent" style={{ animation: 'scrollPulse 2.5s ease-in-out infinite' }} />
         </div>
       </section>
