@@ -681,26 +681,14 @@ export default function Home() {
       </div>
 
       {/* FOOTER */}
-      <footer className="bg-[#06080d]/90 py-16 border-t border-sea-gold/5">
+      <footer className="bg-[#06080d]/90 pt-14 pb-10 border-t border-sea-gold/5">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
+          <div className="grid md:grid-cols-4 gap-12">
             <div>
               <img src="/SeaStarWhiteLogo_2x.png" alt="The Sea Star" className="w-48 mb-4" />
-              <div className="font-cormorant italic text-base text-sea-blue mb-6">Booze Your Own Adventure</div>
-              <div className="flex gap-3">
-                <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
-                </a>
-                <a href="https://www.facebook.com/TheSeaStarSF" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2z"/></svg>
-                </a>
-                <a href="https://www.yelp.com/biz/the-sea-star-san-francisco" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.14 2C10.75 2 9.26 5.2 9.26 5.2L5.5 12.28c-.3.56.16 1.3.8 1.3h3.87s.18 0 .26.1c.08.1.06.24.06.24l-.9 4.2c-.1.46.26.88.7.88.22 0 .42-.1.56-.28l5.72-7.46c.34-.44.1-1.06-.44-1.2l-3.08-.8s-.16-.04-.22-.14c-.06-.1 0-.22 0-.22L14.56 3.2c.16-.52-.16-1.04-.66-1.16-.12-.02-.24-.04-.36-.04h-1.4z"/></svg>
-                </a>
-                <a href="https://untappd.com/v/the-sea-star/1567898" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4C10.34 4 9 5.34 9 7c0 .86.37 1.63.95 2.18L7.4 14.6a3 3 0 1 0 1.73 1l2.55-5.42c.1.01.21.02.32.02s.22-.01.32-.02l2.55 5.42a3 3 0 1 0 1.73-1l-2.55-5.42C14.63 8.63 15 7.86 15 7c0-1.66-1.34-3-3-3zm0 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM6 17a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm12 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
-                </a>
-              </div>
+              <div className="font-cormorant italic text-base text-sea-blue mb-4">Booze Your Own Adventure</div>
+              <div className="text-[0.6rem] text-sea-border leading-relaxed">2289 3rd Street, San Francisco, CA 94107</div>
+              <div className="text-[0.6rem] text-sea-border mt-1">&copy; 2026 The Sea Star SF</div>
             </div>
             <div>
               <div className="text-[0.55rem] font-medium tracking-[0.35em] uppercase text-sea-gold mb-5">Navigate</div>
@@ -716,15 +704,26 @@ export default function Home() {
               <a href="mailto:offsiteboozeness@theseastarsf.com" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">Catering Inquiries</a>
             </div>
             <div>
+              <div className="text-[0.55rem] font-medium tracking-[0.35em] uppercase text-sea-gold mb-5">Follow</div>
+              <div className="flex gap-3 mb-6">
+                <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+                </a>
+                <a href="https://www.facebook.com/TheSeaStarSF" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2z"/></svg>
+                </a>
+                <a href="https://www.yelp.com/biz/the-sea-star-san-francisco" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.14 2C10.75 2 9.26 5.2 9.26 5.2L5.5 12.28c-.3.56.16 1.3.8 1.3h3.87s.18 0 .26.1c.08.1.06.24.06.24l-.9 4.2c-.1.46.26.88.7.88.22 0 .42-.1.56-.28l5.72-7.46c.34-.44.1-1.06-.44-1.2l-3.08-.8s-.16-.04-.22-.14c-.06-.1 0-.22 0-.22L14.56 3.2c.16-.52-.16-1.04-.66-1.16-.12-.02-.24-.04-.36-.04h-1.4z"/></svg>
+                </a>
+                <a href="https://untappd.com/v/the-sea-star/1567898" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4C10.34 4 9 5.34 9 7c0 .86.37 1.63.95 2.18L7.4 14.6a3 3 0 1 0 1.73 1l2.55-5.42c.1.01.21.02.32.02s.22-.01.32-.02l2.55 5.42a3 3 0 1 0 1.73-1l-2.55-5.42C14.63 8.63 15 7.86 15 7c0-1.66-1.34-3-3-3zm0 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM6 17a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm12 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+                </a>
+              </div>
               <div className="text-[0.55rem] font-medium tracking-[0.35em] uppercase text-sea-gold mb-5">Discover</div>
               <a href="https://www.google.com/maps/place/The+Sea+Star/" target="_blank" rel="noopener" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">Google Maps</a>
               <a href="https://www.tripadvisor.com/Restaurant_Review-g60713-d15106299-Reviews-The_Sea_Star-San_Francisco_California.html" target="_blank" rel="noopener" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">TripAdvisor</a>
               <a href="https://foursquare.com/v/sea-star/53583898498e7059d4ce6206" target="_blank" rel="noopener" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">Foursquare</a>
             </div>
-          </div>
-          <div className="border-t border-white/[0.03] pt-8 flex flex-col md:flex-row justify-between items-center text-[0.65rem] text-sea-border gap-2">
-            <span>&copy; 2026 The Sea Star SF. All rights reserved.</span>
-            <span>2289 3rd Street, San Francisco, CA 94107</span>
           </div>
         </div>
       </footer>
