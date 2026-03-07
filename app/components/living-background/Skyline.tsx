@@ -31,68 +31,68 @@ export default function Skyline({ skyPhase, skyBottom, mode = 'back' }: SkylineP
 
   const layers = [
     {
-      opacity: phaseOpacity * 0.14,
+      opacity: phaseOpacity * 0.32,
       translateX: '-1.8%',
-      translateY: '-18%',
-      scale: 1.02,
-      blur: '2.8px',
-      brightness: isNight ? 1.06 : 0.84,
-      contrast: 1.02,
-      size: '103% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.72) 68%, rgba(0,0,0,1) 100%)',
+      translateY: '-11%',
+      scale: 1.008,
+      blur: '0.35px',
+      brightness: isNight ? 1.26 : 1.12,
+      contrast: 1.16,
+      size: '102% auto',
+      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.01) 12%, rgba(0,0,0,0.5) 48%, rgba(0,0,0,0.94) 100%)',
     },
     {
-      opacity: phaseOpacity * 0.3,
+      opacity: phaseOpacity * 0.56,
       translateX: '-0.7%',
-      translateY: '-10%',
-      scale: 1.032,
-      blur: '1.8px',
-      brightness: isNight ? 1.02 : 0.78,
-      contrast: 1.04,
-      size: '106% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.06) 24%, rgba(0,0,0,0.84) 66%, rgba(0,0,0,1) 100%)',
+      translateY: '-5%',
+      scale: 1.016,
+      blur: '0px',
+      brightness: isNight ? 1.18 : 1,
+      contrast: 1.22,
+      size: '104% auto',
+      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.03) 12%, rgba(0,0,0,0.66) 52%, rgba(0,0,0,1) 100%)',
     },
     {
-      opacity: phaseOpacity * 0.48,
+      opacity: phaseOpacity * 0.74,
       translateX: '0.45%',
-      translateY: '-3%',
-      scale: 1.045,
-      blur: '1.3px',
-      brightness: isNight ? 0.9 : 0.68,
-      contrast: 1.08,
-      size: '109% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.92) 60%, rgba(0,0,0,1) 100%)',
+      translateY: '0%',
+      scale: 1.02,
+      blur: '0px',
+      brightness: isNight ? 1.08 : 0.88,
+      contrast: 1.26,
+      size: '104.5% auto',
+      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.06) 12%, rgba(0,0,0,0.8) 48%, rgba(0,0,0,1) 100%)',
     },
     {
-      opacity: 0.94,
-      translateX: '1.1%',
-      translateY: '3%',
-      scale: 1.06,
+      opacity: 0.96,
+      translateX: '0.8%',
+      translateY: '0%',
+      scale: 1.018,
       blur: '0px',
       brightness: 0,
       contrast: 1,
-      size: '112% auto',
-      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.18) 16%, rgba(0,0,0,1) 54%, rgba(0,0,0,1) 100%)',
+      size: '101.5% auto',
+      mask: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.06) 22%, rgba(0,0,0,1) 56%, rgba(0,0,0,1) 100%)',
     },
   ]
   const visibleLayers = isFront ? [layers[3]] : layers.slice(0, 3)
 
   return (
     <div
-      className={`absolute left-0 right-0 pointer-events-none ${isFront ? 'z-[5]' : 'z-[3]'}`}
+      className={`absolute left-0 right-0 pointer-events-none ${isFront ? 'z-[6]' : 'z-[5]'}`}
       style={{
-        bottom: isFront ? 'calc(18vh - 0.25vh)' : 'calc(18vh + 0.9vh)',
-        height: isFront ? '7.2vh' : '10.5vh',
+        bottom: isFront ? 'calc(18vh - 0.15vh)' : 'calc(18vh + 1.2vh)',
+        height: isFront ? '2.5vh' : '8.6vh',
       }}
     >
       {!isFront && (
         <div
           className="absolute inset-x-0 bottom-[10%]"
           style={{
-            height: '56%',
+            height: '24%',
             background: `radial-gradient(ellipse 62% 60% at 50% 100%, ${shorelineGlow} 0%, transparent 72%)`,
-            filter: 'blur(11px)',
-            opacity: isNight ? 0.68 : 0.54,
+            filter: 'blur(3px)',
+            opacity: isNight ? 0.24 : 0.16,
           }}
         />
       )}
@@ -119,8 +119,9 @@ export default function Skyline({ skyPhase, skyBottom, mode = 'back' }: SkylineP
         <div
           className="absolute inset-0 transition-all duration-[10000ms] ease-linear"
           style={{
-            background: `linear-gradient(180deg, transparent 0%, transparent 42%, ${tint} 100%)`,
-            mixBlendMode: isNight ? 'screen' : 'soft-light',
+            background: `linear-gradient(180deg, transparent 0%, transparent 52%, ${tint} 100%)`,
+            mixBlendMode: isNight ? 'screen' : 'multiply',
+            opacity: 0.55,
           }}
         />
       )}
@@ -129,8 +130,8 @@ export default function Skyline({ skyPhase, skyBottom, mode = 'back' }: SkylineP
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(180deg, transparent 0%, transparent 44%, ${skyBottom} 100%)`,
-            opacity: isNight ? 0.1 : 0.14,
+            background: `linear-gradient(180deg, transparent 0%, transparent 56%, ${skyBottom} 100%)`,
+            opacity: isNight ? 0.03 : 0.04,
           }}
         />
       )}

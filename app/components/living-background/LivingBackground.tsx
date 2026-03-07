@@ -94,11 +94,6 @@ export default function LivingBackground({ overrideDate }: LivingBackgroundProps
           />
         </>
       )}
-      <Skyline
-        skyPhase={skyData.phase}
-        skyBottom={skyData.skyBottom}
-        mode="back"
-      />
       <WaterReflection
         reflectionColor={skyData.reflectionColor}
         skyBottom={skyData.skyBottom}
@@ -114,6 +109,11 @@ export default function LivingBackground({ overrideDate }: LivingBackgroundProps
         cloudCoverage={weather?.clouds}
         quality={isMobile ? 'low' : 'high'}
         reducedMotion={reducedMotion}
+      />
+      <Skyline
+        skyPhase={skyData.phase}
+        skyBottom={skyData.skyBottom}
+        mode="back"
       />
       <Skyline
         skyPhase={skyData.phase}
