@@ -138,7 +138,7 @@ export default function WaterReflection({
   const isNight = sunAltitude < -6
   const windFactor = clamp(windSpeed / 20, 0, 1)
   const cloudSoftener = 1 - clamp(cloudCoverage / 120, 0, 0.6)
-  const lineCount = quality === 'high' && !reducedMotion ? 15 : 11
+  const lineCount = quality === 'high' && !reducedMotion ? 8 : 6
   const waveLines = buildWaveLines(lineCount, windFactor)
   const showSunReflection = sunAltitude > -2
   const showMoonReflection = moonVisible && moonAltitude > 0 && sunAltitude < 3
@@ -188,9 +188,9 @@ export default function WaterReflection({
         <div
           className="absolute inset-0"
           style={{
-            background: `radial-gradient(ellipse 20vw 9vh at ${sunX}% 0%, ${alpha(sunColor, 0.16 * cloudSoftener)} 0%, ${alpha(sunColor, 0.07 * cloudSoftener)} 36%, transparent 74%)`,
-            filter: 'blur(6px)',
-            opacity: 0.9,
+            background: `radial-gradient(ellipse 24vw 11vh at ${sunX}% 0%, ${alpha(sunColor, 0.26 * cloudSoftener)} 0%, ${alpha(sunColor, 0.14 * cloudSoftener)} 34%, transparent 74%)`,
+            filter: 'blur(7px)',
+            opacity: 1,
           }}
         />
       )}
@@ -199,9 +199,9 @@ export default function WaterReflection({
         <div
           className="absolute inset-0"
           style={{
-            background: `radial-gradient(ellipse 12vw 7vh at ${moonX}% 0%, ${alpha(moonGlowColor, 0.14 * cloudSoftener)} 0%, ${alpha(moonGlowColor, 0.05 * cloudSoftener)} 32%, transparent 70%)`,
-            filter: 'blur(7px)',
-            opacity: 0.75,
+            background: `radial-gradient(ellipse 16vw 8vh at ${moonX}% 0%, ${alpha(moonGlowColor, 0.22 * cloudSoftener)} 0%, ${alpha(moonGlowColor, 0.08 * cloudSoftener)} 32%, transparent 70%)`,
+            filter: 'blur(8px)',
+            opacity: 0.9,
           }}
         />
       )}
@@ -245,7 +245,7 @@ export default function WaterReflection({
 
         <g
           style={{
-            animation: motion('ripple-shift-a', '9s', 'linear', 'infinite'),
+            animation: motion('ripple-shift-a', '4.5s', 'linear'),
             transformBox: 'fill-box',
             transformOrigin: 'center',
           }}
@@ -266,7 +266,7 @@ export default function WaterReflection({
 
         <g
           style={{
-            animation: motion('ripple-shift-b', '12s', 'linear', 'infinite'),
+            animation: motion('ripple-shift-b', '6s', 'linear'),
             opacity: 0.76,
             transformBox: 'fill-box',
             transformOrigin: 'center',
@@ -290,8 +290,8 @@ export default function WaterReflection({
 
         <g
           style={{
-            animation: motion('ripple-shift-c', '7s', 'ease-in-out', 'infinite'),
-            opacity: 0.42,
+            animation: motion('ripple-shift-c', '3.5s', 'ease-in-out'),
+            opacity: 0.5,
             transformBox: 'fill-box',
             transformOrigin: 'center',
           }}
@@ -301,7 +301,7 @@ export default function WaterReflection({
               key={`crest-${index}`}
               d={buildWavePath(line, 0.2, 0.72, -2)}
               fill="none"
-              stroke={alpha('#f7f3ea', warm ? 0.08 : 0.06)}
+              stroke={alpha('#f7f3ea', warm ? 0.1 : 0.08)}
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={Math.max(0.6, line.strokeWidth - 0.25)}
@@ -312,7 +312,7 @@ export default function WaterReflection({
         {showSunReflection && (
           <g
             style={{
-              animation: motion('reflection-shimmer', '4.5s', 'ease-in-out', 'infinite'),
+              animation: motion('reflection-shimmer', '2.2s', 'ease-in-out'),
               transformBox: 'fill-box',
               transformOrigin: 'center',
             }}
@@ -325,8 +325,8 @@ export default function WaterReflection({
                 stroke={`url(#${gradientId}-sun-${index})`}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={line.strokeWidth + 0.35}
-                strokeOpacity={0.92}
+                strokeWidth={line.strokeWidth + 0.65}
+                strokeOpacity={1}
               />
             ))}
           </g>
@@ -335,7 +335,7 @@ export default function WaterReflection({
         {showMoonReflection && (
           <g
             style={{
-              animation: motion('reflection-shimmer', '5.5s', 'ease-in-out', 'infinite'),
+              animation: motion('reflection-shimmer', '2.8s', 'ease-in-out'),
               transformBox: 'fill-box',
               transformOrigin: 'center',
             }}
@@ -350,8 +350,8 @@ export default function WaterReflection({
                 stroke={`url(#${gradientId}-moon-${index})`}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={line.strokeWidth + 0.18}
-                strokeOpacity={0.88}
+                strokeWidth={line.strokeWidth + 0.38}
+                strokeOpacity={1}
               />
             ))}
           </g>

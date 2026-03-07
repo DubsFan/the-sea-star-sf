@@ -211,23 +211,23 @@ body {
 }
 
 @keyframes ripple-shift-a {
-  0%, 100% { transform: translate3d(-6.5%, 0.4%, 0); }
-  50% { transform: translate3d(6.5%, -0.8%, 0); }
+  0% { transform: translate3d(-12%, 0.8%, 0); }
+  100% { transform: translate3d(12%, -1.6%, 0); }
 }
 
 @keyframes ripple-shift-b {
-  0%, 100% { transform: translate3d(4.8%, -0.45%, 0); }
-  50% { transform: translate3d(-4.8%, 0.85%, 0); }
+  0% { transform: translate3d(9%, -0.8%, 0); }
+  100% { transform: translate3d(-9%, 1.6%, 0); }
 }
 
 @keyframes ripple-shift-c {
-  0%, 100% { transform: translate3d(-3.2%, -1.4%, 0) scaleY(0.96); }
-  50% { transform: translate3d(3.2%, 1.4%, 0) scaleY(1.05); }
+  0% { transform: translate3d(-6%, -2.4%, 0) scaleY(0.92); }
+  100% { transform: translate3d(6%, 2.4%, 0) scaleY(1.08); }
 }
 
 @keyframes reflection-shimmer {
-  0%, 100% { opacity: 0.72; transform: translate3d(-1.2%, 0, 0); }
-  50% { opacity: 1; transform: translate3d(1.2%, 0, 0); }
+  0% { opacity: 0.72; transform: translate3d(-2.5%, 0, 0); }
+  100% { opacity: 1; transform: translate3d(2.5%, 0, 0); }
 }
 
 @keyframes haze-pulse {
