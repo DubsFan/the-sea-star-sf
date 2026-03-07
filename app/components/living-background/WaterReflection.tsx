@@ -243,7 +243,13 @@ export default function WaterReflection({
           ))}
         </defs>
 
-        <g style={{ animation: motion('engrave-drift', '24s', 'linear', 'infinite') }}>
+        <g
+          style={{
+            animation: motion('ripple-shift-a', '18s', 'linear', 'infinite'),
+            transformBox: 'fill-box',
+            transformOrigin: 'center',
+          }}
+        >
           {waveLines.map((line, index) => (
             <path
               key={`base-${index}`}
@@ -254,28 +260,16 @@ export default function WaterReflection({
               strokeLinejoin="round"
               strokeOpacity={0.46 + index / (lineCount * 2.4)}
               strokeWidth={line.strokeWidth}
-            >
-              {!reducedMotion && (
-                <animate
-                  attributeName="d"
-                  dur={`${11 + index * 0.8}s`}
-                  repeatCount="indefinite"
-                  values={[
-                    buildWavePath(line, 0, 1, 0),
-                    buildWavePath(line, 0.35 + index * 0.03, 1.08, -0.6),
-                    buildWavePath(line, -0.22 - index * 0.02, 0.94, 0.5),
-                    buildWavePath(line, 0, 1, 0),
-                  ].join(';')}
-                />
-              )}
-            </path>
+            />
           ))}
         </g>
 
         <g
           style={{
-            animation: motion('engrave-drift-reverse', '31s', 'linear', 'infinite'),
-            opacity: 0.72,
+            animation: motion('ripple-shift-b', '24s', 'linear', 'infinite'),
+            opacity: 0.76,
+            transformBox: 'fill-box',
+            transformOrigin: 'center',
           }}
         >
           {waveLines.slice(1).map((line, index) => (
@@ -290,26 +284,39 @@ export default function WaterReflection({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={Math.max(0.7, line.strokeWidth - 0.1)}
-            >
-              {!reducedMotion && (
-                <animate
-                  attributeName="d"
-                  dur={`${13 + index * 0.7}s`}
-                  repeatCount="indefinite"
-                  values={[
-                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 0.7, 0.82, 0),
-                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 1.02 + index * 0.02, 0.9, -0.4),
-                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 0.44, 0.78, 0.55),
-                    buildWavePath({ ...line, baseline: line.baseline + 3.5 }, 0.7, 0.82, 0),
-                  ].join(';')}
-                />
-              )}
-            </path>
+            />
+          ))}
+        </g>
+
+        <g
+          style={{
+            animation: motion('ripple-shift-c', '13s', 'ease-in-out', 'infinite alternate'),
+            opacity: 0.34,
+            transformBox: 'fill-box',
+            transformOrigin: 'center',
+          }}
+        >
+          {waveLines.slice(2).map((line, index) => (
+            <path
+              key={`crest-${index}`}
+              d={buildWavePath(line, 0.2, 0.72, -2)}
+              fill="none"
+              stroke={alpha('#f7f3ea', warm ? 0.08 : 0.06)}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={Math.max(0.6, line.strokeWidth - 0.25)}
+            />
           ))}
         </g>
 
         {showSunReflection && (
-          <g style={{ animation: motion('reflection-flicker-subtle', '8s') }}>
+          <g
+            style={{
+              animation: motion('reflection-shimmer', '9s', 'ease-in-out', 'infinite'),
+              transformBox: 'fill-box',
+              transformOrigin: 'center',
+            }}
+          >
             {waveLines.map((line, index) => (
               <path
                 key={`sun-${index}`}
@@ -319,27 +326,20 @@ export default function WaterReflection({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={line.strokeWidth + 0.35}
-              >
-                {!reducedMotion && (
-                  <animate
-                    attributeName="d"
-                    dur={`${11 + index * 0.8}s`}
-                    repeatCount="indefinite"
-                    values={[
-                      buildWavePath(line, 0, 1, 0),
-                      buildWavePath(line, 0.35 + index * 0.03, 1.08, -0.6),
-                      buildWavePath(line, -0.22 - index * 0.02, 0.94, 0.5),
-                      buildWavePath(line, 0, 1, 0),
-                    ].join(';')}
-                  />
-                )}
-              </path>
+                strokeOpacity={0.92}
+              />
             ))}
           </g>
         )}
 
         {showMoonReflection && (
-          <g style={{ animation: motion('reflection-flicker-subtle', '10s') }}>
+          <g
+            style={{
+              animation: motion('reflection-shimmer', '11s', 'ease-in-out', 'infinite'),
+              transformBox: 'fill-box',
+              transformOrigin: 'center',
+            }}
+          >
             {waveLines.map((line, index) => (
               <path
                 key={`moon-${index}`}
@@ -351,21 +351,8 @@ export default function WaterReflection({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={line.strokeWidth + 0.18}
-              >
-                {!reducedMotion && (
-                  <animate
-                    attributeName="d"
-                    dur={`${12 + index * 0.9}s`}
-                    repeatCount="indefinite"
-                    values={[
-                      buildWavePath(line, 0.18, 0.9, 0),
-                      buildWavePath(line, 0.54 + index * 0.02, 0.96, -0.35),
-                      buildWavePath(line, -0.08, 0.84, 0.3),
-                      buildWavePath(line, 0.18, 0.9, 0),
-                    ].join(';')}
-                  />
-                )}
-              </path>
+                strokeOpacity={0.88}
+              />
             ))}
           </g>
         )}

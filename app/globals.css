@@ -210,6 +210,28 @@ body {
   50% { opacity: 1; }
 }
 
+@keyframes ripple-shift-a {
+  0% { transform: translate3d(-3.5%, 0.2%, 0); }
+  50% { transform: translate3d(1.4%, -0.5%, 0); }
+  100% { transform: translate3d(3.8%, 0.25%, 0); }
+}
+
+@keyframes ripple-shift-b {
+  0% { transform: translate3d(2.4%, -0.3%, 0); }
+  50% { transform: translate3d(-1.8%, 0.45%, 0); }
+  100% { transform: translate3d(-3.2%, -0.2%, 0); }
+}
+
+@keyframes ripple-shift-c {
+  0% { transform: translate3d(-1.5%, -0.8%, 0) scaleY(0.98); }
+  100% { transform: translate3d(1.8%, 0.9%, 0) scaleY(1.02); }
+}
+
+@keyframes reflection-shimmer {
+  0%, 100% { opacity: 0.7; transform: translate3d(-0.5%, 0, 0); }
+  50% { opacity: 1; transform: translate3d(0.8%, 0, 0); }
+}
+
 @keyframes haze-pulse {
   0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.08; }
   50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.14; }
