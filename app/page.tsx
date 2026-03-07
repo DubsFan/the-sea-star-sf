@@ -304,10 +304,10 @@ export default function Home() {
             <span className="text-sea-gold">Booze</span> Your Own Adventure
           </p>
           <div className="flex gap-6 justify-center flex-wrap opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.1s forwards' }}>
-            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold text-[#06080d] hover:bg-sea-gold-light hover:-translate-y-0.5 hover:shadow-[0_8px_40px_rgba(201,165,78,0.25)] transition-all no-underline">
+            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/30 hover:bg-sea-gold/30 hover:-translate-y-0.5 transition-all no-underline">
               Explore the Menu
             </a>
-            <a href="#visit" className="font-dm text-[0.6rem] font-normal tracking-[0.3em] uppercase px-10 py-4 bg-transparent text-sea-light border border-sea-border hover:border-sea-gold hover:text-sea-gold transition-all no-underline">
+            <a href="#visit" className="font-dm text-[0.6rem] font-normal tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/30 hover:bg-sea-gold/30 hover:-translate-y-0.5 transition-all no-underline">
               Plan Your Visit
             </a>
           </div>
@@ -326,7 +326,7 @@ export default function Home() {
               <img src="https://www.opensfhistory.org/Image/700/wnp27.4067.jpg" alt="3rd Street Bridge, Dogpatch, circa 1940" className="w-full h-full object-cover opacity-50" style={{ filter: 'sepia(0.3) contrast(1.1)' }} />
               <div className="absolute inset-0 bg-gradient-to-br from-[#06080d]/40 to-[#0c2d3a]/30" />
               <div className="absolute top-8 left-8 text-[0.5rem] tracking-[0.4em] uppercase text-sea-teal px-3 py-1.5 border border-sea-teal/20 z-10">Since 1899</div>
-              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/25 z-10">1899</div>
+              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/40 z-10">1899</div>
             </div>
             <div ref={addRevealRef} className="opacity-0 translate-y-10 transition-all duration-700">
               <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">Our Story</p>
@@ -685,7 +685,7 @@ export default function Home() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
-              <img src="/SeaStarWhiteLogo_2x.png" alt="The Sea Star" className="w-24 mb-4" />
+              <img src="/SeaStarWhiteLogo_2x.png" alt="The Sea Star" className="w-48 mb-4" />
               <div className="font-cormorant italic text-base text-sea-blue mb-6">Booze Your Own Adventure</div>
               <div className="flex gap-3">
                 <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
