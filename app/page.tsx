@@ -348,14 +348,20 @@ export default function Home() {
           <p className="font-cormorant text-[clamp(1.1rem,2.5vw,1.7rem)] font-light italic text-sea-white mt-6 mb-14 tracking-wide opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.9s forwards' }}>
             <span className="text-sea-gold">Booze</span> <span className="text-sea-white">Your Own Adventure</span>
           </p>
-          <div className="flex gap-6 justify-center flex-wrap opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.1s forwards' }}>
-            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/45 hover:bg-sea-gold/28 hover:border-sea-gold hover:-translate-y-0.5 transition-all no-underline">
-              Explore the Menu
-            </a>
-            <a href="#visit" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/45 hover:bg-sea-gold/28 hover:border-sea-gold hover:-translate-y-0.5 transition-all no-underline">
-              Plan Your Visit
-            </a>
-          </div>
+        </div>
+        <div
+          className="absolute left-1/2 z-10 flex -translate-x-1/2 gap-6 justify-center flex-wrap opacity-0"
+          style={{
+            bottom: 'calc(18vh + 0.2vh)',
+            animation: 'fadeUp 1s ease-out 1.1s forwards',
+          }}
+        >
+          <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/90 text-sea-white border border-sea-gold hover:bg-[#dfc06e] hover:border-[#dfc06e] hover:-translate-y-0.5 transition-all no-underline">
+            Explore the Menu
+          </a>
+          <a href="#visit" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/90 text-sea-white border border-sea-gold hover:bg-[#dfc06e] hover:border-[#dfc06e] hover:-translate-y-0.5 transition-all no-underline">
+            Plan Your Visit
+          </a>
         </div>
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3 opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.5s forwards' }}>
           <span className="text-[0.55rem] tracking-[0.4em] uppercase text-sea-white">Discover</span>
