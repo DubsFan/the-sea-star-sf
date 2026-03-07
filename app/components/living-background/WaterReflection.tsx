@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import type { SkyPhase } from '../../lib/sky-phases'
 
 interface WaterReflectionProps {
@@ -19,11 +20,13 @@ interface WaterReflectionProps {
   reducedMotion?: boolean
 }
 
-function isWarmSky(skyBottom: string): boolean {
-  if (!skyBottom.startsWith('#') || skyBottom.length < 7) return false
-  const r = parseInt(skyBottom.slice(1, 3), 16)
-  const g = parseInt(skyBottom.slice(3, 5), 16)
-  return r > 150 && r > g * 1.3
+interface WaveLine {
+  baseline: number
+  amplitude: number
+  frequency: number
+  phase: number
+  strokeWidth: number
+  reflectionSpread: number
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -44,6 +47,73 @@ function alpha(hex: string, opacity: number): string {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
+function isWarmSky(skyBottom: string): boolean {
+  if (!skyBottom.startsWith('#') || skyBottom.length < 7) return false
+  const r = parseInt(skyBottom.slice(1, 3), 16)
+  const g = parseInt(skyBottom.slice(3, 5), 16)
+  return r > 150 && r > g * 1.3
+}
+
+function buildWavePath(line: WaveLine): string {
+  const points: Array<{ x: number; y: number }> = []
+
+  for (let x = -80; x <= 1080; x += 70) {
+    const nx = x / 1000
+    const y =
+      line.baseline +
+      Math.sin(nx * Math.PI * line.frequency + line.phase) * line.amplitude +
+      Math.sin(nx * Math.PI * (line.frequency * 0.45) + line.phase * 1.7) * line.amplitude * 0.45
+
+    points.push({ x, y })
+  }
+
+  let path = `M ${points[0].x} ${points[0].y}`
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const current = points[i]
+    const next = points[i + 1]
+    const midX = (current.x + next.x) / 2
+    const midY = (current.y + next.y) / 2
+    path += ` Q ${current.x} ${current.y} ${midX} ${midY}`
+  }
+
+  const last = points[points.length - 1]
+  path += ` T ${last.x} ${last.y}`
+  return path
+}
+
+function buildWaveLines(lineCount: number, windFactor: number): WaveLine[] {
+  return Array.from({ length: lineCount }, (_, index) => {
+    const t = index / Math.max(lineCount - 1, 1)
+
+    return {
+      baseline: 30 + t * 200,
+      amplitude: 2 + t * 4.5 + windFactor * 2.2,
+      frequency: 5.4 + t * 2.8,
+      phase: 0.45 + t * 1.12,
+      strokeWidth: 0.9 + t * 0.7,
+      reflectionSpread: 0.06 + t * 0.11,
+    }
+  })
+}
+
+function buildReflectionStops(center: number, spread: number, color: string, strength: number) {
+  const startOuter = clamp(center - spread, 0, 1) * 100
+  const startInner = clamp(center - spread * 0.45, 0, 1) * 100
+  const centerStop = clamp(center, 0, 1) * 100
+  const endInner = clamp(center + spread * 0.45, 0, 1) * 100
+  const endOuter = clamp(center + spread, 0, 1) * 100
+
+  return [
+    { offset: '0%', color: alpha(color, 0) },
+    { offset: `${startOuter}%`, color: alpha(color, 0) },
+    { offset: `${startInner}%`, color: alpha(color, strength * 0.28) },
+    { offset: `${centerStop}%`, color: alpha(color, strength) },
+    { offset: `${endInner}%`, color: alpha(color, strength * 0.28) },
+    { offset: `${endOuter}%`, color: alpha(color, 0) },
+    { offset: '100%', color: alpha(color, 0) },
+  ]
+}
+
 export default function WaterReflection({
   reflectionColor,
   skyBottom,
@@ -60,28 +130,28 @@ export default function WaterReflection({
   quality = 'high',
   reducedMotion = false,
 }: WaterReflectionProps) {
+  const gradientId = useId().replace(/:/g, '')
   const warm = isWarmSky(skyBottom)
-  const isDay = sunAltitude > 0
   const isNight = sunAltitude < -6
-  const windFactor = clamp(windSpeed / 18, 0, 1)
-  const cloudSoftener = 1 - clamp(cloudCoverage / 130, 0, 0.65)
-  const highQuality = quality === 'high' && !reducedMotion
+  const windFactor = clamp(windSpeed / 20, 0, 1)
+  const cloudSoftener = 1 - clamp(cloudCoverage / 120, 0, 0.6)
+  const lineCount = quality === 'high' && !reducedMotion ? 15 : 11
+  const waveLines = buildWaveLines(lineCount, windFactor)
   const showSunReflection = sunAltitude > -2
   const showMoonReflection = moonVisible && moonAltitude > 0 && sunAltitude < 3
-
-  const sunReflectionOpacity = (
-    sunAltitude <= 0
-      ? 0.12
-      : sunAltitude < 3 ? 0.36
-      : sunAltitude < 8 ? 0.24
-      : sunAltitude < 20 ? 0.15
-      : 0.09
-  ) * cloudSoftener
-
-  const sunReflectionWidth = sunAltitude < 5 ? 24 : sunAltitude < 15 ? 18 : 12
-  const moonReflectionOpacity = (0.1 + clamp(moonAltitude / 50, 0, 0.12)) * cloudSoftener
-  const waveLineOpacity = isNight ? 0.08 : isDay ? 0.12 : 0.1
-  const surfaceTopGlow = skyPhase === 'sunset' || skyPhase === 'goldenEvening' ? 0.14 : isNight ? 0.06 : 0.1
+  const sunCenter = clamp(sunX / 100, 0.05, 0.95)
+  const moonCenter = clamp(moonX / 100, 0.05, 0.95)
+  const baseStroke = warm
+    ? alpha('#d5c1a2', isNight ? 0.12 : 0.18)
+    : alpha('#aabfd1', isNight ? 0.14 : 0.18)
+  const secondaryStroke = warm
+    ? alpha('#8a7b67', 0.16)
+    : alpha('#72879b', 0.16)
+  const topGlow = skyPhase === 'sunset' || skyPhase === 'goldenEvening'
+    ? alpha(sunColor, 0.16 * cloudSoftener)
+    : isNight
+      ? alpha(moonGlowColor, 0.08 * cloudSoftener)
+      : alpha(skyBottom, 0.08)
   const motion = (name: string, duration: string, timing = 'ease-in-out', extras = 'infinite alternate') =>
     reducedMotion ? 'none' : `${name} ${duration} ${timing} ${extras}`
 
@@ -89,286 +159,167 @@ export default function WaterReflection({
     <div
       className="absolute bottom-0 left-0 right-0 h-[18vh] z-[4] overflow-hidden"
       style={{
-        animation: motion('wave-breathe', '10s'),
+        animation: motion('wave-breathe', '11s'),
         transformOrigin: 'bottom',
       }}
     >
-      <svg aria-hidden="true" className="absolute h-0 w-0">
-        <defs>
-          <filter id="water-distortion-filter">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency={highQuality ? '0.008 0.05' : '0.012 0.07'}
-              numOctaves="2"
-              seed="7"
-              result="noise"
-            >
-              {highQuality && (
-                <animate
-                  attributeName="baseFrequency"
-                  dur="16s"
-                  values="0.008 0.05;0.011 0.065;0.008 0.05"
-                  repeatCount="indefinite"
-                />
-              )}
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale={highQuality ? 24 : 12} xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
-
-      {/* Deep water base */}
       <div
-        className="absolute inset-0 transition-all duration-[120000ms] ease-linear"
+        className="absolute inset-0"
         style={{
           background: `linear-gradient(180deg,
-            ${alpha(reflectionColor, 0.28)} 0%,
-            ${alpha(reflectionColor, 0.62)} 20%,
-            ${alpha(reflectionColor, 0.86)} 54%,
+            ${alpha(reflectionColor, 0.22)} 0%,
+            ${alpha(reflectionColor, 0.58)} 24%,
+            ${alpha(reflectionColor, 0.82)} 58%,
             ${reflectionColor} 100%)`,
         }}
       />
 
-      {/* Horizon sheen */}
-      <div
-        className="absolute inset-0 transition-all duration-[120000ms] ease-linear"
-        style={{
-          background: `linear-gradient(180deg, ${alpha(skyBottom, surfaceTopGlow)} 0%, ${alpha(skyBottom, 0.07)} 32%, transparent 65%)`,
-        }}
-      />
-
-      {/* Surface normal illusion */}
       <div
         className="absolute inset-0"
         style={{
-          opacity: waveLineOpacity,
-          background: `repeating-linear-gradient(
-            180deg,
-            transparent 0 6px,
-            rgba(255,255,255,0.08) 6px 7px,
-            transparent 7px 16px
-          )`,
-          backgroundSize: highQuality ? '160% 115%' : '140% 100%',
-          animation: motion('surface-swell', highQuality ? '26s' : '34s', 'linear', 'infinite'),
+          background: `linear-gradient(180deg, ${topGlow} 0%, ${alpha(skyBottom, 0.02)} 34%, transparent 66%)`,
         }}
       />
 
-      <div
-        className="absolute inset-0"
-        style={{
-          opacity: isNight ? 0.05 : 0.08,
-          background: `repeating-linear-gradient(
-            180deg,
-            transparent 0 18px,
-            rgba(255,255,255,0.05) 18px 19px,
-            transparent 19px 36px
-          )`,
-          transform: `translateX(${windFactor * 2 - 1}%)`,
-          animation: motion('wave-drift', '36s', 'linear', 'infinite'),
-        }}
-      />
-
-      {/* Low, narrow crest sheen */}
-      <div
-        className="absolute inset-0"
-        style={{
-          opacity: isNight ? 0.04 : 0.08 * cloudSoftener,
-          background: `linear-gradient(180deg,
-            transparent 0%,
-            transparent 28%,
-            rgba(255,255,255,0.04) 36%,
-            rgba(255,255,255,0.08) 42%,
-            rgba(255,255,255,0.03) 48%,
-            transparent 62%)`,
-          backgroundSize: '100% 140%',
-          filter: highQuality ? 'url(#water-distortion-filter)' : undefined,
-          animation: motion('specular-scan', highQuality ? '18s' : '24s'),
-        }}
-      />
-
-      {/* Secondary soft sweep */}
-      <div
-        className="absolute inset-0"
-        style={{
-          opacity: isNight ? 0.03 : 0.05,
-          background: `linear-gradient(180deg,
-            transparent 0%,
-            transparent 44%,
-            rgba(255,255,255,0.03) 52%,
-            transparent 64%)`,
-          backgroundSize: '100% 160%',
-          animation: motion('specular-scan', highQuality ? '24s' : '30s', 'ease-in-out', 'infinite alternate-reverse'),
-        }}
-      />
-
-      {/* Sun reflection column */}
       {showSunReflection && (
         <div
-          className="absolute top-0 bottom-0"
+          className="absolute inset-0"
           style={{
-            left: `${sunX - sunReflectionWidth / 2}%`,
-            width: `${sunReflectionWidth}vw`,
-            filter: highQuality ? 'url(#water-distortion-filter)' : undefined,
+            background: `radial-gradient(ellipse 20vw 9vh at ${sunX}% 0%, ${alpha(sunColor, 0.16 * cloudSoftener)} 0%, ${alpha(sunColor, 0.07 * cloudSoftener)} 36%, transparent 74%)`,
+            filter: 'blur(6px)',
+            opacity: 0.9,
           }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              opacity: sunReflectionOpacity,
-              background: `linear-gradient(180deg,
-                ${alpha(sunColor, 0.62)} 0%,
-                ${alpha(sunColor, 0.3)} 18%,
-                ${alpha(sunColor, 0.12)} 42%,
-                ${alpha(sunColor, 0.08)} 62%,
-                transparent 100%)`,
-              maskImage: `linear-gradient(180deg, transparent 0%, black 14%, black 100%),
-                repeating-linear-gradient(
-                  180deg,
-                  black 0 12px,
-                  rgba(0,0,0,0.3) 12px 16px,
-                  black 16px 28px,
-                  transparent 28px 34px
-                )`,
-              maskComposite: 'intersect',
-              WebkitMaskImage: `linear-gradient(180deg, transparent 0%, black 14%, black 100%),
-                repeating-linear-gradient(
-                  180deg,
-                  black 0 12px,
-                  rgba(0,0,0,0.3) 12px 16px,
-                  black 16px 28px,
-                  transparent 28px 34px
-                )`,
-              animation: motion('reflection-breakup', '7s'),
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              opacity: sunReflectionOpacity * 0.5,
-              background: `repeating-linear-gradient(
-                180deg,
-                ${alpha(sunColor, 0.5)} 0 2px,
-                transparent 2px 12px,
-                ${alpha(sunColor, 0.28)} 12px 13px,
-                transparent 13px 26px
-              )`,
-              filter: 'blur(0.4px)',
-              animation: motion('reflection-breakup', '8s'),
-            }}
-          />
-        </div>
+        />
       )}
 
-      {/* Moon reflection column */}
       {showMoonReflection && (
         <div
-          className="absolute top-0 bottom-0"
+          className="absolute inset-0"
           style={{
-            left: `${moonX - 4}%`,
-            width: '8vw',
-            filter: highQuality ? 'url(#water-distortion-filter)' : undefined,
+            background: `radial-gradient(ellipse 12vw 7vh at ${moonX}% 0%, ${alpha(moonGlowColor, 0.14 * cloudSoftener)} 0%, ${alpha(moonGlowColor, 0.05 * cloudSoftener)} 32%, transparent 70%)`,
+            filter: 'blur(7px)',
+            opacity: 0.75,
+          }}
+        />
+      )}
+
+      <svg
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full"
+        preserveAspectRatio="none"
+        viewBox="0 0 1000 260"
+      >
+        <defs>
+          {waveLines.map((line, index) => (
+            <linearGradient
+              id={`${gradientId}-sun-${index}`}
+              key={`${gradientId}-sun-${index}`}
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              {buildReflectionStops(sunCenter, line.reflectionSpread, sunColor, 0.7 * cloudSoftener).map((stop, stopIndex) => (
+                <stop key={`${gradientId}-sun-${index}-${stopIndex}`} offset={stop.offset} stopColor={stop.color} />
+              ))}
+            </linearGradient>
+          ))}
+          {waveLines.map((line, index) => (
+            <linearGradient
+              id={`${gradientId}-moon-${index}`}
+              key={`${gradientId}-moon-${index}`}
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              {buildReflectionStops(moonCenter, line.reflectionSpread * 0.52, moonGlowColor, 0.55 * cloudSoftener).map((stop, stopIndex) => (
+                <stop key={`${gradientId}-moon-${index}-${stopIndex}`} offset={stop.offset} stopColor={stop.color} />
+              ))}
+            </linearGradient>
+          ))}
+        </defs>
+
+        <g style={{ animation: motion('engrave-drift', '24s', 'linear', 'infinite') }}>
+          {waveLines.map((line, index) => (
+            <path
+              key={`base-${index}`}
+              d={buildWavePath(line)}
+              fill="none"
+              stroke={index % 2 === 0 ? baseStroke : secondaryStroke}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeOpacity={0.46 + index / (lineCount * 2.4)}
+              strokeWidth={line.strokeWidth}
+            />
+          ))}
+        </g>
+
+        <g
+          style={{
+            animation: motion('engrave-drift-reverse', '31s', 'linear', 'infinite'),
+            opacity: 0.72,
           }}
         >
-          <div
-            className="absolute inset-0"
-            style={{
-              opacity: moonReflectionOpacity,
-              background: `linear-gradient(180deg,
-                ${alpha(moonGlowColor, 0.3)} 0%,
-                ${alpha(moonGlowColor, 0.16)} 24%,
-                ${alpha(moonGlowColor, 0.08)} 52%,
-                transparent 100%)`,
-              maskImage: `linear-gradient(180deg, transparent 0%, black 16%, black 100%),
-                repeating-linear-gradient(
-                  180deg,
-                  black 0 10px,
-                  transparent 10px 16px,
-                  black 16px 25px,
-                  transparent 25px 34px
-                )`,
-              WebkitMaskImage: `linear-gradient(180deg, transparent 0%, black 16%, black 100%),
-                repeating-linear-gradient(
-                  180deg,
-                  black 0 10px,
-                  transparent 10px 16px,
-                  black 16px 25px,
-                  transparent 25px 34px
-                )`,
-              animation: motion('moon-glint', '9s'),
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              opacity: moonReflectionOpacity * 0.35,
-              background: `repeating-linear-gradient(
-                180deg,
-                ${alpha(moonGlowColor, 0.3)} 0 1px,
-                transparent 1px 11px,
-                ${alpha(moonGlowColor, 0.16)} 11px 12px,
-                transparent 12px 23px
-              )`,
-              filter: 'blur(0.5px)',
-              animation: motion('reflection-breakup', '10s'),
-            }}
-          />
-        </div>
-      )}
+          {waveLines.slice(1).map((line, index) => (
+            <path
+              key={`echo-${index}`}
+              d={buildWavePath({
+                ...line,
+                baseline: line.baseline + 3.5,
+                phase: line.phase + 0.9,
+                amplitude: line.amplitude * 0.82,
+              })}
+              fill="none"
+              stroke={index % 2 === 0 ? alpha('#20313f', 0.42) : alpha('#d7e0ea', 0.08)}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={Math.max(0.7, line.strokeWidth - 0.1)}
+            />
+          ))}
+        </g>
 
-      {/* Night: ambient moonlight/starlight sparkle on water */}
-      {isNight && (
-        <>
-          <div
-            className="absolute inset-0"
-            style={{
-              opacity: 0.1,
-              background: `linear-gradient(180deg,
-                rgba(180,190,220,0.1) 0%,
-                rgba(140,150,180,0.05) 40%,
-                transparent 80%)`,
-              animation: motion('specular-scan', '14s'),
-              backgroundSize: '200% 100%',
-            }}
-          />
-        </>
-      )}
+        {showSunReflection && (
+          <g style={{ animation: motion('reflection-flicker-subtle', '8s') }}>
+            {waveLines.map((line, index) => (
+              <path
+                key={`sun-${index}`}
+                d={buildWavePath(line)}
+                fill="none"
+                stroke={`url(#${gradientId}-sun-${index})`}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={line.strokeWidth + 0.35}
+              />
+            ))}
+          </g>
+        )}
 
-      {/* Caustic light dapples during daytime */}
-      {isDay && (
-        <div
-          className="absolute inset-0"
-          style={{
-            opacity: 0.12,
-            background: `
-              radial-gradient(ellipse 60px 25px at 15% 50%, rgba(255,255,255,0.08) 0%, transparent 70%),
-              radial-gradient(ellipse 45px 20px at 45% 35%, rgba(255,255,255,0.06) 0%, transparent 70%),
-              radial-gradient(ellipse 70px 30px at 75% 55%, rgba(255,255,255,0.07) 0%, transparent 70%),
-              radial-gradient(ellipse 50px 22px at 90% 40%, rgba(255,255,255,0.05) 0%, transparent 70%)
-            `,
-            animation: motion('caustic-shift', '10s'),
-          }}
-        />
-      )}
+        {showMoonReflection && (
+          <g style={{ animation: motion('reflection-flicker-subtle', '10s') }}>
+            {waveLines.map((line, index) => (
+              <path
+                key={`moon-${index}`}
+                d={buildWavePath({
+                  ...line,
+                  phase: line.phase + 0.25,
+                  amplitude: line.amplitude * 0.9,
+                })}
+                fill="none"
+                stroke={`url(#${gradientId}-moon-${index})`}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={line.strokeWidth + 0.18}
+              />
+            ))}
+          </g>
+        )}
+      </svg>
 
-      {/* Warm golden sparkles at sunset */}
-      {warm && (
-        <div
-          className="absolute inset-0"
-          style={{
-            opacity: 0.1 * cloudSoftener,
-            background: `
-              linear-gradient(180deg, transparent 0%, rgba(255,180,60,0.08) 42%, transparent 64%)
-            `,
-            animation: motion('specular-scan', '20s'),
-          }}
-        />
-      )}
-
-      {/* Dark shoreline weight at the bottom edge */}
       <div
-        className="absolute inset-x-0 bottom-0 h-[22%]"
+        className="absolute inset-x-0 bottom-0 h-[26%]"
         style={{
-          background: 'linear-gradient(180deg, transparent 0%, rgba(3, 5, 8, 0.22) 40%, rgba(2, 3, 6, 0.4) 100%)',
+          background: 'linear-gradient(180deg, transparent 0%, rgba(2, 4, 7, 0.24) 42%, rgba(2, 3, 6, 0.45) 100%)',
         }}
       />
     </div>
