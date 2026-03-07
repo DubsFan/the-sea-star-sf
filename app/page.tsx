@@ -294,8 +294,8 @@ export default function Home() {
           <p className="font-dm text-[0.6rem] font-normal tracking-[0.6em] uppercase text-sea-gold mb-12 opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.4s forwards' }}>
             Dogpatch, San Francisco &bull; Est. 1899
           </p>
-          <div className="mb-4 opacity-0" style={{ animation: 'fadeUp 1.2s ease-out 0.6s forwards' }}>
-            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-blue tracking-[0.4em] block mb-1">the</span>
+          <div className="mb-4 opacity-0 relative inline-block" style={{ animation: 'fadeUp 1.2s ease-out 0.6s forwards' }}>
+            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-blue tracking-[0.2em] absolute left-0 -top-[clamp(1.2rem,2.5vw,1.8rem)]">the</span>
             <h1 className="font-playfair text-[clamp(5rem,14vw,12rem)] font-extrabold leading-[0.85] tracking-tight text-sea-gold uppercase" style={{ textShadow: '0 2px 40px rgba(201,165,78,0.3), 0 0 80px rgba(201,165,78,0.1)' }}>
               Sea Star
             </h1>
