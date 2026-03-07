@@ -115,15 +115,26 @@ export default function Home() {
   const revealRefs = useRef<(HTMLDivElement | null)[]>([])
   const [demoMode, setDemoMode] = useState(false)
   const [demoMinutes, setDemoMinutes] = useState(0)
+  const [sunsetPreviewMode, setSunsetPreviewMode] = useState(false)
 
   // Check for ?demo=1 on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    if (params.get('live') === '1') {
+      setSunsetPreviewMode(false)
+      return
+    }
+
     if (params.get('demo') === '1') {
       setDemoMode(true)
       const now = new Date()
       setDemoMinutes(now.getHours() * 60 + now.getMinutes())
+      return
     }
+
+    // Keep the isolated test branch on a stable golden-hour state by default.
+    setSunsetPreviewMode(true)
+    setDemoMinutes(18 * 60 + 12)
   }, [])
 
   useEffect(() => {
@@ -230,6 +241,14 @@ export default function Home() {
 
   const blogDisplayPosts = blogPosts.length > 0 ? blogPosts.slice(0, 3) : null
 
+  const backgroundOverrideDate = demoMode || sunsetPreviewMode
+    ? (() => {
+        const d = new Date()
+        d.setHours(Math.floor(demoMinutes / 60), demoMinutes % 60, 0, 0)
+        return d
+      })()
+    : null
+
   return (
     <>
       {/* NAV */}
@@ -322,7 +341,7 @@ export default function Home() {
       <section className="h-screen min-h-[750px] flex items-center justify-center relative overflow-hidden">
         {/* Static fallback gradient — visible instantly, LivingBackground layers on top once mounted */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#06080d] via-[#0a3847] to-[#0a0e18]" />
-        <LivingBackground overrideDate={demoMode ? (() => { const d = new Date(); d.setHours(Math.floor(demoMinutes / 60), demoMinutes % 60, 0, 0); return d })() : null} />
+        <LivingBackground overrideDate={backgroundOverrideDate} />
         <div className="text-center relative z-10 px-8">
           <p className="font-dm text-[0.6rem] font-normal tracking-[0.6em] uppercase text-sea-gold mb-12 opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.4s forwards' }}>
             Dogpatch, San Francisco &bull; Est. 1899
