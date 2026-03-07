@@ -27,6 +27,13 @@ interface WaveLine {
   phase: number
   strokeWidth: number
   reflectionSpread: number
+  depth: number
+  perspectiveInset: number
+  irregularity: number
+  skew: number
+  splashX: number
+  splashWidth: number
+  splashLift: number
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -54,20 +61,34 @@ function isWarmSky(skyBottom: string): boolean {
   return r > 150 && r > g * 1.3
 }
 
+function noise(seed: number): number {
+  const value = Math.sin(seed * 12.9898) * 43758.5453
+  return value - Math.floor(value)
+}
+
 function buildWavePath(line: WaveLine, phaseOffset = 0, amplitudeScale = 1, verticalShift = 0): string {
   const points: Array<{ x: number; y: number }> = []
   const amplitude = line.amplitude * amplitudeScale
   const phase = line.phase + phaseOffset
+  const startX = -120 + line.perspectiveInset
+  const endX = 1120 - line.perspectiveInset
+  const step = 52 + (1 - line.depth) * 16
 
-  for (let x = -80; x <= 1080; x += 70) {
+  for (let x = startX; x <= endX; x += step) {
     const nx = x / 1000
+    const progress = (x - startX) / Math.max(endX - startX, 1)
+    const centered = progress - 0.5
+    const widthEnvelope = 1 - Math.min(Math.abs(centered) * 1.55, 0.72)
+    const perspectiveWarp = centered * line.skew * (1 - line.depth) * 42
     const y =
       line.baseline +
       verticalShift +
       Math.sin(nx * Math.PI * line.frequency + phase) * amplitude +
-      Math.sin(nx * Math.PI * (line.frequency * 0.45) + phase * 1.7) * amplitude * 0.45
+      Math.sin(nx * Math.PI * (line.frequency * 0.45) + phase * 1.7) * amplitude * 0.45 +
+      Math.sin(nx * Math.PI * (line.frequency * 1.9) + phase * 0.65) * amplitude * 0.18 * line.irregularity +
+      Math.cos(progress * Math.PI * 6 + phase * 0.8) * amplitude * 0.12 * line.irregularity * widthEnvelope
 
-    points.push({ x, y })
+    points.push({ x: x + perspectiveWarp, y })
   }
 
   let path = `M ${points[0].x} ${points[0].y}`
@@ -87,16 +108,36 @@ function buildWavePath(line: WaveLine, phaseOffset = 0, amplitudeScale = 1, vert
 function buildWaveLines(lineCount: number, windFactor: number): WaveLine[] {
   return Array.from({ length: lineCount }, (_, index) => {
     const t = index / Math.max(lineCount - 1, 1)
+    const depth = Math.pow(t, 1.42)
+    const seed = index + 1
+    const variance = noise(seed)
+    const sideBias = noise(seed * 1.7 + 9) > 0.5 ? 1 : -1
 
     return {
-      baseline: 30 + t * 200,
-      amplitude: 2 + t * 4.5 + windFactor * 2.2,
-      frequency: 5.4 + t * 2.8,
-      phase: 0.45 + t * 1.12,
-      strokeWidth: 0.9 + t * 0.7,
-      reflectionSpread: 0.06 + t * 0.11,
+      baseline: 18 + depth * 214,
+      amplitude: 1.6 + depth * 7.2 + windFactor * 2.4 + variance * 0.8,
+      frequency: 4.6 + depth * 2.4 + variance * 0.9,
+      phase: 0.38 + depth * 1.24 + variance * 0.9,
+      strokeWidth: 0.68 + depth * 1.25,
+      reflectionSpread: 0.035 + depth * 0.12,
+      depth,
+      perspectiveInset: (1 - depth) * 210,
+      irregularity: 0.7 + variance * 0.9,
+      skew: sideBias * (0.7 + noise(seed * 2.4 + 3) * 0.7),
+      splashX: 180 + depth * 560 + sideBias * 90 * (0.35 + variance),
+      splashWidth: 26 + depth * 30 + variance * 12,
+      splashLift: 4 + depth * 8 + variance * 4,
     }
   })
+}
+
+function buildSplashPath(line: WaveLine): string {
+  const startX = line.splashX - line.splashWidth
+  const endX = line.splashX + line.splashWidth
+  const midX = line.splashX
+  const baseY = line.baseline - line.splashLift
+
+  return `M ${startX} ${baseY} Q ${midX - line.splashWidth * 0.3} ${baseY - line.splashLift * 0.75} ${midX} ${baseY - line.splashLift} Q ${midX + line.splashWidth * 0.3} ${baseY - line.splashLift * 0.75} ${endX} ${baseY}`
 }
 
 function buildReflectionStops(center: number, spread: number, color: string, strength: number) {
@@ -140,6 +181,7 @@ export default function WaterReflection({
   const cloudSoftener = 1 - clamp(cloudCoverage / 120, 0, 0.6)
   const lineCount = quality === 'high' && !reducedMotion ? 8 : 6
   const waveLines = buildWaveLines(lineCount, windFactor)
+  const splashLines = waveLines.filter((line, index) => index > 1 && index < waveLines.length - 1 && index % 2 === 1)
   const showSunReflection = sunAltitude > -2
   const showMoonReflection = moonVisible && moonAltitude > 0 && sunAltitude < 3
   const sunCenter = clamp(sunX / 100, 0.05, 0.95)
@@ -181,6 +223,18 @@ export default function WaterReflection({
         className="absolute inset-0"
         style={{
           background: `linear-gradient(180deg, ${topGlow} 0%, ${alpha(skyBottom, 0.02)} 34%, transparent 66%)`,
+        }}
+      />
+
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `linear-gradient(180deg,
+            ${alpha('#08111a', 0.2)} 0%,
+            transparent 28%,
+            transparent 72%,
+            ${alpha('#071018', 0.16)} 100%),
+            radial-gradient(ellipse 68% 50% at 50% 18%, transparent 0%, transparent 48%, ${alpha('#050b12', 0.18)} 100%)`,
         }}
       />
 
@@ -305,6 +359,27 @@ export default function WaterReflection({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={Math.max(0.6, line.strokeWidth - 0.25)}
+            />
+          ))}
+        </g>
+
+        <g
+          style={{
+            animation: motion('ripple-shift-b', '3.2s', 'ease-in-out'),
+            opacity: 0.55,
+            transformBox: 'fill-box',
+            transformOrigin: 'center',
+          }}
+        >
+          {splashLines.map((line, index) => (
+            <path
+              key={`splash-${index}`}
+              d={buildSplashPath(line)}
+              fill="none"
+              stroke={alpha('#f5efe6', warm ? 0.16 : 0.12)}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={Math.max(0.85, line.strokeWidth - 0.25)}
             />
           ))}
         </g>
