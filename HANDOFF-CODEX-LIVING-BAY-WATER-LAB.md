@@ -146,6 +146,7 @@ The codex branch now includes:
 - expanded daytime bird behaviors with gull and pelican dive / skim / recover motion
 - a forced hero pelican dive at golden evening and sunset, with deeper water contact and splash timing so the hunt action reads clearly
 - the landing water layer now has a bottom dock-post overlay from `public/doc posts.png`, plus a stronger seam mask and slightly deeper bottom overlap to hide the animated edge line
+- the corrected water-edge treatment is: water fills the full band from viewport bottom to skyline base, and dock posts render as a cropped front image overlay instead of a compressed background strip
 - celestial path changes for sun and moon movement
 - weather bar/mobile weather adjustments
 - hero CTA styling and placement changes

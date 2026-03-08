@@ -198,9 +198,11 @@ export default function WaterReflection({
     : isNight
       ? alpha(moonGlowColor, 0.08 * cloudSoftener)
       : alpha(skyBottom, 0.08)
+  const waterBandHeight = 'calc(18vh + 0.35vh)'
   const seamMaskHeight = isMobile ? '6.2vh' : '7vh'
-  const dockPostsHeight = isMobile ? '5.6vh' : '6.9vh'
-  const dockPostOpacity = isNight ? 0.7 : warm ? 0.78 : 0.72
+  const dockPostsFrameHeight = isMobile ? '8vh' : '9.5vh'
+  const dockPostsImageMinHeight = isMobile ? '13vh' : '15vh'
+  const dockPostOpacity = isNight ? 0.78 : warm ? 0.86 : 0.82
   const motion = (name: string, duration: string, timing = 'ease-in-out', extras = 'infinite alternate') =>
     reducedMotion ? 'none' : `${name} ${duration} ${timing} ${extras}`
 
@@ -208,8 +210,8 @@ export default function WaterReflection({
     <div
       className="absolute left-0 right-0 z-[4] overflow-hidden"
       style={{
-        bottom: '-1.4vh',
-        height: '21.7vh',
+        bottom: 0,
+        height: waterBandHeight,
         animation: motion('wave-breathe', '6s'),
         transformOrigin: 'bottom',
       }}
@@ -222,6 +224,14 @@ export default function WaterReflection({
             ${alpha(reflectionColor, 0.58)} 24%,
             ${alpha(reflectionColor, 0.82)} 58%,
             ${reflectionColor} 100%)`,
+        }}
+      />
+
+      <div
+        className="absolute inset-x-0 top-0 z-[1] pointer-events-none"
+        style={{
+          height: '1.4vh',
+          background: `linear-gradient(180deg, ${alpha(reflectionColor, 0.5)} 0%, ${alpha(reflectionColor, 0.18)} 52%, transparent 100%)`,
         }}
       />
 
@@ -461,16 +471,22 @@ export default function WaterReflection({
 
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 z-[2] pointer-events-none"
+        className="absolute inset-x-0 bottom-0 z-[3] overflow-hidden pointer-events-none"
         style={{
-          height: dockPostsHeight,
-          backgroundImage: 'url(/doc%20posts.png)',
-          backgroundPosition: 'bottom center',
-          backgroundRepeat: 'repeat-x',
-          backgroundSize: 'auto 100%',
-          opacity: dockPostOpacity,
+          height: dockPostsFrameHeight,
         }}
-      />
+      >
+        <img
+          src="/doc%20posts.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 w-full h-auto max-w-none select-none"
+          style={{
+            minHeight: dockPostsImageMinHeight,
+            opacity: dockPostOpacity,
+          }}
+        />
+      </div>
     </div>
   )
 }

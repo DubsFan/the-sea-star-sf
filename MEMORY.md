@@ -89,6 +89,7 @@ The most important inherited rules are:
 - wildlife now includes more active gull and pelican behaviors, with daytime/golden-hour dive, skim, and recover motion layered into the existing ambient flights
 - sunset and golden-evening behavior now forces a visible hero pelican dive with deeper water contact and a splash cue so hunting reads clearly in preview
 - the landing water layer now uses `public/doc posts.png` as a bottom-edge dock overlay, with a stronger seam mask and slightly deeper bottom overlap to hide the moving water boundary line
+- the bottom water band should run exactly from the viewport bottom up to the skyline base, and dock posts must render as a front cropped image overlay rather than a compressed background band
 
 ## Build And Push Rule
 
