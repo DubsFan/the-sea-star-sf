@@ -370,9 +370,11 @@ export default function Home() {
           </a>
           </div>
         </div>
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3 opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.5s forwards' }}>
-          <span className="text-[0.55rem] tracking-[0.4em] uppercase text-sea-white">Discover</span>
-          <div className="w-[1px] h-10 bg-gradient-to-b from-sea-gold to-transparent" style={{ animation: 'scrollPulse 2.5s ease-in-out infinite' }} />
+        <div className="absolute inset-x-0 bottom-10 z-10 flex justify-center opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.5s forwards' }}>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span className="text-center text-[0.55rem] tracking-[0.4em] uppercase text-sea-white">Discover</span>
+            <div className="w-[1px] h-10 bg-gradient-to-b from-sea-gold to-transparent" style={{ animation: 'scrollPulse 2.5s ease-in-out infinite' }} />
+          </div>
         </div>
       </section>
 

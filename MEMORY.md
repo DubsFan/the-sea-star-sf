@@ -82,6 +82,7 @@ The most important inherited rules are:
 - the visible skyline should be the crisp lower skyline only
 - the water layer is raised to hide the skyline seam
 - the hero CTA row is anchored near the skyline/water break
+- the hero `Discover` marker should be centered with a full-width bottom rail, not positioned from a self-sized box
 - CTA cards are strong gold with white text
 - `the`, `Your Own Adventure`, and `Discover` use the header-logo white
 - the weather widget and `Book Event` button should use matching dark-glass header styling for balance on this branch

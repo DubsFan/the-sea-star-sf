@@ -153,6 +153,7 @@ The codex branch now includes:
 - The hazy upper skyline back layer was removed.
 - The visible skyline should be the crisp lower skyline only.
 - The hero CTA row is anchored near the skyline/water break, not floating in mid-hero.
+- The hero `Discover` marker should stay centered via a full-width bottom rail wrapper.
 - The hero CTA cards were changed to strong gold cards with white text.
 - `the`, `Your Own Adventure`, and `Discover` were changed to the header-logo white.
 - The weather widget and `Book Event` button should share the same dark-glass control styling for header balance on this branch.
