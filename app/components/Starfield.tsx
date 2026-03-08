@@ -2,8 +2,14 @@
 
 import { useEffect, useRef } from 'react'
 
-export default function Starfield() {
+interface StarfieldProps {
+  opacity?: number // 0-1, controlled by LivingBackground based on sky phase
+}
+
+export default function Starfield({ opacity = 0.8 }: StarfieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const opacityRef = useRef(opacity)
+  opacityRef.current = opacity
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -11,6 +17,7 @@ export default function Starfield() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    let animId: number
     let w = window.innerWidth
     let h = window.innerHeight
     function resize() {
@@ -62,6 +69,12 @@ export default function Starfield() {
 
     function draw() {
       ctx!.clearRect(0, 0, w, h)
+
+      // Skip rendering if fully transparent
+      if (opacityRef.current <= 0.01) {
+        animId = requestAnimationFrame(draw)
+        return
+      }
 
       // Twinkling stars
       for (const s of stars) {
@@ -138,20 +151,27 @@ export default function Starfield() {
       // Spawn rate: ~1 every 2 seconds
       if (Math.random() < 0.055) spawnShooter()
 
-      requestAnimationFrame(draw)
+      animId = requestAnimationFrame(draw)
     }
     draw()
 
     return () => {
       window.removeEventListener('resize', resize)
+      cancelAnimationFrame(animId)
     }
   }, [])
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 50, opacity: 0.8, width: '100vw', height: '100vh' }}
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        zIndex: 6,
+        opacity: opacity,
+        transition: 'opacity 10s linear',
+        width: '100%',
+        height: '100%',
+      }}
     />
   )
 }

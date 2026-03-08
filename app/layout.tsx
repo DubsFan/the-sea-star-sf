@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
-import Starfield from './components/Starfield'
 
 export const metadata: Metadata = {
   title: 'The Sea Star SF | Craft Cocktails in Dogpatch Since 1899',
@@ -21,7 +20,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[#06080d] text-[#d8e0ed] antialiased overflow-x-hidden">
-        <Starfield />
         <Toaster position="bottom-center" />
         <div className="relative z-[1]">
           {children}

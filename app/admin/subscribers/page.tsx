@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from '../layout'
+import { useSession } from '../session-context'
 
 interface Subscriber {
   id: string
