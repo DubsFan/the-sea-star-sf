@@ -15,8 +15,9 @@ export default function DockPostsForeground({ sunAltitude, isMobile }: DockPosts
   const brightness = 1 - nightStrength * 0.42
   const contrast = 1.02 - nightStrength * 0.08
   const frameHeight = isMobile ? '7.2vh' : '8.2vh'
-  const repeatBandHeight = isMobile ? '12vh' : '14vh'
+  const imageMinHeight = isMobile ? '12vh' : '14vh'
   const bottomBaseHeight = isMobile ? '1.5vh' : '1.7vh'
+  const horizontalOverscan = isMobile ? '8vw' : '6vw'
 
   return (
     <div
@@ -32,15 +33,23 @@ export default function DockPostsForeground({ sunAltitude, isMobile }: DockPosts
         }}
       />
       <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-[-0.15vh] top-0"
+        className="absolute inset-x-0 bottom-0"
         style={{
+          height: '0.25vh',
+          background: 'rgba(2,4,8,0.98)',
+        }}
+      />
+      <img
+        src="/doc%20posts.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute bottom-[-0.15vh] h-auto max-w-none select-none"
+        style={{
+          left: `calc(${horizontalOverscan} * -1)`,
+          width: `calc(100% + (${horizontalOverscan} * 2))`,
+          minHeight: imageMinHeight,
           opacity,
           filter: `brightness(${brightness}) contrast(${contrast})`,
-          backgroundImage: 'url(/doc%20posts.png)',
-          backgroundRepeat: 'repeat-x',
-          backgroundPosition: 'center bottom',
-          backgroundSize: `auto ${repeatBandHeight}`,
         }}
       />
     </div>
