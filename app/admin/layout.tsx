@@ -1,20 +1,11 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-type UserRole = 'super_admin' | 'admin' | 'social_admin' | 'crew'
-
-interface SessionData {
-  username: string
-  role: UserRole
-  displayName: string
-}
-
-const SessionContext = createContext<SessionData | null>(null)
-export const useSession = () => useContext(SessionContext)
+import { SessionContext, type SessionData } from './session-context'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<SessionData | null>(null)

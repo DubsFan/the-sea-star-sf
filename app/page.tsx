@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
+import WeatherBar from './components/WeatherBar'
+import LivingBackground from './components/living-background/LivingBackground'
 
 interface MenuItem {
   id: string
@@ -71,6 +73,7 @@ const WINE_ITEMS = [
 ]
 
 const BLOG_CONTENT = [
+  { date: 'March 2026', title: 'Discover the Most Inclusive Bars in Bay Area: Your Guide to Safe Space Bars', slug: 'inclusive-bars-bay-area', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">When it comes to finding a spot where everyone feels welcome, the Bay Area stands out.</p><p>Whether you\'re winding down after a long day or searching for a place to meet new people, the inclusive bars in the Bay Area offer a vibrant, safe, and inviting atmosphere.</p>' },
   { date: 'February 2026', title: 'Introducing the Spring Menu: Florals, Smoke & a Little Chaos', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">Every season, we tear up the menu and start fresh. Spring 2026 is no exception.</p><p>The Gypsy Tailwind is the cocktail we\'re proudest of this round. Aqar\u00e1 Agave and sakura sake with celery root syrup for earthiness and Liquid Alchemist peach for sweetness.</p><p>Spill The Tea is the sleeper hit. Mezcal plus earl grey sounds strange until you taste it. The bergamot in the tea amplifies the smoke.</p><p>The full spring menu is live now. Come taste it before we change it again.</p>' },
   { date: 'January 2026', title: 'Behind the Nitro Espresso Martini: Rebuilding a Classic', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">The espresso martini is everywhere. We wanted to make one worth talking about.</p><p>Step one: ditch the vodka. We use Caff\u00e8 Borghetti, and split the base between mezcal and tequila.</p><p>Step two: nitrogen. We charge the cocktail with nitro for that cascading pour and dense, creamy head.</p><p>The result is darker, more complex, and honestly more fun to drink.</p>' },
   { date: 'December 2025', title: '127 Years at 2289 3rd Street: The History Beneath Your Feet', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">There\'s a trough under the bar. A real, century-old trough that once served as a urinal and tobacco spittoon.</p><p>The building first appeared as a saloon on Sanborn fire insurance maps from 1899. It\'s had at least five different names since then.</p><p>The Victorian tin ceilings are original. The long bar has been in the same spot for over a century.</p><p>We don\'t take that lightly. Every cocktail we serve is part of a story that started 127 years ago.</p>' },
@@ -87,6 +90,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   'Beer': 'The Vessel',
 }
 
+function minutesToLabel(mins: number): string {
+  const h = Math.floor(mins / 60) % 24
+  const m = Math.floor(mins % 60)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`
+}
+
 export default function Home() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
@@ -95,7 +106,6 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [blogModalOpen, setBlogModalOpen] = useState(false)
   const [activeBlogIndex, setActiveBlogIndex] = useState(0)
-  const [aliciaSlide, setAliciaSlide] = useState(0)
   const [subscribeEmail, setSubscribeEmail] = useState('')
   const [subscribeName, setSubscribeName] = useState('')
   const [loginOpen, setLoginOpen] = useState(false)
@@ -103,6 +113,28 @@ export default function Home() {
   const [loginPass, setLoginPass] = useState('')
   const [loginError, setLoginError] = useState(false)
   const revealRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [demoMode, setDemoMode] = useState(false)
+  const [demoMinutes, setDemoMinutes] = useState(0)
+
+  // Check for ?demo=1 on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('live') === '1') {
+      return
+    }
+
+    if (params.get('demo') === '1') {
+      setDemoMode(true)
+      const minuteParam = Number(params.get('minute'))
+      if (Number.isFinite(minuteParam) && minuteParam >= 0 && minuteParam <= 1439) {
+        setDemoMinutes(Math.floor(minuteParam))
+        return
+      }
+
+      const now = new Date()
+      setDemoMinutes(now.getHours() * 60 + now.getMinutes())
+    }
+  }, [])
 
   useEffect(() => {
     fetch('/api/menu')
@@ -139,12 +171,6 @@ export default function Home() {
     return () => observer.disconnect()
   }, [menuItems, blogPosts])
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAliciaSlide((prev) => (prev + 1) % 3)
-    }, 6000)
-    return () => clearInterval(timer)
-  }, [])
 
   const addRevealRef = (el: HTMLDivElement | null) => {
     if (el && !revealRefs.current.includes(el)) {
@@ -201,22 +227,33 @@ export default function Home() {
   ]
 
   const blogImages = [
+    '/bright-drinks.png',
     'https://cdn.canvasrebel.com/wp-content/uploads/2025/03/c-1742689690106-1742689689772_alicia_walton_4f1a0644.jpeg',
     'https://thetasteedit.com/wp-content/uploads/2016/04/the-sea-star-san-francisco-thetastesf-alicia-walton-cynar-DSC08610.jpg',
-    'https://drinkfellows.com/cdn/shop/articles/sea_star_interior_2_1100x.jpg?v=1647980521',
   ]
 
   const blogDisplayPosts = blogPosts.length > 0 ? blogPosts.slice(0, 3) : null
+
+  const backgroundOverrideDate = demoMode
+    ? (() => {
+        const d = new Date()
+        d.setHours(Math.floor(demoMinutes / 60), demoMinutes % 60, 0, 0)
+        return d
+      })()
+    : null
 
   return (
     <>
       {/* NAV */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-500 ${scrolled ? 'bg-[#06080d]/95 backdrop-blur-xl py-3 border-b border-sea-gold/10' : ''}`}>
-        <a href="#" className="nav-logo no-underline">
-          <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
-        </a>
+        <div className="flex items-center gap-4">
+          <a href="#" className="nav-logo no-underline">
+            <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
+          </a>
+          <WeatherBar />
+        </div>
         <div className="hidden md:flex gap-9 items-center">
-          {['Story', 'Alicia', 'Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
+          {['Menu', 'Reviews', 'Events', 'Journal', 'Visit'].map((item) => (
             <a key={item} href={`#${item.toLowerCase()}`} className="text-[0.65rem] font-dm tracking-[0.2em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline">
               {item}
             </a>
@@ -224,7 +261,12 @@ export default function Home() {
           <a href="#" onClick={(e) => { e.preventDefault(); setLoginOpen(true) }} className="text-[0.65rem] font-dm tracking-[0.2em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline">
             Login
           </a>
-          <a href="https://app.perfectvenue.com/venues/sea-star/hello" target="_blank" rel="noopener" className="text-[0.6rem] font-dm tracking-[0.2em] uppercase px-5 py-2 border border-sea-gold text-sea-gold hover:bg-sea-gold hover:text-[#06080d] transition-all no-underline">
+          <a
+            href="https://app.perfectvenue.com/venues/sea-star/hello"
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center border border-sea-gold/30 bg-[rgba(8,12,18,0.22)] px-3.5 py-1.5 font-dm text-[0.6rem] tracking-[0.16em] uppercase text-sea-gold/75 transition-all hover:border-sea-gold/60 hover:bg-[rgba(8,12,18,0.35)] hover:shadow-[0_0_0_1px_rgba(201,165,78,0.10)] no-underline"
+          >
             Book Event
           </a>
         </div>
@@ -239,8 +281,8 @@ export default function Home() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-[#06080d]/98 backdrop-blur-xl z-[99] flex flex-col items-center justify-center gap-8">
           <button className="absolute top-6 right-8 bg-transparent border-none text-sea-gold text-3xl cursor-pointer font-light" onClick={() => setMobileMenuOpen(false)}>&times;</button>
-          {['Our Story', 'Alicia Walton', 'Menu', 'Reviews', 'Events', 'Journal', 'Visit Us'].map((item, i) => {
-            const targets = ['story', 'alicia', 'menu', 'reviews', 'events', 'journal', 'visit']
+          {['Menu', 'Reviews', 'Events', 'Journal', 'Visit Us'].map((item, i) => {
+            const targets = ['menu', 'reviews', 'events', 'journal', 'visit']
             return (
               <a key={item} href={`#${targets[i]}`} onClick={() => setMobileMenuOpen(false)} className="font-cormorant text-3xl font-light text-sea-light hover:text-sea-gold transition-colors no-underline">
                 {item}
@@ -295,33 +337,44 @@ export default function Home() {
 
       {/* HERO */}
       <section className="h-screen min-h-[750px] flex items-center justify-center relative overflow-hidden">
+        {/* Static fallback gradient — visible instantly, LivingBackground layers on top once mounted */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#06080d] via-[#0a3847] to-[#0a0e18]" />
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 100% 70% at 30% 60%, rgba(58,125,140,0.08) 0%, transparent 50%), radial-gradient(ellipse 80% 50% at 70% 40%, rgba(92,184,196,0.05) 0%, transparent 50%)', animation: 'caustic-shift 8s ease-in-out infinite alternate' }} />
+        <LivingBackground overrideDate={backgroundOverrideDate} />
         <div className="text-center relative z-10 px-8">
           <p className="font-dm text-[0.6rem] font-normal tracking-[0.6em] uppercase text-sea-gold mb-12 opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.4s forwards' }}>
             Dogpatch, San Francisco &bull; Est. 1899
           </p>
-          <div className="mb-4 opacity-0" style={{ animation: 'fadeUp 1.2s ease-out 0.6s forwards' }}>
-            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-blue tracking-[0.4em] block mb-1">the</span>
+          <div className="mb-4 opacity-0 relative inline-block" style={{ animation: 'fadeUp 1.2s ease-out 0.6s forwards' }}>
+            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-white tracking-[0.2em] absolute left-0 -top-[clamp(1.2rem,2.5vw,1.8rem)]">the</span>
             <h1 className="font-playfair text-[clamp(5rem,14vw,12rem)] font-extrabold leading-[0.85] tracking-tight text-sea-gold uppercase" style={{ textShadow: '0 2px 40px rgba(201,165,78,0.3), 0 0 80px rgba(201,165,78,0.1)' }}>
               Sea Star
             </h1>
           </div>
-          <p className="font-cormorant text-[clamp(1.1rem,2.5vw,1.7rem)] font-light italic text-sea-blue/80 mt-6 mb-14 tracking-wide opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.9s forwards' }}>
-            <span className="text-sea-gold">Booze</span> Your Own Adventure
+          <p className="font-cormorant text-[clamp(1.1rem,2.5vw,1.7rem)] font-light italic text-sea-white mt-6 mb-14 tracking-wide opacity-0" style={{ animation: 'fadeUp 1s ease-out 0.9s forwards' }}>
+            <span className="text-sea-gold">Booze</span> <span className="text-sea-white">Your Own Adventure</span>
           </p>
-          <div className="flex gap-6 justify-center flex-wrap opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.1s forwards' }}>
-            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold text-[#06080d] hover:bg-sea-gold-light hover:-translate-y-0.5 hover:shadow-[0_8px_40px_rgba(201,165,78,0.25)] transition-all no-underline">
-              Explore the Menu
-            </a>
-            <a href="#visit" className="font-dm text-[0.6rem] font-normal tracking-[0.3em] uppercase px-10 py-4 bg-transparent text-sea-light border border-sea-border hover:border-sea-gold hover:text-sea-gold transition-all no-underline">
-              Plan Your Visit
-            </a>
+        </div>
+        <div
+          className="absolute inset-x-0 z-10 flex justify-center px-8 opacity-0"
+          style={{
+            bottom: 'calc(18vh + 0.2vh)',
+            animation: 'fadeUp 1s ease-out 1.1s forwards',
+          }}
+        >
+          <div className="flex justify-center gap-6 flex-wrap">
+          <a href="#menu" className="w-[17rem] text-center font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/90 text-sea-white border border-sea-gold hover:bg-[#dfc06e] hover:border-[#dfc06e] hover:-translate-y-0.5 transition-all no-underline">
+            Explore the Menu
+          </a>
+          <a href="#visit" className="w-[17rem] text-center font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/90 text-sea-white border border-sea-gold hover:bg-[#dfc06e] hover:border-[#dfc06e] hover:-translate-y-0.5 transition-all no-underline">
+            Plan Your Visit
+          </a>
           </div>
         </div>
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3 opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.5s forwards' }}>
-          <span className="text-[0.55rem] tracking-[0.4em] uppercase text-sea-blue">Discover</span>
-          <div className="w-[1px] h-10 bg-gradient-to-b from-sea-gold to-transparent" style={{ animation: 'scrollPulse 2.5s ease-in-out infinite' }} />
+        <div className="absolute inset-x-0 bottom-10 z-10 flex justify-center opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.5s forwards' }}>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span className="text-center text-[0.55rem] tracking-[0.4em] uppercase text-sea-white">Discover</span>
+            <div className="w-[1px] h-10 bg-gradient-to-b from-sea-gold to-transparent" style={{ animation: 'scrollPulse 2.5s ease-in-out infinite' }} />
+          </div>
         </div>
       </section>
 
@@ -333,7 +386,7 @@ export default function Home() {
               <img src="https://www.opensfhistory.org/Image/700/wnp27.4067.jpg" alt="3rd Street Bridge, Dogpatch, circa 1940" className="w-full h-full object-cover opacity-50" style={{ filter: 'sepia(0.3) contrast(1.1)' }} />
               <div className="absolute inset-0 bg-gradient-to-br from-[#06080d]/40 to-[#0c2d3a]/30" />
               <div className="absolute top-8 left-8 text-[0.5rem] tracking-[0.4em] uppercase text-sea-teal px-3 py-1.5 border border-sea-teal/20 z-10">Since 1899</div>
-              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/10 z-10">1899</div>
+              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/25 z-10">1899</div>
             </div>
             <div ref={addRevealRef} className="opacity-0 translate-y-10 transition-all duration-700">
               <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">Our Story</p>
@@ -356,9 +409,7 @@ export default function Home() {
       {/* ALICIA */}
       <section id="alicia" className="py-32 relative overflow-hidden border-t border-sea-gold/10">
         <div className="absolute inset-0 z-0">
-          {aliciaPhotos.map((photo, i) => (
-            <div key={i} className={`absolute inset-[-20px] bg-cover bg-[center_20%] transition-opacity duration-[2500ms] ${i === aliciaSlide ? 'opacity-100' : 'opacity-0'}`} style={{ backgroundImage: `url('${photo}')`, filter: 'saturate(0.6)', ...(i === aliciaSlide ? { animation: 'kenBurns 12s ease-in-out forwards' } : {}) }} />
-          ))}
+          <div className="absolute inset-[-20px] bg-cover bg-[center_20%]" style={{ backgroundImage: `url('${aliciaPhotos[0]}')`, filter: 'saturate(0.6)' }} />
           <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(180deg, #06080d 0%, rgba(6,8,13,0.78) 15%, rgba(10,14,24,0.65) 40%, rgba(10,14,24,0.65) 60%, rgba(6,8,13,0.78) 85%, #06080d 100%)' }} />
         </div>
         <div className="max-w-[800px] mx-auto px-6 md:px-12 text-center relative z-[2]" ref={addRevealRef}>
@@ -563,12 +614,12 @@ export default function Home() {
             <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">The <em className="text-sea-gold">Journal</em></h2>
           </div>
           <div ref={addRevealRef} className="grid md:grid-cols-3 gap-6 opacity-0 translate-y-10 transition-all duration-700">
-            {(blogDisplayPosts || BLOG_CONTENT.map((b, i) => ({ ...b, slug: '', excerpt: b.content.slice(0, 120).replace(/<[^>]*>/g, ''), featured_image: blogImages[i], published_at: '', id: String(i), created_at: '' }))).map((post, i) => (
+            {(blogDisplayPosts || BLOG_CONTENT.map((b, i) => ({ ...b, slug: (b as any).slug || '', excerpt: b.content.slice(0, 120).replace(/<[^>]*>/g, ''), featured_image: blogImages[i], published_at: '', id: String(i), created_at: '' }))).map((post, i) => (
               <div
                 key={post.id || i}
                 className="border border-sea-gold/5 overflow-hidden hover:border-sea-gold/15 hover:-translate-y-1 transition-all cursor-pointer"
                 onClick={() => {
-                  if (blogDisplayPosts && post.slug) {
+                  if (post.slug) {
                     window.location.href = `/blog/${post.slug}`
                   } else {
                     setActiveBlogIndex(i)
@@ -694,7 +745,7 @@ export default function Home() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
-              <div className="font-playfair text-3xl font-bold text-sea-gold mb-3">The Sea Star</div>
+              <img src="/SeaStarWhiteLogo_2x.png" alt="The Sea Star" className="w-24 mb-4" />
               <div className="font-cormorant italic text-base text-sea-blue mb-6">Booze Your Own Adventure</div>
               <div className="flex gap-3">
                 <a href="https://www.instagram.com/seastarbarsf/" target="_blank" rel="noopener" className="w-9 h-9 flex items-center justify-center border border-sea-border text-sea-blue rounded-full hover:border-sea-gold hover:text-sea-gold hover:-translate-y-0.5 transition-all no-underline">
@@ -737,6 +788,47 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Demo sky slider — ?demo=1 to activate. Works on phone. */}
+      {demoMode && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-[300] pointer-events-auto"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)' }}
+        >
+          <div className="max-w-2xl mx-auto px-5 pt-6 pb-8">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-dm text-[0.65rem] tracking-[0.2em] uppercase text-sea-gold/60">Sky Demo</span>
+              <span className="font-cormorant text-2xl text-sea-white">{minutesToLabel(demoMinutes)}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1439}
+              value={demoMinutes}
+              onChange={(e) => setDemoMinutes(Number(e.target.value))}
+              className="w-full cursor-pointer"
+              style={{
+                height: '44px',
+                WebkitAppearance: 'none',
+                appearance: 'none',
+                background: `linear-gradient(to right,
+                  #0a0e18 0%, #1a1030 4%, #c47060 6%, #e8a050 8%,
+                  #4090d0 15%, #70b8e8 30%, #4090d0 70%,
+                  #e8732a 80%, #c47060 83%, #2a2050 87%, #0a0e18 92%, #0a0e18 100%
+                )`,
+                borderRadius: '8px',
+              }}
+            />
+            <div className="flex justify-between mt-1">
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">12 AM</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">6 AM</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">NOON</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">6 PM</span>
+              <span className="font-dm text-[0.55rem] text-sea-gold/40">12 AM</span>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

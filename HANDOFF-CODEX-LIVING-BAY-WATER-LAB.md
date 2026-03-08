@@ -1,0 +1,278 @@
+# Handoff Prompt: `codex/living-bay-water-lab`
+
+Use this prompt to continue work on the Sea Star living background branch without repeating the merge and deployment failures from this session.
+
+## Prompt
+
+You are continuing work on the Sea Star repo for the branch `codex/living-bay-water-lab`.
+
+Read this entire handoff before touching any files.
+
+### Branch Rules
+
+- Work only on branch: `codex/living-bay-water-lab`
+- Do not touch: `main`
+- Do not touch: `living-bay-background`
+- Do not do any work in the original repo root if a stable codex worktree exists
+
+### Critical Workspace Rule
+
+There were repeated branch-state problems during this session because the original repo worktree at:
+
+- `/Volumes/Sam4T/External Project/the-sea-star`
+
+kept flipping between branches during active work.
+
+To avoid that, all real work was moved to the stable dedicated worktree:
+
+- `/Volumes/Sam4T/External Project/the-sea-star-codex`
+
+The next engineer should do all coding, builds, commits, and pushes from:
+
+- `/Volumes/Sam4T/External Project/the-sea-star-codex`
+
+Before doing anything:
+
+```bash
+cd "/Volumes/Sam4T/External Project/the-sea-star-codex"
+git branch --show-current
+```
+
+Required result:
+
+```bash
+codex/living-bay-water-lab
+```
+
+If that is not the result, stop and fix the branch/worktree first.
+
+### What Went Wrong Earlier
+
+These were the real problems:
+
+1. The original repo worktree kept landing on `main`, which made it look like the living background files had disappeared.
+2. `main` does not contain the living background system. The codex branch does.
+3. This caused false "missing files" confusion because the checked-out branch kept changing underneath the session.
+4. Vercel preview checks were confusing because the branch preview lagged behind local pushed changes.
+5. A direct `vercel deploy` to a newly linked project failed because that project had no env vars.
+6. After relinking to the correct Vercel project, a direct CLI deploy still failed due to a Vercel team permission check on the Git author email.
+7. Because of that, the deterministic deployment path for this branch is: commit to Git, push branch, let Git-connected Vercel rebuild.
+
+### Deterministic Rules
+
+Follow these rules exactly:
+
+1. Use only `/Volumes/Sam4T/External Project/the-sea-star-codex`
+2. Confirm branch before edits
+3. Build after meaningful passes
+4. Do not claim visual success unless actually seen
+5. Do not use `vercel deploy` as the primary path
+6. Push to `origin/codex/living-bay-water-lab` and let Vercel build from Git
+7. Never modify `main` or `living-bay-background`
+8. Do not commit `output/` screenshots or debug artifacts
+9. Do not stop at local edits when the user expects to see the work in preview
+10. If PR automation is blocked by missing GitHub auth, report that blocker immediately
+11. Keep commit identity only under GG / `DubsFan`; never add Claude, Anthropic, Codex, OpenAI, or ChatGPT as co-author, co-signer, trailer, or signature
+
+### Required Pre-Flight Before Every Push
+
+Run:
+
+```bash
+cd "/Volumes/Sam4T/External Project/the-sea-star-codex"
+git branch --show-current
+git status --short
+npm run build
+git log -1 --format='%h %an <%ae>'
+```
+
+Push only if:
+
+- branch is `codex/living-bay-water-lab`
+- build passes
+- only intended tracked files are changed
+
+### Deployment Rule
+
+Do not rely on manual Vercel CLI deployment for this branch.
+
+Use:
+
+```bash
+git push origin codex/living-bay-water-lab
+```
+
+Then verify the Git-based Vercel preview after rebuild.
+
+Visible completion for this branch means:
+
+1. commit the work
+2. push the branch
+3. verify the Git-based preview when possible
+4. update or create the PR if GitHub auth is available
+
+### Current Branch State
+
+Recent branch commits from this session:
+
+- `0709807` Restore visible dock posts foreground
+- `46644fe` Repeat dock posts to screen edges
+- `810f90c` Make dock posts a fixed foreground layer
+- `1582cb2` Align water band to skyline base
+- `81bf4a1` Finish landing water edge with dock posts
+- `fcfbfbf` Make pelican dives read clearly at sunset
+- `15c7fa1` Center hero discover marker
+- `072e2c6` Add active pelican and gull hunt behavior
+
+### Living Background Files on This Branch
+
+These are the key files that were merged and repaired on `codex/living-bay-water-lab`:
+
+- `app/components/living-background/LivingBackground.tsx`
+- `app/components/living-background/Wildlife.tsx`
+- `app/components/living-background/Skyline.tsx`
+- `app/components/living-background/WaterReflection.tsx`
+- `app/components/living-background/CelestialBody.tsx`
+- `app/components/WeatherBar.tsx`
+- `app/lib/sky-phases.ts`
+- `app/globals.css`
+- `app/page.tsx`
+- `public/SS_skyline_long.png`
+
+### What Was Merged
+
+The codex branch now includes:
+
+- the living background engine
+- skyline layer rendering
+- raised water layer to cover the seam at the skyline/water break
+- daytime bird system replacing the failed scratch-like birds
+- expanded daytime bird behaviors with gull and pelican dive / skim / recover motion
+- a forced hero pelican dive at golden evening and sunset, with deeper water contact and splash timing so the hunt action reads clearly
+- the landing water layer now has a stronger seam mask and water-band geometry aligned to the skyline base
+- `DockPostsForeground.tsx` was added so dock posts can be a stationary bottom foreground layer instead of moving with the water
+- celestial path changes for sun and moon movement
+- weather bar/mobile weather adjustments
+- hero CTA styling and placement changes
+
+### Important Current Visual Decisions
+
+- The hazy upper skyline back layer was removed.
+- The visible skyline should be the crisp lower skyline only.
+- The hero CTA row is anchored near the skyline/water break, not floating in mid-hero.
+- The hero `Discover` marker should stay centered via a full-width bottom rail wrapper.
+- The hero CTA cards were changed to strong gold cards with white text.
+- `the`, `Your Own Adventure`, and `Discover` were changed to the header-logo white.
+- The weather widget and `Book Event` button should share the same dark-glass control styling for header balance on this branch.
+- The bottom water band should run from viewport bottom to skyline base.
+- Dock posts should be stationary foreground art, not part of the animated water.
+- Dock posts should sit low enough that no water shows beneath them.
+- The dock-post PNG should remain a visible foreground image treatment; the repeated CSS background experiment hid the posts and should not be reused as the default fix.
+
+### Known Risks / Things To Verify Before New Work
+
+Before starting unrelated tasks, visually verify:
+
+1. skyline is present and crisp, with no hazy duplicate layer above it
+2. water fully covers the skyline seam with no visible gap
+3. CTA row is centered
+4. CTA cards are visible against the current sky
+5. current-time sky behavior matches real time when not in demo mode
+6. branch preview reflects the latest pushed commit
+7. dock posts are visibly present in the live preview
+8. no post is clipped at the right screen edge
+9. no water strip shows below the dock posts
+
+### Session Failure Modes To Avoid Repeating
+
+1. Do not move the dock-post art into `WaterReflection`; it must stay fixed in `LivingBackground`.
+2. Do not replace the dock-post foreground image with a CSS repeated background unless a verified result shows the posts remain visible. That experiment hid the artwork because the source PNG carries the detail only at the bottom.
+3. Do not trust blank white terminal screenshots as proof of visual state.
+4. If a commit hits a transient worktree `index.lock` error, retry after checking there is no active git process before assuming repo corruption.
+
+### Current Work-In-Progress State
+
+As of commit `0709807`:
+
+1. Weather widget/header balance work is committed and pushed.
+2. Active gull/pelican hunt behavior is committed and pushed.
+3. Water seam masking and water-band alignment work is committed and pushed.
+4. Dock posts were restored to a stationary foreground image after the failed repeated-background experiment.
+5. The latest dock-post state still needs direct live-preview visual confirmation for:
+   - visibility
+   - no water below
+   - no right-edge clipping
+
+### Demo and Time Controls
+
+The page supports demo sky testing through query params in `app/page.tsx`.
+
+Current behavior:
+
+- default path uses real current time
+- `?demo=1` enables demo mode
+- `?demo=1&minute=720` forces noon for verification
+
+Do not leave debug-only time overrides hardcoded into normal runtime.
+
+### Build Notes
+
+The stable codex worktree uses symlinks for local development:
+
+- `.env.local` symlinked from the original repo
+- `node_modules` symlinked from the original repo
+
+These are local environment conveniences. Do not remove them unless replacing them intentionally.
+
+### Vercel Context
+
+The correct Vercel project for real env vars was:
+
+- `the-sea-star`
+
+A temporary incorrect project link to `the-sea-star-codex` was created during troubleshooting. That project had no env vars and was not the correct deployment target.
+
+The next engineer should treat Git push as the primary deployment path and avoid trying to outsmart Vercel with ad hoc project relinking unless absolutely necessary.
+
+### Untracked Local Artifacts
+
+Do not commit:
+
+- `output/`
+- screenshots
+- test artifacts
+- local-only debug files
+
+### How To Start the Next Task Safely
+
+Use this exact startup sequence:
+
+```bash
+cd "/Volumes/Sam4T/External Project/the-sea-star-codex"
+git branch --show-current
+git status --short
+sed -n '1,220p' HANDOFF-CODEX-LIVING-BAY-WATER-LAB.md
+```
+
+Then inspect the exact files relevant to the next request before editing.
+
+### If Something Looks "Missing"
+
+Do not assume the files are gone.
+
+Check:
+
+```bash
+git branch --show-current
+pwd
+```
+
+If you are in the original repo root or on `main`, you are in the wrong place.
+
+### Instruction To the Next Engineer
+
+Do not restart by "merging the living background" again unless Git proves something is actually absent.
+
+The main failure mode in this session was not missing code. It was using the wrong worktree and then reading the wrong branch state.
+
+Start from the codex worktree, confirm the branch, inspect the relevant files, build after meaningful changes, and push only through Git.
