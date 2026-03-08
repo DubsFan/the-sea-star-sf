@@ -143,6 +143,7 @@ The codex branch now includes:
 - skyline layer rendering
 - raised water layer to cover the seam at the skyline/water break
 - daytime bird system replacing the failed scratch-like birds
+- expanded daytime bird behaviors with gull and pelican dive / skim / recover motion
 - celestial path changes for sun and moon movement
 - weather bar/mobile weather adjustments
 - hero CTA styling and placement changes

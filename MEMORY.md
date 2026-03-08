@@ -85,6 +85,7 @@ The most important inherited rules are:
 - CTA cards are strong gold with white text
 - `the`, `Your Own Adventure`, and `Discover` use the header-logo white
 - the weather widget and `Book Event` button should use matching dark-glass header styling for balance on this branch
+- wildlife now includes more active gull and pelican behaviors, with daytime/golden-hour dive, skim, and recover motion layered into the existing ambient flights
 
 ## Build And Push Rule
 
