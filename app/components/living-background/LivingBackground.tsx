@@ -10,6 +10,7 @@ import WeatherEffects from './WeatherEffects'
 import WaterReflection from './WaterReflection'
 import Skyline from './Skyline'
 import Wildlife from './Wildlife'
+import DockPostsForeground from './DockPostsForeground'
 import Starfield from '../Starfield'
 
 const WEATHER_FETCH_INTERVAL = 30 * 60 * 1000 // 30 minutes
@@ -125,6 +126,10 @@ export default function LivingBackground({ overrideDate }: LivingBackgroundProps
         isMobile={isMobile}
         reducedMotion={reducedMotion}
         starsOpacity={skyData.starsOpacity}
+      />
+      <DockPostsForeground
+        sunAltitude={skyData.sunPosition.altitude}
+        isMobile={isMobile}
       />
       <Starfield opacity={skyData.starsOpacity} />
     </div>

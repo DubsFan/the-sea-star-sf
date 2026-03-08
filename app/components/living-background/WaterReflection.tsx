@@ -200,9 +200,6 @@ export default function WaterReflection({
       : alpha(skyBottom, 0.08)
   const waterBandHeight = 'calc(18vh + 0.35vh)'
   const seamMaskHeight = isMobile ? '6.2vh' : '7vh'
-  const dockPostsFrameHeight = isMobile ? '8vh' : '9.5vh'
-  const dockPostsImageMinHeight = isMobile ? '13vh' : '15vh'
-  const dockPostOpacity = isNight ? 0.78 : warm ? 0.86 : 0.82
   const motion = (name: string, duration: string, timing = 'ease-in-out', extras = 'infinite alternate') =>
     reducedMotion ? 'none' : `${name} ${duration} ${timing} ${extras}`
 
@@ -469,24 +466,6 @@ export default function WaterReflection({
         }}
       />
 
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 z-[3] overflow-hidden pointer-events-none"
-        style={{
-          height: dockPostsFrameHeight,
-        }}
-      >
-        <img
-          src="/doc%20posts.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute bottom-0 left-0 w-full h-auto max-w-none select-none"
-          style={{
-            minHeight: dockPostsImageMinHeight,
-            opacity: dockPostOpacity,
-          }}
-        />
-      </div>
     </div>
   )
 }
