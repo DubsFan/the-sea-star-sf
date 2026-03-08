@@ -72,6 +72,7 @@ Follow these rules exactly:
 8. Do not commit `output/` screenshots or debug artifacts
 9. Do not stop at local edits when the user expects to see the work in preview
 10. If PR automation is blocked by missing GitHub auth, report that blocker immediately
+11. Keep commit identity only under GG / `DubsFan`; never add Claude, Anthropic, Codex, OpenAI, or ChatGPT as co-author, co-signer, trailer, or signature
 
 ### Required Pre-Flight Before Every Push
 

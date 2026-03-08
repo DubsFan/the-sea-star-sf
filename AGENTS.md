@@ -92,6 +92,12 @@ Visible completion rule:
 4. PR status must be updated when GitHub auth is available
 5. if PR automation is blocked by missing auth, report that blocker immediately in the handoff
 
+Commit identity rule:
+
+1. commits must be attributed only to GG / `DubsFan`
+2. never add Claude, Anthropic, Codex, OpenAI, or ChatGPT as co-author, co-signer, trailer, or signature in commits
+3. never add AI co-sign language to commit messages
+
 ## Branch-Specific Override To Primary Deploy Rule
 
 The primary `CLAUDE.md` says production deploys happen through Vercel CLI.

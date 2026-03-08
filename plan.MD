@@ -87,6 +87,12 @@ For visible completion on this branch:
 4. update or create the PR when GitHub auth is available
 5. report any auth or deploy blocker immediately
 
+Commit identity rule:
+
+1. commit authorship stays only under GG / `DubsFan`
+2. do not add Claude, Anthropic, Codex, OpenAI, or ChatGPT as co-author, co-signer, trailer, or signature
+3. do not use AI co-sign wording in commit messages
+
 ## Current Branch Focus
 
 This branch is the living background branch.

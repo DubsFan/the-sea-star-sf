@@ -46,6 +46,7 @@ These are the important durable facts:
 8. PR, commit, and merge are always part of the normal workflow unless explicitly paused.
 9. Users expect visible results, not just local edits, so meaningful UI work should end with commit plus push unless explicitly paused.
 10. If GitHub CLI auth is missing, PR automation is blocked and that blocker must be reported immediately instead of silently stopping at local changes.
+11. Commit identity must stay only under GG / `DubsFan`; do not add Claude, Anthropic, Codex, OpenAI, or ChatGPT as co-author, co-signer, trailer, or signature.
 
 ## Primary Workflow Baseline
 
