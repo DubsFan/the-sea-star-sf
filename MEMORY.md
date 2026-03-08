@@ -87,6 +87,7 @@ The most important inherited rules are:
 - `the`, `Your Own Adventure`, and `Discover` use the header-logo white
 - the weather widget and `Book Event` button should use matching dark-glass header styling for balance on this branch
 - wildlife now includes more active gull and pelican behaviors, with daytime/golden-hour dive, skim, and recover motion layered into the existing ambient flights
+- sunset and golden-evening behavior now forces a visible hero pelican dive with deeper water contact and a splash cue so hunting reads clearly in preview
 
 ## Build And Push Rule
 

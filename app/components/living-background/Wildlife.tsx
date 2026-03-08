@@ -14,6 +14,7 @@ type FlightKind =
   | 'ambient-single'
   | 'paired-pass'
   | 'low-pelican'
+  | 'hero-pelican-dive'
   | 'pelican-dive'
   | 'gull-dive'
   | 'gull-skim-pack'
@@ -26,6 +27,7 @@ type PathName =
   | 'bird-arc-high'
   | 'bird-arc-mid'
   | 'bird-arc-low'
+  | 'bird-dive-pelican-hero'
   | 'bird-dive-pelican'
   | 'bird-dive-gull'
   | 'bird-skim-water'
@@ -55,6 +57,7 @@ interface FlightGroup {
   width: number
   height: number
   opacity: number
+  startLeft: string
   pathName: PathName
   pathTiming: string
   actionProfile: ActionProfile
@@ -64,6 +67,13 @@ interface FlightGroup {
   bankTilt: number
   bankIterations: number | 'infinite'
   bodyName?: BodyName
+  splash?: {
+    left: number
+    top: number
+    size: number
+    delay: number
+    duration: number
+  }
   members: BirdMember[]
 }
 
@@ -71,10 +81,12 @@ type WeightedKind = [FlightKind, number]
 
 const ACTIVE_PHASES: SkyPhase[] = ['sunrise', 'goldenMorning', 'day', 'goldenEvening', 'sunset']
 const GOLDEN_PHASES: SkyPhase[] = ['sunrise', 'goldenMorning', 'goldenEvening', 'sunset']
+const HERO_DIVE_PHASES: SkyPhase[] = ['goldenEvening', 'sunset']
 
 const ACTION_COOLDOWNS: Partial<Record<FlightKind, number>> = {
   'paired-pass': 18000,
   'low-pelican': 24000,
+  'hero-pelican-dive': 12000,
   'pelican-dive': 16000,
   'gull-dive': 9500,
   'gull-skim-pack': 8500,
@@ -125,22 +137,22 @@ function phaseWeights(phase: SkyPhase, isMobile: boolean): WeightedKind[] {
   const weights: WeightedKind[] =
     phase === 'day'
       ? [
-          ['ambient-single', 0.18],
-          ['paired-pass', 0.1],
-          ['low-pelican', 0.08],
-          ['pelican-dive', 0.16],
-          ['gull-dive', 0.17],
-          ['gull-skim-pack', 0.2],
-          ['pelican-skim-recover', 0.11],
+          ['ambient-single', 0.08],
+          ['paired-pass', 0.08],
+          ['low-pelican', 0.05],
+          ['pelican-dive', 0.24],
+          ['gull-dive', 0.2],
+          ['gull-skim-pack', 0.23],
+          ['pelican-skim-recover', 0.12],
         ]
       : [
-          ['ambient-single', 0.2],
-          ['paired-pass', 0.12],
-          ['low-pelican', 0.1],
-          ['pelican-dive', 0.18],
-          ['gull-dive', 0.14],
-          ['gull-skim-pack', 0.16],
-          ['pelican-skim-recover', 0.1],
+          ['ambient-single', 0.1],
+          ['paired-pass', 0.1],
+          ['low-pelican', 0.06],
+          ['pelican-dive', 0.24],
+          ['gull-dive', 0.18],
+          ['gull-skim-pack', 0.2],
+          ['pelican-skim-recover', 0.12],
         ]
 
   if (!isMobile) return weights
@@ -148,7 +160,7 @@ function phaseWeights(phase: SkyPhase, isMobile: boolean): WeightedKind[] {
   return weights.map(([kind, weight]) => {
     if (kind === 'gull-skim-pack') return [kind, weight * 0.82]
     if (kind === 'paired-pass') return [kind, weight * 0.86]
-    if (kind === 'ambient-single') return [kind, weight * 1.1]
+    if (kind === 'ambient-single') return [kind, weight * 0.8]
     return [kind, weight]
   })
 }
@@ -178,6 +190,19 @@ function chooseKind(
   }
 
   return 'ambient-single'
+}
+
+function isActiveDiveKind(kind: FlightKind) {
+  return kind === 'hero-pelican-dive' || kind === 'pelican-dive' || kind === 'gull-dive' || kind === 'gull-skim-pack' || kind === 'pelican-skim-recover'
+}
+
+function pickForcedDiveKind(isMobile: boolean): FlightKind {
+  if (isMobile) return 'hero-pelican-dive'
+  const roll = Math.random()
+  if (roll < 0.54) return 'hero-pelican-dive'
+  if (roll < 0.76) return 'pelican-dive'
+  if (roll < 0.9) return 'gull-skim-pack'
+  return 'gull-dive'
 }
 
 function gullFlapDuration(pose: Pose) {
@@ -287,6 +312,8 @@ function makeFlightBase(
     bankIterations: number | 'infinite'
     bankDuration?: [number, number]
     bodyName?: BodyName
+    splash?: FlightGroup['splash']
+    startLeft?: string
     members: BirdMember[]
   },
 ): FlightGroup {
@@ -313,6 +340,7 @@ function makeFlightBase(
     width,
     height,
     opacity: laneOpacity(lane, starsOpacity, actionProfile),
+    startLeft: config.startLeft ?? (direction === 'ltr' ? '-18vw' : '102vw'),
     pathName: config.pathName,
     pathTiming: config.pathTiming,
     actionProfile,
@@ -322,6 +350,7 @@ function makeFlightBase(
     bankTilt,
     bankIterations: config.bankIterations,
     bodyName: config.bodyName,
+    splash: config.splash,
     members: config.members.map(member => ({
       ...member,
       x: member.x * (width / Math.max(config.width[0], 1)),
@@ -373,31 +402,76 @@ function buildAmbientFlight(id: number, kind: Extract<FlightKind, 'ambient-singl
 function buildPelicanDiveFlight(id: number, isMobile: boolean, starsOpacity: number): FlightGroup {
   const widthSeed = isMobile ? 104 : 132
   return makeFlightBase(id, 'pelican-dive', 'pelican', 'low', isMobile, starsOpacity, 'dive', {
-    duration: [18, 24],
-    width: isMobile ? [104, 124] : [126, 156],
+    duration: [16, 22],
+    width: isMobile ? [116, 136] : [144, 176],
     heightRatio: 0.44,
-    top: [46, 53],
+    top: [48, 55],
     pathName: 'bird-dive-pelican',
     pathTiming: 'cubic-bezier(0.32, 0.02, 0.16, 1)',
     bankName: 'bird-bank-hard',
     bankIterations: 1,
     bodyName: 'pelican-body-pitch',
+    splash: {
+      left: 0.54,
+      top: 0.78,
+      size: isMobile ? 18 : 26,
+      delay: 0.48,
+      duration: 1.45,
+    },
     members: buildPelicanMembers(Math.random() > 0.7 ? 2 : 1, widthSeed, ['dive', 'skim', 'recover']),
   })
+}
+
+function buildHeroPelicanDiveFlight(id: number, isMobile: boolean, starsOpacity: number): FlightGroup {
+  const widthSeed = isMobile ? 132 : 176
+  const hero = makeFlightBase(id, 'hero-pelican-dive', 'pelican', 'low', isMobile, starsOpacity, 'dive', {
+    duration: [10, 13],
+    width: isMobile ? [138, 162] : [184, 232],
+    heightRatio: 0.46,
+    top: isMobile ? [42, 47] : [44, 49],
+    startLeft: isMobile ? '18vw' : '32vw',
+    pathName: 'bird-dive-pelican-hero',
+    pathTiming: 'cubic-bezier(0.22, 0.02, 0.14, 1)',
+    bankName: 'bird-bank-hard',
+    bankIterations: 1,
+    bodyName: 'pelican-body-pitch',
+    splash: {
+      left: 0.66,
+      top: 0.88,
+      size: isMobile ? 28 : 42,
+      delay: 0.5,
+      duration: 1.7,
+    },
+    members: buildPelicanMembers(1, widthSeed, ['dive']),
+  })
+
+  return {
+    ...hero,
+    direction: 'ltr',
+    startLeft: isMobile ? '18vw' : '32vw',
+    opacity: Math.min(0.78, hero.opacity + 0.24),
+  }
 }
 
 function buildGullDiveFlight(id: number, isMobile: boolean, starsOpacity: number): FlightGroup {
   const widthSeed = isMobile ? 112 : 146
   return makeFlightBase(id, 'gull-dive', 'gull', 'mid', isMobile, starsOpacity, 'dive', {
-    duration: [14, 20],
-    width: isMobile ? [106, 136] : [126, 172],
+    duration: [13, 18],
+    width: isMobile ? [114, 144] : [142, 186],
     heightRatio: 0.39,
-    top: [34, 42],
+    top: [38, 46],
     pathName: 'bird-dive-gull',
     pathTiming: 'cubic-bezier(0.3, 0.03, 0.18, 1)',
     bankName: 'bird-bank-hard',
     bankIterations: 1,
     bodyName: 'gull-body-flick',
+    splash: {
+      left: 0.62,
+      top: 0.8,
+      size: isMobile ? 14 : 18,
+      delay: 0.5,
+      duration: 1.1,
+    },
     members: buildGullMembers(randomIntBetween(isMobile ? 3 : 4, isMobile ? 5 : 7), widthSeed, 'pack', ['dive', 'lift', 'recover']),
   })
 }
@@ -405,15 +479,22 @@ function buildGullDiveFlight(id: number, isMobile: boolean, starsOpacity: number
 function buildGullSkimPack(id: number, isMobile: boolean, starsOpacity: number): FlightGroup {
   const widthSeed = isMobile ? 120 : 154
   return makeFlightBase(id, 'gull-skim-pack', 'gull', 'low', isMobile, starsOpacity, 'skim', {
-    duration: [16, 23],
-    width: isMobile ? [116, 150] : [144, 190],
+    duration: [14, 20],
+    width: isMobile ? [126, 160] : [156, 204],
     heightRatio: 0.38,
-    top: [54, 60],
+    top: [57, 63],
     pathName: 'bird-skim-water',
     pathTiming: 'cubic-bezier(0.28, 0.04, 0.2, 1)',
     bankName: 'bird-bank-hard',
     bankIterations: 1,
     bodyName: 'gull-body-flick',
+    splash: {
+      left: 0.66,
+      top: 0.82,
+      size: isMobile ? 16 : 22,
+      delay: 0.54,
+      duration: 1.0,
+    },
     members: buildGullMembers(randomIntBetween(isMobile ? 5 : 7, isMobile ? 7 : 10), widthSeed, 'pack', ['skim', 'skim', 'recover', 'lift']),
   })
 }
@@ -421,21 +502,29 @@ function buildGullSkimPack(id: number, isMobile: boolean, starsOpacity: number):
 function buildPelicanSkimRecover(id: number, isMobile: boolean, starsOpacity: number): FlightGroup {
   const widthSeed = isMobile ? 102 : 128
   return makeFlightBase(id, 'pelican-skim-recover', 'pelican', 'low', isMobile, starsOpacity, 'skim', {
-    duration: [20, 28],
-    width: isMobile ? [98, 120] : [118, 150],
+    duration: [18, 24],
+    width: isMobile ? [110, 132] : [136, 168],
     heightRatio: 0.43,
-    top: [56, 63],
+    top: [58, 64],
     pathName: 'bird-recover-climb',
     pathTiming: 'cubic-bezier(0.28, 0.06, 0.18, 1)',
     bankName: 'bird-bank-hard',
     bankIterations: 1,
     bodyName: 'pelican-body-pitch',
+    splash: {
+      left: 0.58,
+      top: 0.8,
+      size: isMobile ? 18 : 24,
+      delay: 0.42,
+      duration: 1.25,
+    },
     members: buildPelicanMembers(Math.random() > 0.68 ? 2 : 1, widthSeed, ['skim', 'recover']),
   })
 }
 
 function buildFlight(id: number, kind: FlightKind, isMobile: boolean, reducedMotion: boolean, starsOpacity: number): FlightGroup {
   if (reducedMotion) return buildAmbientFlight(id, 'ambient-single', isMobile, starsOpacity)
+  if (kind === 'hero-pelican-dive') return buildHeroPelicanDiveFlight(id, isMobile, starsOpacity)
   if (kind === 'pelican-dive') return buildPelicanDiveFlight(id, isMobile, starsOpacity)
   if (kind === 'gull-dive') return buildGullDiveFlight(id, isMobile, starsOpacity)
   if (kind === 'gull-skim-pack') return buildGullSkimPack(id, isMobile, starsOpacity)
@@ -582,7 +671,14 @@ export default function Wildlife({ skyPhase, isMobile, reducedMotion, starsOpaci
 
         if (starsOpacity >= 0.35 || current.length >= target) return current
 
-        const kind = chooseKind(skyPhase, isMobile, starsOpacity, now, lastActionAtRef.current)
+        const hasVisibleDive = current.some(flight => isActiveDiveKind(flight.kind))
+        const hasHeroDive = current.some(flight => flight.kind === 'hero-pelican-dive')
+        const kind =
+          HERO_DIVE_PHASES.includes(skyPhase) && !hasHeroDive
+            ? 'hero-pelican-dive'
+            : HERO_DIVE_PHASES.includes(skyPhase) && !hasVisibleDive
+            ? pickForcedDiveKind(isMobile)
+            : chooseKind(skyPhase, isMobile, starsOpacity, now, lastActionAtRef.current)
         if (ACTION_COOLDOWNS[kind]) lastActionAtRef.current[kind] = now
 
         return [...current, buildFlight(nextIdRef.current++, kind, isMobile, reducedMotion, starsOpacity)]
@@ -609,7 +705,7 @@ export default function Wildlife({ skyPhase, isMobile, reducedMotion, starsOpaci
     <div className="absolute inset-0 z-[5] overflow-hidden pointer-events-none">
       {flights.map(flight => {
         const fill = flight.species === 'pelican' ? '#2b3844' : '#31404d'
-        const startX = flight.direction === 'ltr' ? '-18vw' : '102vw'
+        const startX = flight.startLeft
         const bankStyle: CSSProperties = {
           transformOrigin: '50% 50%',
           ['--bird-bank-tilt' as string]: `${flight.bankTilt}deg`,
@@ -650,6 +746,19 @@ export default function Wildlife({ skyPhase, isMobile, reducedMotion, starsOpaci
             >
               <div className="h-full w-full will-change-transform" style={bankStyle}>
                 <div className="h-full w-full will-change-transform" style={bodyStyle}>
+                  {flight.splash && !reducedMotion && (
+                    <div
+                      className="bird-splash"
+                      style={{
+                        left: `${flight.splash.left * 100}%`,
+                        top: `${flight.splash.top * 100}%`,
+                        width: `${flight.splash.size}px`,
+                        height: `${flight.splash.size}px`,
+                        animationDelay: `${Math.max(0, flight.duration * flight.splash.delay)}s`,
+                        animationDuration: `${flight.splash.duration}s`,
+                      }}
+                    />
+                  )}
                   {flight.members.map(member => (
                     <div
                       key={member.id}

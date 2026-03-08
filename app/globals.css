@@ -273,38 +273,48 @@ body {
 }
 
 @keyframes bird-dive-pelican {
-  0% { transform: translate3d(0, 8px, 0); }
-  18% { transform: translate3d(0, -4px, 0); }
-  42% { transform: translate3d(0, 24px, 0); }
-  58% { transform: translate3d(0, 34px, 0); }
-  76% { transform: translate3d(0, 12px, 0); }
-  100% { transform: translate3d(0, -10px, 0); }
+  0% { transform: translate3d(0, 4px, 0); }
+  18% { transform: translate3d(0, -8px, 0); }
+  44% { transform: translate3d(0, 34px, 0); }
+  56% { transform: translate3d(0, 52px, 0); }
+  74% { transform: translate3d(0, 18px, 0); }
+  100% { transform: translate3d(0, -16px, 0); }
+}
+
+@keyframes bird-dive-pelican-hero {
+  0% { transform: translate3d(0, 6px, 0); }
+  16% { transform: translate3d(0, -14px, 0); }
+  36% { transform: translate3d(0, 22px, 0); }
+  54% { transform: translate3d(0, 88px, 0); }
+  62% { transform: translate3d(0, 102px, 0); }
+  76% { transform: translate3d(0, 42px, 0); }
+  100% { transform: translate3d(0, -18px, 0); }
 }
 
 @keyframes bird-dive-gull {
-  0% { transform: translate3d(0, 6px, 0); }
-  22% { transform: translate3d(0, -8px, 0); }
-  46% { transform: translate3d(0, 18px, 0); }
-  62% { transform: translate3d(0, 26px, 0); }
-  78% { transform: translate3d(0, 6px, 0); }
-  100% { transform: translate3d(0, -6px, 0); }
+  0% { transform: translate3d(0, 2px, 0); }
+  22% { transform: translate3d(0, -10px, 0); }
+  48% { transform: translate3d(0, 26px, 0); }
+  60% { transform: translate3d(0, 38px, 0); }
+  78% { transform: translate3d(0, 10px, 0); }
+  100% { transform: translate3d(0, -10px, 0); }
 }
 
 @keyframes bird-skim-water {
-  0% { transform: translate3d(0, 12px, 0); }
-  18% { transform: translate3d(0, 6px, 0); }
-  38% { transform: translate3d(0, 26px, 0); }
-  56% { transform: translate3d(0, 28px, 0); }
-  74% { transform: translate3d(0, 14px, 0); }
-  100% { transform: translate3d(0, -4px, 0); }
+  0% { transform: translate3d(0, 10px, 0); }
+  18% { transform: translate3d(0, 4px, 0); }
+  38% { transform: translate3d(0, 34px, 0); }
+  56% { transform: translate3d(0, 38px, 0); }
+  74% { transform: translate3d(0, 18px, 0); }
+  100% { transform: translate3d(0, -6px, 0); }
 }
 
 @keyframes bird-recover-climb {
-  0% { transform: translate3d(0, 16px, 0); }
-  26% { transform: translate3d(0, 28px, 0); }
-  48% { transform: translate3d(0, 30px, 0); }
-  70% { transform: translate3d(0, 10px, 0); }
-  100% { transform: translate3d(0, -12px, 0); }
+  0% { transform: translate3d(0, 22px, 0); }
+  26% { transform: translate3d(0, 38px, 0); }
+  48% { transform: translate3d(0, 42px, 0); }
+  70% { transform: translate3d(0, 12px, 0); }
+  100% { transform: translate3d(0, -16px, 0); }
 }
 
 @keyframes bird-bank-hard {
@@ -330,6 +340,29 @@ body {
   62% { transform: translate3d(0, 1px, 0) rotate(6deg); }
   82% { transform: translate3d(0, -1px, 0) rotate(-6deg); }
   100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+@keyframes bird-splash-ring {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  15% { opacity: 0.85; }
+  60% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.65; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
+.bird-splash {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  border: 1px solid rgba(235, 243, 255, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 14px rgba(180, 220, 255, 0.18);
+  background: radial-gradient(circle, rgba(236, 244, 255, 0.55) 0%, rgba(210, 232, 255, 0.18) 38%, rgba(210, 232, 255, 0) 72%);
+  opacity: 0;
+  animation-name: bird-splash-ring;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
 }
 
 @keyframes moon-turn {

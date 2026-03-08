@@ -144,6 +144,7 @@ The codex branch now includes:
 - raised water layer to cover the seam at the skyline/water break
 - daytime bird system replacing the failed scratch-like birds
 - expanded daytime bird behaviors with gull and pelican dive / skim / recover motion
+- a forced hero pelican dive at golden evening and sunset, with deeper water contact and splash timing so the hunt action reads clearly
 - celestial path changes for sun and moon movement
 - weather bar/mobile weather adjustments
 - hero CTA styling and placement changes
