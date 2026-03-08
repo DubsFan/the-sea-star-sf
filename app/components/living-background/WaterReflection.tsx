@@ -177,6 +177,7 @@ export default function WaterReflection({
   const gradientId = useId().replace(/:/g, '')
   const warm = isWarmSky(skyBottom)
   const isNight = sunAltitude < -6
+  const isMobile = quality === 'low'
   const windFactor = clamp(windSpeed / 20, 0, 1)
   const cloudSoftener = 1 - clamp(cloudCoverage / 120, 0, 0.6)
   const lineCount = quality === 'high' && !reducedMotion ? 8 : 6
@@ -197,6 +198,9 @@ export default function WaterReflection({
     : isNight
       ? alpha(moonGlowColor, 0.08 * cloudSoftener)
       : alpha(skyBottom, 0.08)
+  const seamMaskHeight = isMobile ? '6.2vh' : '7vh'
+  const dockPostsHeight = isMobile ? '5.6vh' : '6.9vh'
+  const dockPostOpacity = isNight ? 0.7 : warm ? 0.78 : 0.72
   const motion = (name: string, duration: string, timing = 'ease-in-out', extras = 'infinite alternate') =>
     reducedMotion ? 'none' : `${name} ${duration} ${timing} ${extras}`
 
@@ -204,8 +208,8 @@ export default function WaterReflection({
     <div
       className="absolute left-0 right-0 z-[4] overflow-hidden"
       style={{
-        bottom: '-1.1vh',
-        height: '20.5vh',
+        bottom: '-1.4vh',
+        height: '21.7vh',
         animation: motion('wave-breathe', '6s'),
         transformOrigin: 'bottom',
       }}
@@ -439,6 +443,32 @@ export default function WaterReflection({
         className="absolute inset-x-0 bottom-0 h-[30%]"
         style={{
           background: 'linear-gradient(180deg, transparent 0%, rgba(2, 4, 7, 0.24) 42%, rgba(2, 3, 6, 0.45) 100%)',
+        }}
+      />
+
+      <div
+        className="absolute inset-x-0 bottom-0 z-[1] pointer-events-none"
+        style={{
+          height: seamMaskHeight,
+          background: `linear-gradient(180deg,
+            transparent 0%,
+            ${alpha('#04070b', 0.1)} 22%,
+            ${alpha('#020407', 0.5)} 62%,
+            ${alpha('#010204', 0.9)} 100%)`,
+          boxShadow: `inset 0 -2px 0 ${alpha('#010204', 0.92)}`,
+        }}
+      />
+
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 z-[2] pointer-events-none"
+        style={{
+          height: dockPostsHeight,
+          backgroundImage: 'url(/doc%20posts.png)',
+          backgroundPosition: 'bottom center',
+          backgroundRepeat: 'repeat-x',
+          backgroundSize: 'auto 100%',
+          opacity: dockPostOpacity,
         }}
       />
     </div>

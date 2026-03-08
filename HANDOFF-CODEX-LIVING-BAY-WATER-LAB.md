@@ -145,6 +145,7 @@ The codex branch now includes:
 - daytime bird system replacing the failed scratch-like birds
 - expanded daytime bird behaviors with gull and pelican dive / skim / recover motion
 - a forced hero pelican dive at golden evening and sunset, with deeper water contact and splash timing so the hunt action reads clearly
+- the landing water layer now has a bottom dock-post overlay from `public/doc posts.png`, plus a stronger seam mask and slightly deeper bottom overlap to hide the animated edge line
 - celestial path changes for sun and moon movement
 - weather bar/mobile weather adjustments
 - hero CTA styling and placement changes
