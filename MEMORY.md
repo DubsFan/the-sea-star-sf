@@ -83,6 +83,7 @@ The most important inherited rules are:
 - the hero CTA row is anchored near the skyline/water break
 - CTA cards are strong gold with white text
 - `the`, `Your Own Adventure`, and `Discover` use the header-logo white
+- the weather widget and `Book Event` button should use matching dark-glass header styling for balance on this branch
 
 ## Build And Push Rule
 

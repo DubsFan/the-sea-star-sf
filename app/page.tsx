@@ -261,7 +261,12 @@ export default function Home() {
           <a href="#" onClick={(e) => { e.preventDefault(); setLoginOpen(true) }} className="text-[0.65rem] font-dm tracking-[0.2em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline">
             Login
           </a>
-          <a href="https://app.perfectvenue.com/venues/sea-star/hello" target="_blank" rel="noopener" className="text-[0.6rem] font-dm tracking-[0.2em] uppercase px-3.5 py-1.5 border border-sea-gold/30 text-sea-gold hover:border-sea-gold hover:bg-sea-gold/5 transition-all no-underline">
+          <a
+            href="https://app.perfectvenue.com/venues/sea-star/hello"
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center border border-sea-gold/30 bg-[rgba(8,12,18,0.22)] px-3.5 py-1.5 font-dm text-[0.6rem] tracking-[0.16em] uppercase text-sea-gold/75 transition-all hover:border-sea-gold/60 hover:bg-[rgba(8,12,18,0.35)] hover:shadow-[0_0_0_1px_rgba(201,165,78,0.10)] no-underline"
+          >
             Book Event
           </a>
         </div>

@@ -100,6 +100,12 @@ Primary systems in scope:
 - weather widget
 - hero integration with the living background
 
+## Current Header Decisions
+
+- the weather widget and `Book Event` button should use the same header control shell for balance
+- on this branch, `Book Event` should mirror the weather widget's dark glass background, border strength, and hover treatment
+- if this branch is merged later, that header pairing should come forward with it
+
 ## Sources Of Truth
 
 Task and workflow source of truth:
