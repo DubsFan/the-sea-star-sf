@@ -144,6 +144,8 @@ Minimum memory persistence standard:
 8. After meaningful progress, persist institutional memory into the repo docs.
 9. Treat commit and PR progression as part of the task, not optional follow-up.
 10. Do not stop at a local-only state when the user expects to see the change live in preview.
+11. When using transparent foreground edge art, do not assume a CSS background repeat will preserve the visible subject; verify whether the subject lives only at the image bottom before replacing an `img` with a background treatment.
+12. When terminal screenshot tooling returns blank or inconsistent frames, do not claim visual confirmation from it; rely on the live preview or a verified local browser capture instead.
 
 ## Startup Command
 

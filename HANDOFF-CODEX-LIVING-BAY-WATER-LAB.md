@@ -115,10 +115,14 @@ Visible completion for this branch means:
 
 Recent branch commits from this session:
 
-- `7363441` Merge living background into codex branch
-- `08c2567` Refine hero styling and skyline layer
-- `5a9d6d1` Adjust hero CTA placement and styling
-- `55e2ed0` Center hero CTA row
+- `0709807` Restore visible dock posts foreground
+- `46644fe` Repeat dock posts to screen edges
+- `810f90c` Make dock posts a fixed foreground layer
+- `1582cb2` Align water band to skyline base
+- `81bf4a1` Finish landing water edge with dock posts
+- `fcfbfbf` Make pelican dives read clearly at sunset
+- `15c7fa1` Center hero discover marker
+- `072e2c6` Add active pelican and gull hunt behavior
 
 ### Living Background Files on This Branch
 
@@ -145,9 +149,8 @@ The codex branch now includes:
 - daytime bird system replacing the failed scratch-like birds
 - expanded daytime bird behaviors with gull and pelican dive / skim / recover motion
 - a forced hero pelican dive at golden evening and sunset, with deeper water contact and splash timing so the hunt action reads clearly
-- the landing water layer now has a bottom dock-post overlay from `public/doc posts.png`, plus a stronger seam mask and slightly deeper bottom overlap to hide the animated edge line
-- the corrected water-edge treatment is: water fills the full band from viewport bottom to skyline base, and dock posts render as a cropped front image overlay instead of a compressed background strip
-- dock posts are now treated as a stationary bottom foreground layer in `LivingBackground` rather than part of `WaterReflection`, with reduced night brightness
+- the landing water layer now has a stronger seam mask and water-band geometry aligned to the skyline base
+- `DockPostsForeground.tsx` was added so dock posts can be a stationary bottom foreground layer instead of moving with the water
 - celestial path changes for sun and moon movement
 - weather bar/mobile weather adjustments
 - hero CTA styling and placement changes
@@ -161,6 +164,10 @@ The codex branch now includes:
 - The hero CTA cards were changed to strong gold cards with white text.
 - `the`, `Your Own Adventure`, and `Discover` were changed to the header-logo white.
 - The weather widget and `Book Event` button should share the same dark-glass control styling for header balance on this branch.
+- The bottom water band should run from viewport bottom to skyline base.
+- Dock posts should be stationary foreground art, not part of the animated water.
+- Dock posts should sit low enough that no water shows beneath them.
+- The dock-post PNG should remain a visible foreground image treatment; the repeated CSS background experiment hid the posts and should not be reused as the default fix.
 
 ### Known Risks / Things To Verify Before New Work
 
@@ -172,6 +179,29 @@ Before starting unrelated tasks, visually verify:
 4. CTA cards are visible against the current sky
 5. current-time sky behavior matches real time when not in demo mode
 6. branch preview reflects the latest pushed commit
+7. dock posts are visibly present in the live preview
+8. no post is clipped at the right screen edge
+9. no water strip shows below the dock posts
+
+### Session Failure Modes To Avoid Repeating
+
+1. Do not move the dock-post art into `WaterReflection`; it must stay fixed in `LivingBackground`.
+2. Do not replace the dock-post foreground image with a CSS repeated background unless a verified result shows the posts remain visible. That experiment hid the artwork because the source PNG carries the detail only at the bottom.
+3. Do not trust blank white terminal screenshots as proof of visual state.
+4. If a commit hits a transient worktree `index.lock` error, retry after checking there is no active git process before assuming repo corruption.
+
+### Current Work-In-Progress State
+
+As of commit `0709807`:
+
+1. Weather widget/header balance work is committed and pushed.
+2. Active gull/pelican hunt behavior is committed and pushed.
+3. Water seam masking and water-band alignment work is committed and pushed.
+4. Dock posts were restored to a stationary foreground image after the failed repeated-background experiment.
+5. The latest dock-post state still needs direct live-preview visual confirmation for:
+   - visibility
+   - no water below
+   - no right-edge clipping
 
 ### Demo and Time Controls
 

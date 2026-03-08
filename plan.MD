@@ -112,6 +112,13 @@ Primary systems in scope:
 - on this branch, `Book Event` should mirror the weather widget's dark glass background, border strength, and hover treatment
 - if this branch is merged later, that header pairing should come forward with it
 
+## Current Living Background Decisions
+
+- sunset and golden-evening should show clearly readable pelican dive action, not just denser ambient birds
+- the bottom water band should run from viewport bottom to skyline base
+- dock posts belong to a stationary foreground layer, not to the animated water container
+- do not convert the dock-post artwork to a repeated CSS background band; keep it as a visible foreground image treatment unless a verified replacement preserves the post detail and edge coverage
+
 ## Sources Of Truth
 
 Task and workflow source of truth:

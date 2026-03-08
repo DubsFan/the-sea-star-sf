@@ -92,6 +92,62 @@ The most important inherited rules are:
 - the bottom water band should run exactly from the viewport bottom up to the skyline base, and dock posts must render as a front cropped image overlay rather than a compressed background band
 - dock posts are a stationary foreground layer in `LivingBackground`, not part of the animated water container, and should be dimmed for night while staying brighter in daytime
 
+## Session Log: Weather, Wildlife, Water Edge
+
+Completed in this session:
+
+1. Header weather widget was refined in `app/components/WeatherBar.tsx`:
+   - button now uses temp + live sky description
+   - desktop uses a compact left-side tray
+   - mobile can use a broader tray
+   - tray content reduced to `Sunset` and `Moon`
+2. `Book Event` in `app/page.tsx` was restyled to visually match the weather control shell.
+3. Wildlife was expanded in `app/components/living-background/Wildlife.tsx` and `app/globals.css`:
+   - gull and pelican dive / skim / recover behaviors
+   - stronger sunset pelican-dive emphasis
+4. Hero `Discover` was centered with a full-width bottom rail wrapper in `app/page.tsx`.
+5. Bottom water treatment was refactored:
+   - `WaterReflection.tsx` now owns the water band and seam masking
+   - `DockPostsForeground.tsx` was added so dock posts can be stationary in front of the water
+
+Problems hit in this session:
+
+1. The first dock-post pass put the posts inside the animated water layer, which made them move when they should have stayed fixed.
+2. A later dock-post pass replaced the visible foreground image with a repeated CSS background band, which hid the posts because the PNG is mostly transparent and the real post detail sits at the bottom of the source image.
+3. Terminal screenshot capture was unreliable during the water/post work:
+   - some demo captures were usable
+   - some normal landing captures came back blank white and could not be trusted
+4. Git worktree commits intermittently hit a stale `index.lock` condition in the linked worktree metadata, then cleared on retry.
+
+Current branch state from this session:
+
+1. Recent commits:
+   - `0709807` Restore visible dock posts foreground
+   - `46644fe` Repeat dock posts to screen edges
+   - `810f90c` Make dock posts a fixed foreground layer
+   - `1582cb2` Align water band to skyline base
+   - `81bf4a1` Finish landing water edge with dock posts
+   - `fcfbfbf` Make pelican dives read clearly at sunset
+   - `15c7fa1` Center hero discover marker
+2. The correct preview project remains `Vercel – the-sea-star`.
+3. Untracked local reference assets still in `public/` should not be committed:
+   - `Seagull_Etching_Video_Generation.mp4`
+   - `Vintage_Pelican_Engraving_Animation.mp4`
+   - `pelican dive.png`
+   - `pelican_1.mp4`
+   - `pelican_2.mp4`
+   - `pelican_4.png`
+   - `seagul_123.png`
+   - `seagull off water.png`
+4. `output/` remains local-only and should not be committed.
+
+Current unresolved risk:
+
+1. The dock-post layer was restored to a foreground image in `DockPostsForeground.tsx`, but the exact live preview still needs direct visual confirmation after the latest push to confirm:
+   - posts are visible
+   - no water shows below them
+   - no post is clipped at the far left or right edge
+
 ## Build And Push Rule
 
 Before push:
