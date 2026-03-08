@@ -77,6 +77,16 @@ For meaningful task completion:
 
 Do not treat a local uncommitted state as the default stopping point unless explicitly requested.
 
+Do not treat "implemented locally" as completion when the user expects to see the result.
+
+For visible completion on this branch:
+
+1. commit the work
+2. push `codex/living-bay-water-lab`
+3. let the Git-connected Vercel preview rebuild
+4. update or create the PR when GitHub auth is available
+5. report any auth or deploy blocker immediately
+
 ## Current Branch Focus
 
 This branch is the living background branch.

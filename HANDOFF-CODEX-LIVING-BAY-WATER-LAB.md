@@ -70,6 +70,8 @@ Follow these rules exactly:
 6. Push to `origin/codex/living-bay-water-lab` and let Vercel build from Git
 7. Never modify `main` or `living-bay-background`
 8. Do not commit `output/` screenshots or debug artifacts
+9. Do not stop at local edits when the user expects to see the work in preview
+10. If PR automation is blocked by missing GitHub auth, report that blocker immediately
 
 ### Required Pre-Flight Before Every Push
 
@@ -100,6 +102,13 @@ git push origin codex/living-bay-water-lab
 ```
 
 Then verify the Git-based Vercel preview after rebuild.
+
+Visible completion for this branch means:
+
+1. commit the work
+2. push the branch
+3. verify the Git-based preview when possible
+4. update or create the PR if GitHub auth is available
 
 ### Current Branch State
 

@@ -44,6 +44,8 @@ These are the important durable facts:
 6. The correct Vercel project with env vars is `the-sea-star`.
 7. The temporary `the-sea-star-codex` Vercel project was the wrong target for real branch deployment.
 8. PR, commit, and merge are always part of the normal workflow unless explicitly paused.
+9. Users expect visible results, not just local edits, so meaningful UI work should end with commit plus push unless explicitly paused.
+10. If GitHub CLI auth is missing, PR automation is blocked and that blocker must be reported immediately instead of silently stopping at local changes.
 
 ## Primary Workflow Baseline
 

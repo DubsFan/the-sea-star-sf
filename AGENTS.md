@@ -84,6 +84,14 @@ Default workflow:
 
 Do not leave meaningful finished work uncommitted unless explicitly asked.
 
+Visible completion rule:
+
+1. local code changes are not enough
+2. meaningful work must be committed
+3. the working branch must be pushed so the Git-connected Vercel preview can rebuild
+4. PR status must be updated when GitHub auth is available
+5. if PR automation is blocked by missing auth, report that blocker immediately in the handoff
+
 ## Branch-Specific Override To Primary Deploy Rule
 
 The primary `CLAUDE.md` says production deploys happen through Vercel CLI.
@@ -129,6 +137,7 @@ Minimum memory persistence standard:
 7. Use Git push as the default deployment path for this branch.
 8. After meaningful progress, persist institutional memory into the repo docs.
 9. Treat commit and PR progression as part of the task, not optional follow-up.
+10. Do not stop at a local-only state when the user expects to see the change live in preview.
 
 ## Startup Command
 
