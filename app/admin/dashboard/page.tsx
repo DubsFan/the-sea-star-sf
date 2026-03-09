@@ -10,6 +10,7 @@ interface Stats {
   publishedPosts: number
   unreadMessages: number
   upcomingEvents: number
+  pendingReview: number
   socialConfigured: boolean
   weeklyBlogPublished: boolean
   weeklySocialPosted: boolean
@@ -56,11 +57,14 @@ export default function Dashboard() {
       {stats && (
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 -mx-1 px-1 scrollbar-hide">
           <StatusPill href="/admin/messages" label={`${stats.unreadMessages} unread`} highlight={stats.unreadMessages > 0} />
-          <StatusPill href="/admin/subscribers" label={`${stats.subscribers} subs`} />
-          <StatusPill href="/admin/create" label={`${stats.publishedPosts} posts`} />
+          <StatusPill href="/admin/marketing?tab=email" label={`${stats.subscribers} subs`} />
+          <StatusPill href="/admin/marketing?tab=blog" label={`${stats.publishedPosts} posts`} />
           <StatusPill label={stats.socialConfigured ? 'Social: Active' : 'Social: Off'} highlight={!stats.socialConfigured} />
+          {stats.pendingReview > 0 && (
+            <StatusPill href="/admin/marketing?tab=drafts&status=ready" label={`${stats.pendingReview} to review`} highlight />
+          )}
           {stats.upcomingEvents > 0 && (
-            <StatusPill href="/admin/create?tab=events" label={`${stats.upcomingEvents} events`} />
+            <StatusPill href="/admin/marketing?tab=events" label={`${stats.upcomingEvents} events`} />
           )}
         </div>
       )}
@@ -68,9 +72,9 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3 mb-8">
         <QuickAction href="/admin/menu" title="Update Menu" icon={<MenuQAIcon />} />
-        <QuickAction href="/admin/create?tab=blog" title="New Blog" icon={<BlogQAIcon />} />
-        <QuickAction href="/admin/create?tab=social" title="New Social Post" icon={<SocialQAIcon />} />
-        <QuickAction href="/admin/create?tab=events" title="New Event" icon={<EventQAIcon />} />
+        <QuickAction href="/admin/marketing?tab=blog" title="New Blog" icon={<BlogQAIcon />} />
+        <QuickAction href="/admin/marketing?tab=social" title="New Social Post" icon={<SocialQAIcon />} />
+        <QuickAction href="/admin/marketing?tab=events" title="New Event" icon={<EventQAIcon />} />
       </div>
 
       {/* Weekly Checklist */}
@@ -78,8 +82,8 @@ export default function Dashboard() {
         <div className="mb-8">
           <h2 className="font-cormorant text-lg text-sea-white mb-3">This Week</h2>
           <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-3">
-            <CheckItem done={stats.weeklyBlogPublished} label="Publish a blog post" href="/admin/create?tab=blog" />
-            <CheckItem done={stats.weeklySocialPosted} label="Post to social media" href="/admin/create?tab=social" />
+            <CheckItem done={stats.weeklyBlogPublished} label="Publish a blog post" href="/admin/marketing?tab=blog" />
+            <CheckItem done={stats.weeklySocialPosted} label="Post to social media" href="/admin/marketing?tab=social" />
             <CheckItem done={stats.weeklyMessagesRead} label="Check messages" href="/admin/messages" />
             <CheckItem done={false} label="Review menu for accuracy" href="/admin/menu" />
           </div>

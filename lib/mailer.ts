@@ -45,6 +45,18 @@ export async function renderMailerPreview(campaignId: string): Promise<string> {
 
   if (!campaign) throw new Error('Campaign not found')
 
+  if (campaign.content_type === 'standalone_email') {
+    const source: MailerSource = {
+      type: 'blog' as const,
+      title: campaign.subject || 'Newsletter',
+      excerpt: campaign.body_html || '',
+      imageUrl: campaign.hero_image,
+      ctaUrl: campaign.cta_url || 'https://theseastarsf.com',
+      ctaText: campaign.cta_text || 'Visit Us',
+    }
+    return renderMailerHtml(source, campaign.subject || source.title)
+  }
+
   const source = await getMailerSource(campaign.content_type, campaign.source_id)
   return renderMailerHtml(source, campaign.subject || source.title)
 }
@@ -106,7 +118,19 @@ export async function sendMailer(campaignId: string, actor?: string) {
 
   if (!campaign) throw new Error('Campaign not found')
 
-  const source = await getMailerSource(campaign.content_type, campaign.source_id)
+  let source: MailerSource
+  if (campaign.content_type === 'standalone_email') {
+    source = {
+      type: 'blog' as const,
+      title: campaign.subject || 'Newsletter',
+      excerpt: campaign.body_html || '',
+      imageUrl: campaign.hero_image,
+      ctaUrl: campaign.cta_url || 'https://theseastarsf.com',
+      ctaText: campaign.cta_text || 'Visit Us',
+    }
+  } else {
+    source = await getMailerSource(campaign.content_type, campaign.source_id)
+  }
   const html = renderMailerHtml(source, campaign.subject || source.title)
 
   const { data: subscribers } = await supabase

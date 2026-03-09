@@ -20,6 +20,14 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'published')
 
+  // Pending review count (status = 'ready' across content types)
+  const [readyBlog, readyEvents, readySocial] = await Promise.all([
+    supabase.from('blog_posts').select('*', { count: 'exact', head: true }).eq('status', 'ready'),
+    supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'ready'),
+    supabase.from('social_campaigns').select('*', { count: 'exact', head: true }).eq('status', 'ready'),
+  ])
+  const pendingReview = (readyBlog.count || 0) + (readyEvents.count || 0) + (readySocial.count || 0)
+
   // Check weekly activity
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
@@ -36,6 +44,7 @@ export async function GET(request: NextRequest) {
     publishedPosts: publishedCount || 0,
     unreadMessages: unread.count || 0,
     upcomingEvents: events.count || 0,
+    pendingReview,
     socialConfigured: !!(socialConfig.data?.value),
     weeklyBlogPublished: (weeklyBlog.count || 0) > 0,
     weeklySocialPosted: (weeklySocial.count || 0) > 0,

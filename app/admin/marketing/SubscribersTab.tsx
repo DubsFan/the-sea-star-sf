@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useSession } from '../session-context'
 
 interface Subscriber {
@@ -22,6 +23,58 @@ export default function SubscribersTab() {
   const [savingEdit, setSavingEdit] = useState(false)
 
   const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin' || session?.role === 'social_admin'
+
+  // Newsletter settings
+  const [showNewsletterSettings, setShowNewsletterSettings] = useState(false)
+  const [nlSettings, setNlSettings] = useState<Record<string, string>>({})
+  const [nlEditing, setNlEditing] = useState<Record<string, string>>({})
+  const [nlSaving, setNlSaving] = useState<string | null>(null)
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+
+  const loadNlSettings = async () => {
+    const res = await fetch('/api/admin/settings', { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        const map: Record<string, string> = {}
+        for (const s of data as { key: string; value: string }[]) {
+          if (s.key.startsWith('newsletter_')) map[s.key] = s.value
+        }
+        setNlSettings(map)
+      }
+    }
+  }
+
+  useEffect(() => { if (showNewsletterSettings) loadNlSettings() }, [showNewsletterSettings])
+
+  const saveNlSetting = async (key: string) => {
+    setNlSaving(key)
+    const res = await fetch('/api/admin/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ key, value: nlEditing[key] }),
+    })
+    if (res.ok) {
+      toast.success('Saved')
+      setNlSettings(prev => ({ ...prev, [key]: nlEditing[key] }))
+      setNlEditing(prev => { const n = { ...prev }; delete n[key]; return n })
+    } else {
+      toast.error('Failed')
+    }
+    setNlSaving(null)
+  }
+
+  const handlePreviewEmail = async () => {
+    setLoadingPreview(true)
+    try {
+      const res = await fetch('/api/newsletter/preview', { credentials: 'include' })
+      if (res.ok) setPreviewHtml(await res.text())
+      else toast.error('Preview failed')
+    } catch { toast.error('Preview failed') }
+    finally { setLoadingPreview(false) }
+  }
 
   const loadSubscribers = () => {
     fetch('/api/subscribe', { credentials: 'include' })
@@ -139,6 +192,87 @@ export default function SubscribersTab() {
 
   return (
     <div>
+      {/* Newsletter Settings Collapsible */}
+      <div className="mb-6">
+        <button
+          onClick={() => setShowNewsletterSettings(!showNewsletterSettings)}
+          className="flex items-center gap-2 text-sm text-sea-blue font-dm bg-transparent border-none cursor-pointer hover:text-sea-gold transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showNewsletterSettings ? 'rotate-90' : ''}`}>
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+          Newsletter Settings
+        </button>
+        {showNewsletterSettings && (
+          <div className="mt-3 bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-4">
+            <p className="text-xs text-sea-blue font-dm">Configure email newsletter schedule and template.</p>
+            {/* Cadence */}
+            <div>
+              <label className="block text-xs text-sea-blue mb-1 font-dm">Send Cadence</label>
+              <select
+                value={'newsletter_cadence' in nlEditing ? nlEditing.newsletter_cadence : nlSettings.newsletter_cadence || ''}
+                onChange={(e) => setNlEditing({ ...nlEditing, newsletter_cadence: e.target.value })}
+                onFocus={() => { if (!('newsletter_cadence' in nlEditing)) setNlEditing({ ...nlEditing, newsletter_cadence: nlSettings.newsletter_cadence || '' }) }}
+                className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded min-h-[44px]"
+              >
+                <option value="">Not set</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Biweekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+              {'newsletter_cadence' in nlEditing && (
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => saveNlSetting('newsletter_cadence')} disabled={nlSaving === 'newsletter_cadence'} className="px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer rounded disabled:opacity-50 min-h-[44px]">{nlSaving === 'newsletter_cadence' ? 'Saving...' : 'Save'}</button>
+                  <button onClick={() => setNlEditing(prev => { const n = { ...prev }; delete n.newsletter_cadence; return n })} className="px-4 py-2 bg-transparent text-sea-blue font-dm text-xs uppercase border border-sea-border cursor-pointer rounded min-h-[44px]">Cancel</button>
+                </div>
+              )}
+            </div>
+            {/* Next Send */}
+            <div>
+              <label className="block text-xs text-sea-blue mb-1 font-dm">Next Send Date</label>
+              <input
+                type="date"
+                value={'newsletter_next_send' in nlEditing ? nlEditing.newsletter_next_send : nlSettings.newsletter_next_send || ''}
+                onChange={(e) => setNlEditing({ ...nlEditing, newsletter_next_send: e.target.value })}
+                onFocus={() => { if (!('newsletter_next_send' in nlEditing)) setNlEditing({ ...nlEditing, newsletter_next_send: nlSettings.newsletter_next_send || '' }) }}
+                className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded min-h-[44px]"
+              />
+              {'newsletter_next_send' in nlEditing && (
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => saveNlSetting('newsletter_next_send')} disabled={nlSaving === 'newsletter_next_send'} className="px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer rounded disabled:opacity-50 min-h-[44px]">{nlSaving === 'newsletter_next_send' ? 'Saving...' : 'Save'}</button>
+                  <button onClick={() => setNlEditing(prev => { const n = { ...prev }; delete n.newsletter_next_send; return n })} className="px-4 py-2 bg-transparent text-sea-blue font-dm text-xs uppercase border border-sea-border cursor-pointer rounded min-h-[44px]">Cancel</button>
+                </div>
+              )}
+            </div>
+            {/* Template Notes */}
+            <div>
+              <label className="block text-xs text-sea-blue mb-1 font-dm">Email Template Notes</label>
+              <textarea
+                value={'newsletter_template_notes' in nlEditing ? nlEditing.newsletter_template_notes : nlSettings.newsletter_template_notes || ''}
+                onChange={(e) => setNlEditing({ ...nlEditing, newsletter_template_notes: e.target.value })}
+                onFocus={() => { if (!('newsletter_template_notes' in nlEditing)) setNlEditing({ ...nlEditing, newsletter_template_notes: nlSettings.newsletter_template_notes || '' }) }}
+                rows={2}
+                placeholder="Custom intro/outro text for newsletters..."
+                className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded resize-y"
+              />
+              {'newsletter_template_notes' in nlEditing && (
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => saveNlSetting('newsletter_template_notes')} disabled={nlSaving === 'newsletter_template_notes'} className="px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer rounded disabled:opacity-50 min-h-[44px]">{nlSaving === 'newsletter_template_notes' ? 'Saving...' : 'Save'}</button>
+                  <button onClick={() => setNlEditing(prev => { const n = { ...prev }; delete n.newsletter_template_notes; return n })} className="px-4 py-2 bg-transparent text-sea-blue font-dm text-xs uppercase border border-sea-border cursor-pointer rounded min-h-[44px]">Cancel</button>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handlePreviewEmail}
+              disabled={loadingPreview}
+              className="w-full sm:w-auto px-6 py-3 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all min-h-[44px] rounded disabled:opacity-50"
+            >
+              {loadingPreview ? 'Loading...' : 'Preview Email'}
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <div className="flex gap-3 mt-1">
@@ -367,6 +501,28 @@ export default function SubscribersTab() {
         </div>
         {subscribers.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No subscribers yet.</p>}
       </div>
+
+      {/* Email Preview Modal */}
+      {previewHtml && (
+        <div className="fixed inset-0 bg-[#06080d]/95 backdrop-blur-xl z-[200] overflow-y-auto p-4 md:p-16">
+          <button
+            className="fixed top-4 right-4 bg-transparent border border-sea-border text-sea-gold text-xl w-10 h-10 flex items-center justify-center cursor-pointer hover:border-sea-gold transition-all z-[201] rounded"
+            onClick={() => setPreviewHtml(null)}
+          >
+            &times;
+          </button>
+          <div className="max-w-[600px] mx-auto mt-12">
+            <h3 className="font-cormorant text-xl text-sea-white mb-4">Email Preview</h3>
+            <div className="bg-white rounded-lg overflow-hidden">
+              <iframe
+                srcDoc={previewHtml}
+                className="w-full min-h-[600px] border-none"
+                title="Newsletter Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

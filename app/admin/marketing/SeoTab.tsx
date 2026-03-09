@@ -12,6 +12,21 @@ interface ContentIdea {
   title: string; description: string; target_keyword: string
 }
 
+interface FaqItem {
+  id: string
+  question: string
+  answer: string
+  category: string
+  is_public: boolean
+  show_on_homepage: boolean
+  sort_order: number
+  status: string
+}
+
+interface LibraryItem {
+  primary_keyword: string | null
+}
+
 export default function SeoTab() {
   const [pages, setPages] = useState<PageSeoRow[]>([])
   const [editingPath, setEditingPath] = useState<string | null>(null)
@@ -20,6 +35,58 @@ export default function SeoTab() {
   const [suggestedKeywords, setSuggestedKeywords] = useState<string[]>([])
   const [contentIdeas, setContentIdeas] = useState<ContentIdea[]>([])
   const [loading, setLoading] = useState(false)
+  const [faqs, setFaqs] = useState<FaqItem[]>([])
+  const [faqLoading, setFaqLoading] = useState(false)
+  const [packKeywords, setPackKeywords] = useState<string[]>([])
+
+  const loadFaqs = async () => {
+    setFaqLoading(true)
+    try {
+      const res = await fetch('/api/content-library?asset_type=faq', { credentials: 'include' })
+      const data = await res.json()
+      if (Array.isArray(data)) setFaqs(data)
+    } catch {
+      toast.error('Failed to load FAQs')
+    } finally {
+      setFaqLoading(false)
+    }
+  }
+
+  const loadPackKeywords = async () => {
+    try {
+      const res = await fetch('/api/content-library', { credentials: 'include' })
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        const kws = Array.from(new Set(
+          data
+            .map((item: LibraryItem) => item.primary_keyword)
+            .filter((kw: string | null): kw is string => !!kw)
+        )) as string[]
+        setPackKeywords(kws.sort())
+      }
+    } catch {
+      /* silently ignore */
+    }
+  }
+
+  const patchFaq = async (id: string, updates: Partial<FaqItem>) => {
+    try {
+      const res = await fetch(`/api/content-library/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(updates),
+      })
+      if (res.ok) {
+        setFaqs(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f))
+        toast.success('FAQ updated')
+      } else {
+        toast.error('Update failed')
+      }
+    } catch {
+      toast.error('Update failed')
+    }
+  }
 
   const loadPages = async () => {
     const res = await fetch('/api/seo', { credentials: 'include' })
@@ -27,7 +94,7 @@ export default function SeoTab() {
     if (Array.isArray(data)) setPages(data)
   }
 
-  useEffect(() => { loadPages() }, [])
+  useEffect(() => { loadPages(); loadFaqs(); loadPackKeywords() }, [])
 
   const handleEdit = (page: PageSeoRow) => {
     setEditingPath(page.page_path)
@@ -166,6 +233,118 @@ export default function SeoTab() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* FAQ Manager */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-cormorant text-lg text-sea-white">FAQ Manager</h3>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-sea-blue font-dm">
+              {faqs.filter(f => f.is_public).length} public / {faqs.length} total
+            </span>
+            <a
+              href="/faq"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-sea-gold font-dm hover:underline min-h-[44px] flex items-center"
+            >
+              Preview /faq →
+            </a>
+          </div>
+        </div>
+        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+          {faqLoading ? (
+            <p className="text-xs text-sea-blue font-dm">Loading FAQs...</p>
+          ) : faqs.length === 0 ? (
+            <p className="text-xs text-sea-blue font-dm">No FAQ items found. Create FAQs via the Content Library API.</p>
+          ) : (
+            <div className="space-y-3">
+              {faqs.map((faq) => (
+                <div key={faq.id} className="border border-sea-gold/10 rounded p-3">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-sea-white font-dm font-medium">{faq.question}</p>
+                      <p className="text-xs text-sea-blue font-dm mt-1 line-clamp-2">{faq.answer}</p>
+                      {faq.category && (
+                        <span className="inline-block text-[0.6rem] text-sea-gold/60 font-dm mt-1 px-2 py-0.5 rounded bg-sea-gold/5 border border-sea-gold/10">
+                          {faq.category}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <label className="flex items-center gap-2 min-h-[44px] cursor-pointer">
+                        <span className="text-[0.6rem] text-sea-blue font-dm uppercase tracking-wider">Public</span>
+                        <input
+                          type="checkbox"
+                          checked={faq.is_public}
+                          onChange={() => patchFaq(faq.id, { is_public: !faq.is_public })}
+                          className="w-5 h-5 accent-[#c9a959] cursor-pointer"
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 min-h-[44px] cursor-pointer">
+                        <span className="text-[0.6rem] text-sea-blue font-dm uppercase tracking-wider">Homepage</span>
+                        <input
+                          type="checkbox"
+                          checked={faq.show_on_homepage}
+                          onChange={() => patchFaq(faq.id, { show_on_homepage: !faq.show_on_homepage })}
+                          className="w-5 h-5 accent-[#c9a959] cursor-pointer"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-sea-gold/5">
+                    <span className="text-[0.6rem] text-sea-blue font-dm uppercase tracking-wider">Order</span>
+                    <input
+                      type="number"
+                      value={faq.sort_order}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10)
+                        if (!isNaN(val)) {
+                          setFaqs(prev => prev.map(f => f.id === faq.id ? { ...f, sort_order: val } : f))
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value, 10)
+                        if (!isNaN(val)) patchFaq(faq.id, { sort_order: val })
+                      }}
+                      className="w-16 px-2 py-1.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-xs outline-none focus:border-sea-gold text-center min-h-[44px]"
+                    />
+                    <span className="text-[0.6rem] font-dm ml-auto" style={{ color: faq.status === 'published' ? '#c9a959' : '#5a6a8a' }}>
+                      {faq.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content Pack Keywords */}
+      <div className="mb-8">
+        <h3 className="font-cormorant text-lg text-sea-white mb-3">Content Pack Keywords</h3>
+        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+          {packKeywords.length === 0 ? (
+            <p className="text-xs text-sea-blue font-dm">No keywords found in the content library.</p>
+          ) : (
+            <>
+              <p className="text-xs text-sea-blue font-dm mb-3">
+                {packKeywords.length} unique keyword{packKeywords.length !== 1 ? 's' : ''} across all library items
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {packKeywords.map((kw) => (
+                  <span
+                    key={kw}
+                    className="text-xs font-dm px-3 py-1.5 rounded-full bg-sea-gold/10 text-sea-gold border border-sea-gold/15 hover:bg-sea-gold/20 transition-colors"
+                  >
+                    {kw}
+                  </span>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

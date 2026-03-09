@@ -82,6 +82,10 @@ export async function DELETE(request: NextRequest) {
   if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  // Only admin and super_admin can delete menu items
+  if (admin.role !== 'admin' && admin.role !== 'super_admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { id } = await request.json()
   const { error } = await supabase

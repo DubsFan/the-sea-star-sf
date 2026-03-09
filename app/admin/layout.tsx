@@ -62,17 +62,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isSocialAdmin = session?.role === 'social_admin'
   const canSeeContent = isAdminOrAbove || isSocialAdmin
 
-  // Primary nav: Home, Menu, Create, Inbox
+  // Primary nav: Home, Menu, Marketing, Inbox
   const primaryNav = [
     { label: 'Home', href: '/admin/dashboard', icon: HomeIcon },
-    ...(!isSocialAdmin ? [{ label: 'Menu', href: '/admin/menu', icon: MenuIcon }] : []),
-    ...(canSeeContent ? [{ label: 'Create', href: '/admin/create', icon: CreateIcon }] : []),
+    { label: 'Menu', href: '/admin/menu', icon: MenuIcon },
+    ...(canSeeContent ? [{ label: 'Marketing', href: '/admin/marketing', icon: MarketingIcon }] : []),
     { label: 'Inbox', href: '/admin/messages', icon: InboxIcon, badge: unreadCount },
   ]
 
   // More menu items
   const moreItems = [
-    ...(canSeeContent ? [{ label: 'Marketing', href: '/admin/marketing', icon: MarketingIcon }] : []),
     ...(isAdminOrAbove ? [{ label: 'Users', href: '/admin/users', icon: UsersIcon }] : []),
     ...(isSuperAdmin ? [{ label: 'Settings', href: '/admin/settings', icon: SettingsIcon }] : []),
   ]
@@ -82,9 +81,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // For mobile: show primary + More button
   const mobileMain = primaryNav.slice(0, 4)
 
-  // Check if Create tab is active (matches /admin/create or /admin/blog)
-  const isCreateActive = pathname.startsWith('/admin/create') || pathname === '/admin/blog'
-  const isMarketingActive = pathname.startsWith('/admin/marketing') || pathname === '/admin/subscribers' || pathname === '/admin/media' || pathname === '/admin/seo'
+  // Check if Marketing is active (matches /admin/marketing, /admin/create redirect, or legacy routes)
+  const isMarketingActive = pathname.startsWith('/admin/marketing') || pathname.startsWith('/admin/create') || pathname === '/admin/blog' || pathname === '/admin/subscribers' || pathname === '/admin/media' || pathname === '/admin/seo'
 
   return (
     <SessionContext.Provider value={session}>
@@ -105,9 +103,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
           <nav className="flex-1 space-y-1">
             {allNav.map((item) => {
-              const active = item.href === '/admin/create'
-                ? isCreateActive
-                : item.href === '/admin/marketing'
+              const active = item.href === '/admin/marketing'
                 ? isMarketingActive
                 : pathname === item.href
               return (
@@ -155,8 +151,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile Bottom Tab Bar */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#0a0e18] border-t border-sea-gold/10 flex z-40 safe-bottom">
           {mobileMain.map((item) => {
-            const active = item.href === '/admin/create'
-              ? isCreateActive
+            const active = item.href === '/admin/marketing'
+              ? isMarketingActive
               : pathname === item.href
             return (
               <Link

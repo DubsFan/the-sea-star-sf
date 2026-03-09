@@ -28,6 +28,12 @@ export async function POST(request: NextRequest) {
     preview_text: body.preview_text || null,
     status: body.status || 'draft',
     scheduled_for: body.scheduled_for || null,
+    body_html: body.body_html || null,
+    hero_image: body.hero_image || null,
+    cta_url: body.cta_url || null,
+    cta_text: body.cta_text || null,
+    primary_keyword: body.primary_keyword || null,
+    source_library_item_id: body.source_library_item_id || null,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -27,6 +27,14 @@ const DEFAULTS: Record<string, PageSeo> = {
     ogImage: '',
     focusKeyword: '',
   },
+  '/faq': {
+    metaTitle: 'FAQ | The Sea Star SF',
+    metaDescription: 'Frequently asked questions about The Sea Star craft cocktail bar in Dogpatch, San Francisco.',
+    ogTitle: 'FAQ | The Sea Star SF',
+    ogDescription: 'Everything you need to know about The Sea Star.',
+    ogImage: '',
+    focusKeyword: '',
+  },
 }
 
 export async function getPageSeo(pagePath: string, deps?: Pick<AppDeps, 'db'>): Promise<PageSeo> {

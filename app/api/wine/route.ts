@@ -60,7 +60,10 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const session = await requireAdmin(request)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (session.role === 'crew') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  // Only admin and super_admin can delete wine items
+  if (session.role !== 'admin' && session.role !== 'super_admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { id } = await request.json()
   const { error } = await supabase.from('wine_items').delete().eq('id', id)
