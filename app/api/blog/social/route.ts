@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { groq } from '@/lib/groq'
-import { postToFacebook, postToInstagram } from '@/lib/meta'
 import { requireAdmin } from '@/lib/auth'
+import { SEA_STAR_VOICE, generateWithGroq, cleanJsonResponse } from '@/lib/ai'
+import { executeSocialPost } from '@/lib/social-post'
 
-const CAPTION_PROMPT = `You write social media captions for The Sea Star, a craft cocktail bar in San Francisco's Dogpatch neighborhood. Your voice is warm, fun, and unpretentious — like a bartender texting a friend.
-
-Given a blog post title and excerpt, write TWO captions:
-
-1. facebook_caption: 2-3 sentences that tease the story and include a call to action. Max 250 characters.
-2. instagram_caption: 2-3 sentences. More casual, can use 1-2 relevant emojis. End with "Link in bio." Include 3-5 hashtags on a new line (#DogpatchSF #SFBars #CraftCocktails etc). Max 300 characters total.
-
-Return ONLY valid JSON with fields: facebook_caption, instagram_caption`
-
+// Compatibility wrapper — delegates to shared social flow
 export async function POST(request: NextRequest) {
   const admin = await requireAdmin(request)
   if (!admin) {
@@ -31,98 +23,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Post not found' }, { status: 404 })
   }
 
-  // Generate captions with Groq
-  const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    messages: [
-      { role: 'system', content: CAPTION_PROMPT },
-      { role: 'user', content: `Title: ${post.title}\nExcerpt: ${post.excerpt}` },
-    ],
-    temperature: 0.5,
-    max_tokens: 500,
-    response_format: { type: 'json_object' },
-  })
+  const captionPrompt = `You write social media captions for The Sea Star. ${SEA_STAR_VOICE}
 
-  const content = completion.choices[0]?.message?.content
-  if (!content) {
-    return NextResponse.json({ error: 'No AI response' }, { status: 500 })
-  }
+Given a blog post title and excerpt, write TWO captions:
+1. facebook_caption: 2-3 sentences that tease the story and include a call to action. Max 250 characters.
+2. instagram_caption: 2-3 sentences. More casual, can use 1-2 relevant emojis. End with "Link in bio." Include 3-5 hashtags on a new line. Max 300 characters total.
 
-  const cleaned = content.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()
-  let captions: { facebook_caption: string; instagram_caption: string }
-  try {
-    captions = JSON.parse(cleaned)
-  } catch {
-    return NextResponse.json({ error: 'Failed to parse captions', raw: content }, { status: 500 })
-  }
+Return ONLY valid JSON with fields: facebook_caption, instagram_caption`
 
-  const { data: settings } = await supabase
-    .from('site_settings')
-    .select('key, value')
-    .in('key', ['site_url'])
+  const content = await generateWithGroq(
+    captionPrompt,
+    `Title: ${post.title}\nExcerpt: ${post.excerpt}`,
+    { temperature: 0.5, maxTokens: 500 }
+  )
+  const captions = cleanJsonResponse(content) as { facebook_caption: string; instagram_caption: string }
 
-  const siteUrl = settings?.find(s => s.key === 'site_url')?.value || 'https://theseastarsf.com'
-  const blogUrl = `${siteUrl}/blog/${post.slug}`
   const imageUrl = post.featured_image || (post.images && post.images.length > 0 ? post.images[0] : null)
 
-  const results: { facebook?: { success: boolean; id?: string; error?: string }; instagram?: { success: boolean; id?: string; error?: string } } = {}
+  // Create campaign + execute
+  const { data: campaign } = await supabase.from('social_campaigns').insert({
+    content_type: 'blog',
+    source_id: id,
+    facebook_caption: captions.facebook_caption,
+    instagram_caption: captions.instagram_caption,
+    image_url: imageUrl,
+    status: 'draft',
+  }).select('id').single()
 
-  // Post to Facebook
-  try {
-    const fb = await postToFacebook(captions.facebook_caption, blogUrl)
-    results.facebook = { success: true, id: fb.id }
-    await supabase.from('social_posts').insert({
-      blog_post_id: id,
-      platform: 'facebook',
-      platform_post_id: fb.id,
-      caption: captions.facebook_caption,
-      status: 'posted',
-    })
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    results.facebook = { success: false, error: message }
-    await supabase.from('social_posts').insert({
-      blog_post_id: id,
-      platform: 'facebook',
-      caption: captions.facebook_caption,
-      status: 'failed',
-      error_message: message,
-    })
+  if (!campaign) {
+    return NextResponse.json({ error: 'Failed to create campaign' }, { status: 500 })
   }
 
-  // Post to Instagram (needs an image)
-  if (imageUrl) {
-    try {
-      const ig = await postToInstagram(imageUrl, captions.instagram_caption)
-      results.instagram = { success: true, id: ig.id }
-      await supabase.from('social_posts').insert({
-        blog_post_id: id,
-        platform: 'instagram',
-        platform_post_id: ig.id,
-        caption: captions.instagram_caption,
-        status: 'posted',
-      })
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      results.instagram = { success: false, error: message }
-      await supabase.from('social_posts').insert({
-        blog_post_id: id,
-        platform: 'instagram',
-        caption: captions.instagram_caption,
-        status: 'failed',
-        error_message: message,
-      })
-    }
-  } else {
-    results.instagram = { success: false, error: 'No image available for Instagram' }
-  }
+  const results = await executeSocialPost(campaign.id, admin.username)
 
-  // Mark social as posted on the blog post
-  if (results.facebook?.success || results.instagram?.success) {
-    await supabase
-      .from('blog_posts')
-      .update({ social_posted_at: new Date().toISOString() })
-      .eq('id', id)
+  // Update blog post
+  const anySuccess = Object.values(results).some((r: { success: boolean }) => r.success)
+  if (anySuccess) {
+    await supabase.from('blog_posts').update({ social_posted_at: new Date().toISOString() }).eq('id', id)
   }
 
   return NextResponse.json(results)

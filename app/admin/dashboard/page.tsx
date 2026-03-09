@@ -1,248 +1,231 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSession } from '../session-context'
 
-const quickActions = [
-  { title: 'Manage Menu', href: '/admin/menu', desc: 'Cocktails, drafts, and wine — all in one place' },
-  { title: 'Create Blog Post', href: '/admin/blog', desc: 'Write your weekly update with AI' },
-  { title: 'Media Library', href: '/admin/media', desc: 'Browse and upload images' },
-  { title: 'Subscribers', href: '/admin/subscribers', desc: 'View your mailing list' },
-  { title: 'Messages', href: '/admin/messages', desc: 'Read contact form submissions' },
-]
+interface Stats {
+  subscribers: number
+  totalPosts: number
+  publishedPosts: number
+  unreadMessages: number
+  upcomingEvents: number
+  socialConfigured: boolean
+  weeklyBlogPublished: boolean
+  weeklySocialPosted: boolean
+  weeklyMessagesRead: boolean
+}
 
-const howItWorks = [
-  {
-    title: 'Your Cocktail & Wine Menu',
-    points: [
-      'You control it all from the Menu page',
-      'Add a new seasonal drink, change a price, update the blurb',
-      'Changes go live on the website instantly',
-    ],
-  },
-  {
-    title: 'Beer & Cans (Untappd)',
-    points: [
-      'Your Untappd menu syncs to the website automatically',
-      'Update a beer in Untappd, the site updates itself',
-      'You do nothing extra',
-    ],
-  },
-  {
-    title: 'Event Bookings (Perfect Venue)',
-    points: [
-      'When someone clicks "Book Event" they go to your Perfect Venue form',
-      'Inquiries land in your Perfect Venue inbox',
-      'Respond from the PV app like you already do',
-    ],
-  },
-  {
-    title: 'Weekly Blog + Social + Newsletter',
-    points: [
-      'Type 5 sentences about what happened this week',
-      'Upload 5 photos',
-      'AI writes a full blog post, you review and publish',
-      'Publishing emails subscribers AND auto-posts to Facebook + Instagram',
-    ],
-  },
-]
+interface ActivityItem {
+  id: string
+  action: string
+  summary: string
+  actor: string
+  created_at: string
+}
 
-const planRows = [
-  { item: 'Website Build', details: '$1,000 one-time' },
-  { item: 'Monthly Management', details: '$100/month' },
-  { item: 'Includes', details: 'SEO, Google Business updates, site maintenance, blog AI, email newsletter, hosting' },
-  { item: 'Your Weekly Task', details: '5 sentences + 5 photos, then hit publish (~15 min)' },
-  { item: 'Your Tools', details: 'Untappd (beer), Perfect Venue (events), this admin page (cocktails, wine, blog)' },
-]
-
-const steps = [
-  'Log into this admin page on your phone',
-  'Type 5 sentences about what happened this week',
-  'Upload 5 photos from your camera roll',
-  'Tap "Generate Post" — AI writes the blog post in 10 seconds',
-  'Review, tweak if you want',
-  'Tap "Publish" — blog goes live, emails subscribers, AND auto-posts to Facebook + Instagram',
-]
-
-const socialRunbook = {
-  title: 'Social Media Auto-Posting',
-  subtitle: 'How your blog posts get to Facebook & Instagram automatically',
-  sections: [
-    {
-      heading: 'What Happens When You Tap "Publish"',
-      steps: [
-        'Your blog post goes live on the website',
-        'An email goes out to all your subscribers',
-        'AI writes a short, fun caption for Facebook and Instagram',
-        'The caption + your first photo get posted to your Facebook Page automatically',
-        'The same thing happens on your Instagram — photo, caption, and hashtags',
-        'Everything is logged so you can see what posted and when',
-      ],
-    },
-    {
-      heading: 'What You Need To Do',
-      steps: [
-        'Nothing extra — just keep doing what you already do',
-        'Write your 5 sentences, upload your photos, hit Publish',
-        'Social posts happen in the background, no extra taps',
-        'If you want to check what posted, look for the purple "Social" badge on your blog posts',
-      ],
-    },
-    {
-      heading: 'Tips For Better Social Posts',
-      steps: [
-        'Your first photo becomes the Instagram post — make it a good one',
-        'The AI uses your blog title and summary to write captions, so catchy titles = catchy social posts',
-        'Instagram captions automatically get hashtags like #DogpatchSF #CraftCocktails',
-        'Facebook posts include a clickable link back to the full blog post on your website',
-      ],
-    },
-    {
-      heading: 'If Something Goes Wrong',
-      steps: [
-        'Social posting failing does NOT stop your blog from publishing — your post is safe',
-        'If Facebook or Instagram didn\'t post, the blog post won\'t have the purple "Social" badge',
-        'Most common fix: the Meta tokens expired — ask GG to update them in Settings',
-        'You can always manually share the blog link to social from your phone as backup',
-      ],
-    },
-  ],
-  footer: 'Cost: $0/month. AI captions are free. Posting to your own Facebook & Instagram is free. No extra apps or subscriptions needed.',
+function getGreeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
 }
 
 export default function Dashboard() {
   const session = useSession()
   const displayName = session?.displayName || 'there'
   const isCrew = session?.role === 'crew'
-  const isSuperAdmin = session?.role === 'super_admin'
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [activity, setActivity] = useState<ActivityItem[]>([])
+
+  useEffect(() => {
+    fetch('/api/admin/stats').then(r => r.ok ? r.json() : null).then(setStats).catch(() => {})
+    fetch('/api/admin/activity').then(r => r.ok ? r.json() : null).then(d => { if (Array.isArray(d)) setActivity(d) }).catch(() => {})
+  }, [])
 
   return (
     <div className="max-w-4xl">
-      {/* WELCOME */}
-      <div className="mb-10 md:mb-12">
-        <h1 className="font-playfair text-3xl md:text-4xl font-bold text-sea-gold mb-2">Welcome back, {displayName}</h1>
-        <p className="font-cormorant text-lg md:text-xl italic text-sea-blue">Your site, your menus, your way.</p>
+      {/* Greeting */}
+      <div className="mb-6">
+        <h1 className="font-cormorant text-2xl md:text-3xl font-light text-sea-white">
+          {getGreeting()}, {displayName}
+        </h1>
       </div>
 
-      {/* QUICK ACTIONS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-10 md:mb-14">
-        {quickActions.map((action) => (
-          <Link
-            key={action.href}
-            href={action.href}
-            className="block bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-5 hover:border-sea-gold/30 transition-all no-underline group"
-          >
-            <h3 className="font-playfair text-base md:text-lg text-sea-white group-hover:text-sea-gold transition-colors mb-1">{action.title}</h3>
-            <p className="text-xs md:text-sm text-sea-blue font-dm">{action.desc}</p>
-          </Link>
-        ))}
-        {isSuperAdmin && (
-          <Link
-            href="/admin/users"
-            className="block bg-[#0a0e18] border border-purple-500/20 rounded-lg p-4 md:p-5 hover:border-purple-500/40 transition-all no-underline group"
-          >
-            <h3 className="font-playfair text-base md:text-lg text-sea-white group-hover:text-purple-400 transition-colors mb-1">Manage Users</h3>
-            <p className="text-xs md:text-sm text-sea-blue font-dm">Add or remove staff accounts</p>
-          </Link>
-        )}
-      </div>
-
-      {/* HOW EVERYTHING WORKS */}
-      <div className="mb-10 md:mb-14">
-        <h2 className="font-playfair text-xl md:text-2xl text-sea-white mb-4 md:mb-6">How Everything Works</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-          {howItWorks.map((card) => (
-            <div key={card.title} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-5">
-              <h3 className="font-playfair text-sm md:text-base text-sea-gold mb-3">{card.title}</h3>
-              <ul className="space-y-2">
-                {card.points.map((point, i) => (
-                  <li key={i} className="text-xs md:text-sm text-sea-blue font-dm flex items-start gap-2">
-                    <span className="text-sea-gold/50 mt-0.5">-</span>
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      {/* Status Pills */}
+      {stats && (
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 -mx-1 px-1 scrollbar-hide">
+          <StatusPill href="/admin/messages" label={`${stats.unreadMessages} unread`} highlight={stats.unreadMessages > 0} />
+          <StatusPill href="/admin/subscribers" label={`${stats.subscribers} subs`} />
+          <StatusPill href="/admin/create" label={`${stats.publishedPosts} posts`} />
+          <StatusPill label={stats.socialConfigured ? 'Social: Active' : 'Social: Off'} highlight={!stats.socialConfigured} />
+          {stats.upcomingEvents > 0 && (
+            <StatusPill href="/admin/create?tab=events" label={`${stats.upcomingEvents} events`} />
+          )}
         </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3 mb-8">
+        <QuickAction href="/admin/menu" title="Update Menu" icon={<MenuQAIcon />} />
+        <QuickAction href="/admin/create?tab=blog" title="New Blog" icon={<BlogQAIcon />} />
+        <QuickAction href="/admin/create?tab=social" title="New Social Post" icon={<SocialQAIcon />} />
+        <QuickAction href="/admin/create?tab=events" title="New Event" icon={<EventQAIcon />} />
       </div>
 
-      {/* YOUR PLAN - hide for crew */}
-      {!isCrew && (
-        <div className="mb-10 md:mb-14">
-          <h2 className="font-playfair text-xl md:text-2xl text-sea-white mb-4 md:mb-6">Your Plan</h2>
-          <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden">
-            {/* Desktop table */}
-            <table className="hidden md:table w-full">
-              <tbody>
-                {planRows.map((row, i) => (
-                  <tr key={row.item} className={i < planRows.length - 1 ? 'border-b border-sea-gold/5' : ''}>
-                    <td className="p-4 text-sm text-sea-gold font-dm font-medium w-[180px] align-top">{row.item}</td>
-                    <td className="p-4 text-sm text-sea-blue font-dm">{row.details}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* Mobile stacked */}
-            <div className="md:hidden divide-y divide-sea-gold/5">
-              {planRows.map((row) => (
-                <div key={row.item} className="p-4">
-                  <p className="text-xs text-sea-gold font-dm font-medium mb-1">{row.item}</p>
-                  <p className="text-sm text-sea-blue font-dm">{row.details}</p>
+      {/* Weekly Checklist */}
+      {stats && !isCrew && (
+        <div className="mb-8">
+          <h2 className="font-cormorant text-lg text-sea-white mb-3">This Week</h2>
+          <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-3">
+            <CheckItem done={stats.weeklyBlogPublished} label="Publish a blog post" href="/admin/create?tab=blog" />
+            <CheckItem done={stats.weeklySocialPosted} label="Post to social media" href="/admin/create?tab=social" />
+            <CheckItem done={stats.weeklyMessagesRead} label="Check messages" href="/admin/messages" />
+            <CheckItem done={false} label="Review menu for accuracy" href="/admin/menu" />
+          </div>
+        </div>
+      )}
+
+      {/* SEO Health */}
+      {stats && !isCrew && (
+        <div className="mb-8">
+          <h2 className="font-cormorant text-lg text-sea-white mb-3">SEO Health</h2>
+          <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <HealthIndicator
+                label="Blog freshness"
+                status={stats.weeklyBlogPublished ? 'green' : 'yellow'}
+                detail={stats.weeklyBlogPublished ? 'Posted this week' : 'No post this week'}
+              />
+              <HealthIndicator
+                label="Social activity"
+                status={stats.weeklySocialPosted ? 'green' : stats.socialConfigured ? 'yellow' : 'red'}
+                detail={stats.weeklySocialPosted ? 'Posted this week' : stats.socialConfigured ? 'Not posted yet' : 'Not configured'}
+              />
+              <HealthIndicator
+                label="Subscriber base"
+                status={stats.subscribers > 0 ? 'green' : 'red'}
+                detail={`${stats.subscribers} active`}
+              />
+              <HealthIndicator
+                label="Events"
+                status={stats.upcomingEvents > 0 ? 'green' : 'yellow'}
+                detail={stats.upcomingEvents > 0 ? `${stats.upcomingEvents} upcoming` : 'None scheduled'}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Feed */}
+      <div className="mb-8">
+        <h2 className="font-cormorant text-lg text-sea-white mb-3">Recent Activity</h2>
+        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden">
+          {activity.length === 0 ? (
+            <p className="text-sm text-sea-blue font-dm p-4">No recent activity. Activity will appear here as you publish, post, and send.</p>
+          ) : (
+            <div className="divide-y divide-sea-gold/5">
+              {activity.map((item) => (
+                <div key={item.id} className="px-4 py-3 flex items-start gap-3">
+                  <ActivityDot action={item.action} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-sea-light font-dm truncate">{item.summary}</p>
+                    <p className="text-[0.65rem] text-sea-blue/60 font-dm mt-0.5">
+                      {item.actor} &middot; {formatTimeAgo(item.created_at)}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* YOUR WEEKLY ROUTINE */}
-      <div className="mb-10 md:mb-14">
-        <h2 className="font-playfair text-xl md:text-2xl text-sea-white mb-4 md:mb-6">Your Weekly Routine</h2>
-        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-6">
-          <ol className="space-y-3">
-            {steps.map((step, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm font-dm">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-sea-gold/10 text-sea-gold flex items-center justify-center text-xs font-medium">{i + 1}</span>
-                <span className="text-sea-blue pt-0.5">{step}</span>
-              </li>
-            ))}
-          </ol>
-          <p className="text-sm text-sea-gold font-dm mt-5 pt-4 border-t border-sea-gold/10">Total time: about 15 minutes</p>
+          )}
         </div>
       </div>
 
-      {/* SOCIAL MEDIA RUNBOOK */}
-      {!isCrew && (
-        <div className="mb-10 md:mb-14">
-          <h2 className="font-playfair text-xl md:text-2xl text-sea-white mb-4 md:mb-6">{socialRunbook.title}</h2>
-          <p className="text-sm text-sea-blue font-dm mb-4">{socialRunbook.subtitle}</p>
-          <div className="space-y-4">
-            {socialRunbook.sections.map((section) => (
-              <div key={section.heading} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-5">
-                <h3 className="font-playfair text-sm md:text-base text-sea-gold mb-3">{section.heading}</h3>
-                <ol className="space-y-2">
-                  {section.steps.map((step, i) => (
-                    <li key={i} className="flex items-start gap-3 text-xs md:text-sm font-dm text-sea-blue">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-sea-gold/10 text-sea-gold flex items-center justify-center text-[0.6rem] font-medium mt-0.5">{i + 1}</span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-sea-gold/60 font-dm mt-4 italic">{socialRunbook.footer}</p>
-        </div>
-      )}
-
-      {/* NEED HELP */}
-      <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-6 mb-8">
-        <h2 className="font-playfair text-xl md:text-2xl text-sea-white mb-3">Need Help?</h2>
-        <p className="text-sm text-sea-blue font-dm leading-relaxed">
-          Text or call GG anytime. For menu or blog changes, just log in here and do it yourself — changes go live instantly.
+      {/* Help */}
+      <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 mb-8">
+        <p className="text-sm text-sea-blue font-dm">
+          Need help? Text or call GG anytime.
         </p>
       </div>
     </div>
   )
+}
+
+function StatusPill({ href, label, highlight }: { href?: string; label: string; highlight?: boolean }) {
+  const cls = `flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-dm whitespace-nowrap transition-colors ${
+    highlight
+      ? 'bg-red-500/15 text-red-400 border border-red-500/30'
+      : 'bg-[#0a0e18] text-sea-blue border border-sea-gold/10 hover:border-sea-gold/30'
+  }`
+  if (href) return <Link href={href} className={`${cls} no-underline`}>{label}</Link>
+  return <span className={cls}>{label}</span>
+}
+
+function QuickAction({ href, title, icon }: { href: string; title: string; icon: React.ReactNode }) {
+  return (
+    <Link href={href} className="flex flex-col items-center justify-center gap-2 bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 min-h-[80px] hover:border-sea-gold/30 transition-all no-underline group">
+      <div className="text-sea-blue group-hover:text-sea-gold transition-colors">{icon}</div>
+      <span className="text-xs text-sea-blue group-hover:text-sea-gold font-dm text-center transition-colors">{title}</span>
+    </Link>
+  )
+}
+
+function CheckItem({ done, label, href }: { done: boolean; label: string; href: string }) {
+  return (
+    <Link href={href} className="flex items-center gap-3 no-underline group">
+      <div className={`w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center ${done ? 'bg-emerald-500/20 border-emerald-500/40' : 'border-sea-gold/20'}`}>
+        {done && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>}
+      </div>
+      <span className={`text-sm font-dm ${done ? 'text-sea-blue/50 line-through' : 'text-sea-light group-hover:text-sea-gold'} transition-colors`}>{label}</span>
+    </Link>
+  )
+}
+
+function HealthIndicator({ label, status, detail }: { label: string; status: 'green' | 'yellow' | 'red'; detail: string }) {
+  const dotColor = status === 'green' ? 'bg-emerald-400' : status === 'yellow' ? 'bg-yellow-400' : 'bg-red-400'
+  return (
+    <div className="flex items-start gap-2">
+      <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${dotColor}`} />
+      <div>
+        <p className="text-xs text-sea-light font-dm">{label}</p>
+        <p className="text-[0.65rem] text-sea-blue/60 font-dm">{detail}</p>
+      </div>
+    </div>
+  )
+}
+
+function ActivityDot({ action }: { action: string }) {
+  let color = 'bg-sea-blue/30'
+  if (action.includes('published')) color = 'bg-emerald-400'
+  if (action.includes('social') || action.includes('posted')) color = 'bg-purple-400'
+  if (action.includes('mailer') || action.includes('sent')) color = 'bg-blue-400'
+  if (action.includes('archived')) color = 'bg-sea-blue/30'
+  if (action.includes('scheduled')) color = 'bg-yellow-400'
+  return <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${color}`} />
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days === 1) return 'yesterday'
+  return `${days}d ago`
+}
+
+// Quick action icons
+function MenuQAIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+}
+function BlogQAIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h6"/></svg>
+}
+function SocialQAIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+}
+function EventQAIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
 }
