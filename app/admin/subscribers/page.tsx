@@ -24,7 +24,7 @@ export default function AdminSubscribers() {
   const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin' || session?.role === 'social_admin'
 
   const loadSubscribers = () => {
-    fetch('/api/subscribe')
+    fetch('/api/subscribe', { credentials: 'include' })
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) setSubscribers(data)
@@ -104,7 +104,7 @@ export default function AdminSubscribers() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      const res = await fetch('/api/subscribe/import', { method: 'POST', body: formData })
+      const res = await fetch('/api/subscribe/import', { credentials: 'include', method: 'POST', body: formData })
       const data = await res.json()
       if (res.ok) {
         setImportResult(`Imported ${data.imported}, skipped ${data.skipped}`)

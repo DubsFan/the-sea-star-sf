@@ -16,7 +16,7 @@ export default function AdminMessages() {
 
   const loadMessages = async () => {
     try {
-      const res = await fetch('/api/contact')
+      const res = await fetch('/api/contact', { credentials: 'include' })
       const data = await res.json()
       if (Array.isArray(data)) setMessages(data)
     } catch {}

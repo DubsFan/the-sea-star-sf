@@ -20,7 +20,7 @@ export default function AdminMedia() {
   const canDelete = session?.role === 'super_admin' || session?.role === 'admin'
 
   const loadFiles = async () => {
-    const res = await fetch('/api/media')
+    const res = await fetch('/api/media', { credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
       if (Array.isArray(data)) setFiles(data)
@@ -38,7 +38,7 @@ export default function AdminMedia() {
       const formData = new FormData()
       formData.append('file', fileList[i])
       formData.append('bucket', bucket)
-      const res = await fetch('/api/media', { method: 'POST', body: formData })
+      const res = await fetch('/api/media', { credentials: 'include', method: 'POST', body: formData })
       if (res.ok) count++
     }
     toast.success(`${count} file(s) uploaded`)

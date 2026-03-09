@@ -51,7 +51,7 @@ export default function AdminMenu() {
   const canDelete = session?.role === 'super_admin' || session?.role === 'admin'
 
   const loadItems = async () => {
-    const [menuRes, wineRes] = await Promise.all([fetch('/api/menu'), fetch('/api/wine')])
+    const [menuRes, wineRes] = await Promise.all([fetch('/api/menu', { credentials: 'include' }), fetch('/api/wine', { credentials: 'include' })])
     const [menuData, wineData] = await Promise.all([menuRes.json(), wineRes.json()])
     if (Array.isArray(menuData)) setItems(menuData)
     if (Array.isArray(wineData)) setWines(wineData)
@@ -94,7 +94,7 @@ export default function AdminMenu() {
     const formData = new FormData()
     formData.append('file', file)
     try {
-      const res = await fetch('/api/menu/upload', { method: 'POST', body: formData })
+      const res = await fetch('/api/menu/upload', { credentials: 'include', method: 'POST', body: formData })
       const data = await res.json()
       if (data.url) {
         setDrinkForm((f) => ({ ...f, image_url: data.url }))

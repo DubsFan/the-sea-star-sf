@@ -39,8 +39,8 @@ export default function Dashboard() {
   const [activity, setActivity] = useState<ActivityItem[]>([])
 
   useEffect(() => {
-    fetch('/api/admin/stats').then(r => r.ok ? r.json() : null).then(setStats).catch(() => {})
-    fetch('/api/admin/activity').then(r => r.ok ? r.json() : null).then(d => { if (Array.isArray(d)) setActivity(d) }).catch(() => {})
+    fetch('/api/admin/stats', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(setStats).catch(() => {})
+    fetch('/api/admin/activity', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (Array.isArray(d)) setActivity(d) }).catch(() => {})
   }, [])
 
   return (

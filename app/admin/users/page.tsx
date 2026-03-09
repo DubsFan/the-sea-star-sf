@@ -27,7 +27,7 @@ export default function AdminUsers() {
   const [form, setForm] = useState({ username: '', password: '', display_name: '', role: 'crew' })
 
   const loadUsers = async () => {
-    const res = await fetch('/api/admin/users')
+    const res = await fetch('/api/admin/users', { credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
       if (Array.isArray(data)) setUsers(data)

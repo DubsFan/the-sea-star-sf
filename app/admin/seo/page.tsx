@@ -22,14 +22,14 @@ export default function SeoPage() {
   const [loading, setLoading] = useState(false)
 
   const loadPages = async () => {
-    const res = await fetch('/api/seo')
+    const res = await fetch('/api/seo', { credentials: 'include' })
     const data = await res.json()
     if (Array.isArray(data)) setPages(data)
   }
 
   // Load keywords from settings
   const loadKeywords = async () => {
-    const res = await fetch('/api/admin/stats')
+    const res = await fetch('/api/admin/stats', { credentials: 'include' })
     if (res.ok) {
       // Just load from site_settings directly
     }
@@ -46,6 +46,7 @@ export default function SeoPage() {
     const res = await fetch('/api/seo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(form),
     })
     if (res.ok) {
@@ -63,6 +64,7 @@ export default function SeoPage() {
       const res = await fetch('/api/seo/suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ type: 'keywords', context: keywords }),
       })
       const data = await res.json()
@@ -80,6 +82,7 @@ export default function SeoPage() {
       const res = await fetch('/api/seo/suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ type: 'content_ideas', context: keywords }),
       })
       const data = await res.json()

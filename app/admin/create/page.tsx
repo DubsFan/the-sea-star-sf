@@ -70,7 +70,7 @@ function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean }) {
   const [publishActions, setPublishActions] = useState({ site: 'now', social: 'skip', mailer: 'skip' })
 
   const loadPosts = async () => {
-    const res = await fetch('/api/blog')
+    const res = await fetch('/api/blog', { credentials: 'include' })
     const data = await res.json()
     if (Array.isArray(data)) setPosts(data)
   }
@@ -85,7 +85,7 @@ function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean }) {
     for (let i = 0; i < Math.min(files.length, 5); i++) {
       const formData = new FormData()
       formData.append('file', files[i])
-      const res = await fetch('/api/menu/upload', { method: 'POST', body: formData })
+      const res = await fetch('/api/menu/upload', { credentials: 'include', method: 'POST', body: formData })
       const data = await res.json()
       if (data.url) urls.push(data.url)
     }
@@ -339,7 +339,7 @@ function SocialTab() {
   const [uploading, setUploading] = useState(false)
 
   const loadCampaigns = async () => {
-    const res = await fetch('/api/social')
+    const res = await fetch('/api/social', { credentials: 'include' })
     const data = await res.json()
     if (Array.isArray(data)) setCampaigns(data)
   }
@@ -372,7 +372,7 @@ function SocialTab() {
     setUploading(true)
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetch('/api/menu/upload', { method: 'POST', body: formData })
+    const res = await fetch('/api/menu/upload', { credentials: 'include', method: 'POST', body: formData })
     const data = await res.json()
     if (data.url) setImageUrl(data.url)
     setUploading(false)
@@ -509,7 +509,7 @@ function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean }) {
   const [publishActions, setPublishActions] = useState({ site: 'now', social: 'skip', mailer: 'skip' })
 
   const loadEvents = async () => {
-    const res = await fetch('/api/events')
+    const res = await fetch('/api/events', { credentials: 'include' })
     const data = await res.json()
     if (Array.isArray(data)) setEvents(data)
   }
@@ -547,7 +547,7 @@ function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean }) {
     if (!file) return
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetch('/api/menu/upload', { method: 'POST', body: formData })
+    const res = await fetch('/api/menu/upload', { credentials: 'include', method: 'POST', body: formData })
     const data = await res.json()
     if (data.url) setForm(f => ({ ...f, featured_image: data.url }))
   }

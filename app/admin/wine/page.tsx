@@ -24,7 +24,7 @@ export default function AdminWine() {
   const canDelete = session?.role === 'super_admin' || session?.role === 'admin'
 
   const loadItems = async () => {
-    const res = await fetch('/api/wine')
+    const res = await fetch('/api/wine', { credentials: 'include' })
     const data = await res.json()
     if (Array.isArray(data)) setItems(data)
   }

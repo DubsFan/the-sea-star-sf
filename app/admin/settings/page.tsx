@@ -78,7 +78,7 @@ export default function SettingsPage() {
   const [loadingPreview, setLoadingPreview] = useState(false)
 
   const loadSettings = async () => {
-    const res = await fetch('/api/admin/settings')
+    const res = await fetch('/api/admin/settings', { credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
       if (Array.isArray(data)) {
@@ -116,7 +116,7 @@ export default function SettingsPage() {
   const handlePreviewEmail = async () => {
     setLoadingPreview(true)
     try {
-      const res = await fetch('/api/newsletter/preview')
+      const res = await fetch('/api/newsletter/preview', { credentials: 'include' })
       if (res.ok) {
         const html = await res.text()
         setPreviewHtml(html)

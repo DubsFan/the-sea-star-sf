@@ -40,14 +40,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Fetch unread message count
   useEffect(() => {
     if (!authenticated || pathname === '/admin') return
-    fetch('/api/contact?unread_count=true')
+    fetch('/api/contact?unread_count=true', { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.count != null) setUnreadCount(data.count) })
       .catch(() => {})
   }, [authenticated, pathname])
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await fetch('/api/auth/logout', { credentials: 'include', method: 'POST' })
     router.push('/admin')
   }
 
