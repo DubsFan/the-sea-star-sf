@@ -72,9 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // More menu items
   const moreItems = [
-    { label: 'Media', href: '/admin/media', icon: MediaIcon },
-    ...(canSeeContent ? [{ label: 'Subscribers', href: '/admin/subscribers', icon: SubsIcon }] : []),
-    ...(isAdminOrAbove ? [{ label: 'SEO', href: '/admin/seo', icon: SeoIcon }] : []),
+    ...(canSeeContent ? [{ label: 'Marketing', href: '/admin/marketing', icon: MarketingIcon }] : []),
     ...(isAdminOrAbove ? [{ label: 'Users', href: '/admin/users', icon: UsersIcon }] : []),
     ...(isSuperAdmin ? [{ label: 'Settings', href: '/admin/settings', icon: SettingsIcon }] : []),
   ]
@@ -86,6 +84,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Check if Create tab is active (matches /admin/create or /admin/blog)
   const isCreateActive = pathname.startsWith('/admin/create') || pathname === '/admin/blog'
+  const isMarketingActive = pathname.startsWith('/admin/marketing') || pathname === '/admin/subscribers' || pathname === '/admin/media' || pathname === '/admin/seo'
 
   return (
     <SessionContext.Provider value={session}>
@@ -108,6 +107,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {allNav.map((item) => {
               const active = item.href === '/admin/create'
                 ? isCreateActive
+                : item.href === '/admin/marketing'
+                ? isMarketingActive
                 : pathname === item.href
               return (
                 <Link
@@ -186,7 +187,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 function MobileMoreMenu({ items, pathname }: { items: { label: string; href: string; icon: React.FC<{ active: boolean }> }[]; pathname: string }) {
   const [open, setOpen] = useState(false)
-  const isActive = items.some((i) => i.href === pathname)
+  const isItemActive = (href: string) => href === '/admin/marketing' ? pathname.startsWith('/admin/marketing') : pathname === href
+  const isActive = items.some((i) => isItemActive(i.href))
 
   return (
     <div className="flex-1 relative">
@@ -201,17 +203,20 @@ function MobileMoreMenu({ items, pathname }: { items: { label: string; href: str
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute bottom-full right-0 mb-2 mr-1 bg-[#0a0e18] border border-sea-gold/20 rounded-lg overflow-hidden shadow-xl z-50 min-w-[160px]">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 text-sm font-dm no-underline transition-colors ${pathname === item.href ? 'text-sea-gold bg-sea-gold/10' : 'text-sea-blue hover:text-sea-gold'}`}
-              >
-                <item.icon active={pathname === item.href} />
-                {item.label}
-              </Link>
-            ))}
+            {items.map((item) => {
+              const active = isItemActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 text-sm font-dm no-underline transition-colors ${active ? 'text-sea-gold bg-sea-gold/10' : 'text-sea-blue hover:text-sea-gold'}`}
+                >
+                  <item.icon active={active} />
+                  {item.label}
+                </Link>
+              )
+            })}
           </div>
         </>
       )}
@@ -240,6 +245,9 @@ function SubsIcon({ active }: { active: boolean }) {
 }
 function SeoIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M8 11h6"/></svg>
+}
+function MarketingIcon({ active }: { active: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
 }
 function UsersIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
