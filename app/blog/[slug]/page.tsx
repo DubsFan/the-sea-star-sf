@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('is_published', true)
     .single()
 
-  if (!post) return { title: 'Post Not Found' }
+  if (!post) return { title: 'The Sea Star SF | Blog' }
 
   const url = `https://theseastarsf.com/blog/${params.slug}`
 

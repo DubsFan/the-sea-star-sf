@@ -72,9 +72,9 @@ const WINE_ITEMS = [
 
 const BLOG_CONTENT = [
   { date: 'March 2026', title: 'Discover the Most Inclusive Bars in Bay Area: Your Guide to Safe Space Bars', slug: 'inclusive-bars-bay-area', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">When it comes to finding a spot where everyone feels welcome, the Bay Area stands out.</p><p>Whether you\'re winding down after a long day or searching for a place to meet new people, the inclusive bars in the Bay Area offer a vibrant, safe, and inviting atmosphere.</p>' },
-  { date: 'February 2026', title: 'Introducing the Spring Menu: Florals, Smoke & a Little Chaos', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">Every season, we tear up the menu and start fresh. Spring 2026 is no exception.</p><p>The Gypsy Tailwind is the cocktail we\'re proudest of this round. Aqar\u00e1 Agave and sakura sake with celery root syrup for earthiness and Liquid Alchemist peach for sweetness.</p><p>Spill The Tea is the sleeper hit. Mezcal plus earl grey sounds strange until you taste it. The bergamot in the tea amplifies the smoke.</p><p>The full spring menu is live now. Come taste it before we change it again.</p>' },
-  { date: 'January 2026', title: 'Behind the Nitro Espresso Martini: Rebuilding a Classic', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">The espresso martini is everywhere. We wanted to make one worth talking about.</p><p>Step one: ditch the vodka. We use Caff\u00e8 Borghetti, and split the base between mezcal and tequila.</p><p>Step two: nitrogen. We charge the cocktail with nitro for that cascading pour and dense, creamy head.</p><p>The result is darker, more complex, and honestly more fun to drink.</p>' },
-  { date: 'December 2025', title: '127 Years at 2289 3rd Street: The History Beneath Your Feet', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">There\'s a trough under the bar. A real, century-old trough that once served as a urinal and tobacco spittoon.</p><p>The building first appeared as a saloon on Sanborn fire insurance maps from 1899. It\'s had at least five different names since then.</p><p>The Victorian tin ceilings are original. The long bar has been in the same spot for over a century.</p><p>We don\'t take that lightly. Every cocktail we serve is part of a story that started 127 years ago.</p>' },
+  { date: 'February 2026', title: 'Introducing the Spring Menu: Florals, Smoke & a Little Chaos', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">Every season, we tear up the menu and start fresh. Spring 2026 is no exception.</p><p>The Gypsy Tailwind is the cocktail we\'re proudest of this round. Aqar\u00e1 Agave and sakura sake meet celery root syrup for earthiness and Liquid Alchemist peach for a sweet finish. It\'s the kind of drink that makes you pause after the first sip because there\'s so much happening — floral, savory, just a whisper of agave heat — and somehow it all works together.</p><p>Spill The Tea is the sleeper hit. Mezcal plus earl grey sounds strange until you taste it. The bergamot in the tea amplifies the smoke from the mezcal, and a honey-ginger syrup ties it together with warmth. We\'ve had people order it as a joke and then order three more.</p><p>We also brought back the Dogpatch Daisy, a riff on a classic Bee\'s Knees with local wildflower honey and a lavender mist. It\'s light, bright, and perfect for those first warm afternoons on the patio.</p><p>The full spring menu is live now. Come taste it before we change it again — because we will.</p>' },
+  { date: 'January 2026', title: 'Behind the Nitro Espresso Martini: Rebuilding a Classic', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">The espresso martini is everywhere. We wanted to make one worth talking about.</p><p>Step one: ditch the vodka. We use Caff\u00e8 Borghetti — an Italian espresso liqueur that tastes like actual coffee, not vanilla extract. We split the base between mezcal and blanco tequila. The smoke from the mezcal plays off the roast of the coffee in a way that vodka could never.</p><p>Step two: nitrogen. We charge the cocktail with nitro on tap, which gives it that cascading pour and a dense, creamy head that lasts the entire drink. No shaking required. It\'s velvety, it\'s dramatic, and it takes about 8 seconds to pour.</p><p>Step three: the garnish. Three espresso beans is tradition. We float them on the nitro foam where they sit perfectly, like little islands. A light dusting of cacao powder on top finishes it off.</p><p>The result is darker, more complex, and honestly more fun to drink than any espresso martini you\'ve had. We make about 80 of these a week, and that number keeps climbing.</p>' },
+  { date: 'December 2025', title: '127 Years at 2289 3rd Street: The History Beneath Your Feet', content: '<p class="text-lg font-cormorant italic text-sea-light leading-relaxed">There\'s a trough under the bar. A real, century-old trough that once served as a urinal and tobacco spittoon.</p><p>The building at 2289 3rd Street first appeared as a saloon on Sanborn fire insurance maps from 1899. Back then, Dogpatch was an industrial waterfront neighborhood full of shipyard workers, and this corner bar was where they came to drink after their shifts. It\'s had at least five different names since then — each one a chapter in Dogpatch history.</p><p>The Victorian pressed-tin ceilings are original, and if you look up, you can see over a century of patina in the metalwork. The long bar has been in the same spot since the building went up. The brick walls behind the bottles have survived two major earthquakes.</p><p>When Alicia took over in 2019, the goal was simple: honor the bones of this place while building something new on top of them. The craft cocktails, the curated jukebox, the dog-friendly policy — that\'s all new. But the spirit of a neighborhood bar where regulars know each other by name? That\'s been here since 1899.</p><p>We don\'t take that lightly. Every cocktail we serve is part of a story that started 127 years ago. Come pull up a stool and add your chapter.</p>' },
 ]
 
 const CATEGORIES = ['Batched', 'Made To Order', 'Draft', 'NA Mocktails', 'Beer', 'Wine'] as const
@@ -103,6 +103,8 @@ export default function Home() {
   const [loginPass, setLoginPass] = useState('')
   const [loginError, setLoginError] = useState(false)
   const revealRefs = useRef<(HTMLDivElement | null)[]>([])
+  const revealedSet = useRef<Set<HTMLDivElement>>(new Set())
+  const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
     fetch('/api/menu')
@@ -123,26 +125,41 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    if (observerRef.current) return
+    observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
           if (e.isIntersecting) {
-            e.target.classList.add('opacity-100', 'translate-y-0')
-            e.target.classList.remove('opacity-0', 'translate-y-10')
-            observer.unobserve(e.target)
+            const el = e.target as HTMLDivElement
+            el.style.opacity = '1'
+            el.style.transform = 'translateY(0)'
+            revealedSet.current.add(el)
+            observerRef.current?.unobserve(el)
           }
         })
       },
       { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
     )
-    revealRefs.current.forEach((el) => el && observer.observe(el))
-    return () => observer.disconnect()
-  }, [menuItems, blogPosts])
-
+    // Observe all refs registered before observer was created
+    revealRefs.current.forEach((el) => {
+      if (el && !revealedSet.current.has(el)) {
+        observerRef.current?.observe(el)
+      }
+    })
+    return () => {
+      observerRef.current?.disconnect()
+      observerRef.current = null
+    }
+  }, [])
 
   const addRevealRef = (el: HTMLDivElement | null) => {
-    if (el && !revealRefs.current.includes(el)) {
+    if (!el) return
+    if (revealedSet.current.has(el)) return
+    if (!revealRefs.current.includes(el)) {
+      el.style.opacity = '0'
+      el.style.transform = 'translateY(10px)'
       revealRefs.current.push(el)
+      observerRef.current?.observe(el)
     }
   }
 
@@ -298,7 +315,7 @@ export default function Home() {
             Dogpatch, San Francisco &bull; Est. 1899
           </p>
           <div className="mb-4 opacity-0 relative inline-block" style={{ animation: 'fadeUp 1.2s ease-out 0.6s forwards' }}>
-            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-blue tracking-[0.2em] absolute left-0 -top-[clamp(1.2rem,2.5vw,1.8rem)]">the</span>
+            <span className="font-cormorant text-[clamp(1.4rem,3vw,2rem)] font-light italic text-sea-white tracking-[0.2em] absolute left-[0.15em] md:left-0 -top-[1.1rem] md:-top-[clamp(1.2rem,2.5vw,1.8rem)]">the</span>
             <h1 className="font-playfair text-[clamp(5rem,14vw,12rem)] font-extrabold leading-[0.85] tracking-tight text-sea-gold uppercase" style={{ textShadow: '0 2px 40px rgba(201,165,78,0.3), 0 0 80px rgba(201,165,78,0.1)' }}>
               Sea Star
             </h1>
@@ -325,13 +342,16 @@ export default function Home() {
       <section id="story" className="py-32 bg-[#06080d]/80">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-2 gap-12 md:gap-24 items-center">
-            <div ref={addRevealRef} className="relative aspect-[3/4] overflow-hidden opacity-0 translate-y-10 transition-all duration-700">
-              <img src="https://www.opensfhistory.org/Image/700/wnp27.4067.jpg" alt="3rd Street Bridge, Dogpatch, circa 1940" className="w-full h-full object-cover opacity-50" style={{ filter: 'sepia(0.3) contrast(1.1)' }} />
+            <div ref={addRevealRef} className="relative aspect-[3/4] overflow-hidden transition-all duration-700">
+              <div className="absolute inset-0 overflow-hidden">
+                <img src="https://www.opensfhistory.org/Image/700/wnp27.4067.jpg" alt="3rd Street Bridge, Dogpatch, circa 1940" className="w-full h-[115%] object-cover object-[center_25%] opacity-50" style={{ filter: 'sepia(0.3) contrast(1.1)' }} />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-br from-[#06080d]/40 to-[#0c2d3a]/30" />
+              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#06080d] via-[#06080d] via-30% to-transparent z-[5]" />
               <div className="absolute top-8 left-8 text-[0.5rem] tracking-[0.4em] uppercase text-sea-teal px-3 py-1.5 border border-sea-teal/20 z-10">Since 1899</div>
-              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/40 z-10">1899</div>
+              <div className="absolute bottom-6 left-8 font-playfair text-7xl font-extrabold text-sea-gold/25 z-10">1899</div>
             </div>
-            <div ref={addRevealRef} className="opacity-0 translate-y-10 transition-all duration-700">
+            <div ref={addRevealRef} className="transition-all duration-700">
               <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">Our Story</p>
               <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white mb-6">127 Years of <em className="text-sea-gold">Boozeness</em></h2>
               <div className="w-[60px] h-[1px] bg-sea-gold-dim mb-8" />
@@ -387,13 +407,13 @@ export default function Home() {
       {/* COCKTAILS / MENU */}
       <section id="menu" className="py-32 bg-[#0a0e18]/85 border-t border-sea-gold/10 relative overflow-hidden">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 relative z-[2]">
-          <div ref={addRevealRef} className="text-center mb-16 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="text-center mb-16 transition-all duration-700">
             <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">The Menu</p>
             <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white mb-6">Signature <em className="text-sea-gold">Cocktails</em></h2>
             <p className="text-sea-blue max-w-[500px] mx-auto text-[0.95rem] font-dm">Creative, bold, and unapologetically fun. Every drink crafted with intention.</p>
           </div>
 
-          <div ref={addRevealRef} className="flex justify-center gap-2 mb-12 flex-wrap opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="flex justify-center gap-2 mb-12 flex-wrap transition-all duration-700">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
@@ -405,7 +425,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div ref={addRevealRef} className="opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="transition-all duration-700">
             {activeTab === 'Beer' && (
               <div className="w-full rounded-lg overflow-hidden">
                 <iframe
@@ -460,18 +480,18 @@ export default function Home() {
       {/* REVIEWS */}
       <section id="reviews" className="py-32 bg-[#06080d]/80 border-t border-sea-gold/10">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div ref={addRevealRef} className="text-center mb-16 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="text-center mb-16 transition-all duration-700">
             <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">What People Say</p>
             <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">Don&apos;t Take <em className="text-sea-gold">Our Word</em> For It</h2>
           </div>
-          <div ref={addRevealRef} className="flex justify-center gap-4 md:gap-8 mb-16 flex-wrap opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-16 transition-all duration-700">
             {[
               { score: '4.7', stars: '\u2605\u2605\u2605\u2605\u2605', source: 'Google', count: '328 reviews', href: 'https://www.google.com/maps/place/The+Sea+Star/@37.7607427,-122.3882716,17z/' },
               { score: '5.0', stars: '\u2605\u2605\u2605\u2605\u2605', source: 'TripAdvisor', count: 'Perfect', href: 'https://www.tripadvisor.com/Restaurant_Review-g60713-d15106299-Reviews-The_Sea_Star-San_Francisco_California.html' },
               { score: '4.5', stars: '\u2605\u2605\u2605\u2605\u2606', source: 'Yelp', count: '128 reviews', href: 'https://www.yelp.com/biz/the-sea-star-san-francisco' },
               { score: '8.6', stars: '\u2605\u2605\u2605\u2605\u2605', source: 'Foursquare', count: '105 ratings', href: 'https://foursquare.com/v/sea-star/53583898498e7059d4ce6206' },
             ].map((r) => (
-              <a key={r.source} href={r.href} target="_blank" rel="noopener" className="text-center px-8 py-6 border border-sea-gold/10 min-w-[150px] hover:border-sea-gold-dim hover:-translate-y-1 transition-all no-underline block">
+              <a key={r.source} href={r.href} target="_blank" rel="noopener" className="text-center px-4 md:px-8 py-6 border border-sea-gold/10 hover:border-sea-gold-dim hover:-translate-y-1 transition-all no-underline block">
                 <div className="font-playfair text-4xl font-bold text-sea-gold">{r.score}</div>
                 <div className="text-sea-gold text-xs mt-1 tracking-wider">{r.stars}</div>
                 <div className="text-[0.55rem] tracking-[0.2em] uppercase text-sea-blue mt-1">{r.source}</div>
@@ -479,7 +499,7 @@ export default function Home() {
               </a>
             ))}
           </div>
-          <div ref={addRevealRef} className="grid md:grid-cols-3 gap-6 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="grid md:grid-cols-3 gap-6 transition-all duration-700">
             {[
               { text: 'This star is rising! New ownership has transformed this spot with a delicious and interesting cocktail list, fun jukebox, gracious bartenders, and lively atmosphere.', author: 'Foursquare', platform: 'Verified Visitor' },
               { text: 'Dog friendly, great bartenders, good value and best of all creative and well made cocktails and non-alcoholic drinks. I left wanting to return.', author: 'Google Review', platform: '5 Stars' },
@@ -496,7 +516,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div ref={addRevealRef} className="flex justify-center gap-4 mt-12 flex-wrap opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="flex justify-center gap-4 mt-12 flex-wrap transition-all duration-700">
             {[
               { label: 'Review on Google', href: 'https://www.google.com/maps/place/The+Sea+Star/@37.7607427,-122.3882716,17z/' },
               { label: 'Review on Yelp', href: 'https://www.yelp.com/biz/the-sea-star-san-francisco' },
@@ -513,11 +533,11 @@ export default function Home() {
       {/* EVENTS */}
       <section id="events" className="py-32 bg-[#0a0e18]/85 border-t border-sea-gold/10">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div ref={addRevealRef} className="opacity-0 translate-y-10 transition-all duration-700 mb-12">
+          <div ref={addRevealRef} className="transition-all duration-700 mb-12">
             <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">Happenings</p>
             <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">What&apos;s <em className="text-sea-gold">On</em></h2>
           </div>
-          <div ref={addRevealRef} className="grid md:grid-cols-2 gap-6 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="grid md:grid-cols-2 gap-6 transition-all duration-700">
             <div className="p-8 border border-sea-gold/10 hover:border-sea-gold-dim hover:-translate-y-1 transition-all duration-300">
               <div className="text-[0.5rem] tracking-[0.35em] uppercase text-sea-teal mb-4">Weekly</div>
               <h3 className="font-cormorant text-2xl font-light text-sea-white mb-3">Live Music Tuesdays</h3>
@@ -552,15 +572,17 @@ export default function Home() {
       {/* JOURNAL */}
       <section id="journal" className="py-32 bg-[#06080d]/80 border-t border-sea-gold/10">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div ref={addRevealRef} className="text-center mb-12 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="text-center mb-12 transition-all duration-700">
             <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">From the Bar</p>
-            <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">The <em className="text-sea-gold">Journal</em></h2>
+            <a href="/blog" className="no-underline"><h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white hover:text-sea-gold transition-colors">The <em className="text-sea-gold">Journal</em></h2></a>
           </div>
-          <div ref={addRevealRef} className="grid grid-cols-2 md:grid-cols-4 gap-6 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="grid grid-cols-2 md:grid-cols-4 gap-6 transition-all duration-700">
             {BLOG_CONTENT.map((post, i) => (
               <div
                 key={i}
-                className="border border-sea-gold/5 overflow-hidden hover:border-sea-gold/15 hover:-translate-y-1 transition-all cursor-pointer"
+                role="button"
+                tabIndex={0}
+                className="border border-sea-gold/5 overflow-hidden hover:border-sea-gold/15 hover:-translate-y-1 active:scale-[0.98] transition-all cursor-pointer"
                 onClick={() => {
                   if ((post as any).slug) {
                     window.location.href = `/blog/${(post as any).slug}`
@@ -571,7 +593,7 @@ export default function Home() {
                 }}
               >
                 <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-[#0c2d3a] to-[#0f1523]">
-                  <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url('${blogImages[i]}')` }} />
+                  <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url('${blogImages[i] || ''}')` }} />
                   <div className="absolute bottom-3 left-4 font-playfair text-5xl font-extrabold text-sea-gold/15">{String(i + 1).padStart(2, '0')}</div>
                 </div>
                 <div className="p-6">
@@ -580,7 +602,7 @@ export default function Home() {
                   </div>
                   <h3 className="font-cormorant text-xl font-normal text-sea-white leading-tight mb-3">{post.title}</h3>
                   <p className="text-[0.85rem] text-sea-blue leading-relaxed font-dm line-clamp-2">{post.content.slice(0, 120).replace(/<[^>]*>/g, '')}</p>
-                  <span className="inline-block mt-4 text-[0.55rem] tracking-[0.25em] uppercase text-sea-gold">Read More &rarr;</span>
+                  <span className="inline-block mt-4 text-[0.55rem] tracking-[0.25em] uppercase text-sea-gold border-b border-sea-gold/40 pb-0.5">Read More &rarr;</span>
                 </div>
               </div>
             ))}
@@ -595,6 +617,11 @@ export default function Home() {
           <div className="max-w-[700px] mx-auto" style={{ animation: 'fadeUp 0.5s ease-out' }}>
             <div className="text-[0.55rem] tracking-[0.25em] uppercase text-sea-gold mb-4">{BLOG_CONTENT[activeBlogIndex].date}</div>
             <h2 className="font-cormorant text-[clamp(2rem,4vw,2.8rem)] font-light text-sea-white leading-tight mb-8">{BLOG_CONTENT[activeBlogIndex].title}</h2>
+            {blogImages[activeBlogIndex] && (
+              <div className="aspect-video mb-8 overflow-hidden rounded-lg">
+                <img src={blogImages[activeBlogIndex]} alt={BLOG_CONTENT[activeBlogIndex].title} className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="space-y-6 text-base text-sea-blue leading-relaxed font-dm" dangerouslySetInnerHTML={{ __html: BLOG_CONTENT[activeBlogIndex].content }} />
           </div>
         </div>
@@ -630,11 +657,11 @@ export default function Home() {
       {/* VISIT */}
       <section id="visit" className="py-32 bg-[#06080d]/80">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div ref={addRevealRef} className="text-center mb-12 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="text-center mb-12 transition-all duration-700">
             <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">Find Us</p>
             <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">Plan Your <em className="text-sea-gold">Visit</em></h2>
           </div>
-          <div ref={addRevealRef} className="grid md:grid-cols-3 gap-[1px] bg-sea-gold/5 border border-sea-gold/5 opacity-0 translate-y-10 transition-all duration-700">
+          <div ref={addRevealRef} className="grid md:grid-cols-3 gap-[1px] bg-sea-gold/5 border border-sea-gold/5 transition-all duration-700">
             <div className="bg-[#06080d] p-8">
               <h3 className="font-cormorant text-2xl font-light text-sea-gold mb-6">Hours</h3>
               <table className="w-full">

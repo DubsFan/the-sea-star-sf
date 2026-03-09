@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from '../layout'
+import { useSession } from '../session-context'
 
 interface Subscriber {
   id: string
@@ -17,6 +17,9 @@ export default function AdminSubscribers() {
   const [importResult, setImportResult] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ email: '', name: '', is_active: true })
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin' || session?.role === 'social_admin'
 
@@ -63,6 +66,33 @@ export default function AdminSubscribers() {
       if (res.ok) loadSubscribers()
     } catch {} finally {
       setDeleting(false)
+    }
+  }
+
+  const startEdit = (sub: Subscriber) => {
+    setEditingId(sub.id)
+    setEditForm({ email: sub.email, name: sub.name || '', is_active: sub.is_active })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+  }
+
+  const saveEdit = async () => {
+    if (!editingId) return
+    setSavingEdit(true)
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingId, ...editForm }),
+      })
+      if (res.ok) {
+        setEditingId(null)
+        loadSubscribers()
+      }
+    } catch {} finally {
+      setSavingEdit(false)
     }
   }
 
@@ -177,6 +207,9 @@ export default function AdminSubscribers() {
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Email</th>
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Name</th>
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Active</th>
+              {isAdminOrAbove && (
+                <th className="w-16 p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Edit</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -192,13 +225,42 @@ export default function AdminSubscribers() {
                     />
                   </td>
                 )}
-                <td className="p-3 text-sm text-sea-white font-dm">{sub.email}</td>
-                <td className="p-3 text-sm text-sea-blue font-dm">{sub.name || '-'}</td>
-                <td className="p-3">
-                  <span className={`text-xs font-dm px-2 py-1 rounded ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
-                    {sub.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
+                {editingId === sub.id ? (
+                  <>
+                    <td className="p-3">
+                      <input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="w-full px-2 py-1.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded" />
+                    </td>
+                    <td className="p-3">
+                      <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-2 py-1.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded" />
+                    </td>
+                    <td className="p-3">
+                      <button onClick={() => setEditForm({ ...editForm, is_active: !editForm.is_active })} className={`text-xs font-dm px-2 py-1 rounded cursor-pointer border-none ${editForm.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                        {editForm.is_active ? 'Active' : 'Inactive'}
+                      </button>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex gap-1">
+                        <button onClick={saveEdit} disabled={savingEdit} className="text-xs text-sea-gold font-dm cursor-pointer bg-transparent border-none hover:text-sea-gold-light">{savingEdit ? '...' : '✓'}</button>
+                        <button onClick={cancelEdit} className="text-xs text-sea-blue font-dm cursor-pointer bg-transparent border-none hover:text-sea-white">✕</button>
+                      </div>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="p-3 text-sm text-sea-white font-dm">{sub.email}</td>
+                    <td className="p-3 text-sm text-sea-blue font-dm">{sub.name || '-'}</td>
+                    <td className="p-3">
+                      <span className={`text-xs font-dm px-2 py-1 rounded ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                        {sub.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    {isAdminOrAbove && (
+                      <td className="p-3">
+                        <button onClick={() => startEdit(sub)} className="text-xs text-sea-blue font-dm cursor-pointer bg-transparent border-none hover:text-sea-gold transition-colors">✎</button>
+                      </td>
+                    )}
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
@@ -220,29 +282,89 @@ export default function AdminSubscribers() {
           {subscribers.map((sub) => (
             <div
               key={sub.id}
-              onClick={() => isAdminOrAbove && toggleSelect(sub.id)}
-              className={`bg-[#0a0e18] border rounded-lg p-4 min-h-[56px] active:bg-sea-gold/10 ${isAdminOrAbove ? 'cursor-pointer' : ''} ${selected.has(sub.id) ? 'border-sea-gold/40 bg-sea-gold/5' : 'border-sea-gold/10'}`}
+              className={`bg-[#0a0e18] border rounded-lg overflow-hidden ${selected.has(sub.id) ? 'border-sea-gold/40 bg-sea-gold/5' : 'border-sea-gold/10'}`}
             >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {isAdminOrAbove && (
-                    <input
-                      type="checkbox"
-                      checked={selected.has(sub.id)}
-                      onChange={() => toggleSelect(sub.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="accent-sea-gold cursor-pointer w-5 h-5 flex-shrink-0"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-sea-white font-dm truncate">{sub.email}</p>
-                    {sub.name && <p className="text-xs text-sea-blue font-dm mt-0.5">{sub.name}</p>}
+              <div
+                onClick={() => editingId !== sub.id && isAdminOrAbove && toggleSelect(sub.id)}
+                className={`p-4 min-h-[56px] active:bg-sea-gold/10 ${isAdminOrAbove && editingId !== sub.id ? 'cursor-pointer' : ''}`}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {isAdminOrAbove && (
+                      <input
+                        type="checkbox"
+                        checked={selected.has(sub.id)}
+                        onChange={() => toggleSelect(sub.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="accent-sea-gold cursor-pointer w-5 h-5 flex-shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-sea-white font-dm truncate">{sub.email}</p>
+                      {sub.name && <p className="text-xs text-sea-blue font-dm mt-0.5">{sub.name}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                    <span className={`text-[0.6rem] font-dm px-2 py-1 rounded ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                      {sub.is_active ? 'Active' : 'Off'}
+                    </span>
+                    {isAdminOrAbove && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); editingId === sub.id ? cancelEdit() : startEdit(sub) }}
+                        className="w-[44px] h-[44px] flex items-center justify-center text-sea-blue bg-transparent border border-sea-gold/10 rounded cursor-pointer hover:text-sea-gold hover:border-sea-gold/30 transition-colors"
+                      >
+                        {editingId === sub.id ? '✕' : '✎'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <span className={`text-[0.6rem] font-dm px-2 py-1 rounded ml-2 flex-shrink-0 ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
-                  {sub.is_active ? 'Active' : 'Off'}
-                </span>
               </div>
+
+              {/* Inline edit form */}
+              {editingId === sub.id && (
+                <div className="px-4 pb-4 pt-2 border-t border-sea-gold/10 space-y-3">
+                  <div>
+                    <label className="text-[0.6rem] tracking-[0.15em] uppercase text-sea-blue font-dm mb-1 block">Email</label>
+                    <input
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[0.6rem] tracking-[0.15em] uppercase text-sea-blue font-dm mb-1 block">Name</label>
+                    <input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[0.6rem] tracking-[0.15em] uppercase text-sea-blue font-dm">Status</label>
+                    <button
+                      onClick={() => setEditForm({ ...editForm, is_active: !editForm.is_active })}
+                      className={`text-xs font-dm px-3 py-2 rounded cursor-pointer border-none min-h-[44px] ${editForm.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}
+                    >
+                      {editForm.is_active ? 'Active' : 'Inactive'}
+                    </button>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={saveEdit}
+                      disabled={savingEdit}
+                      className="flex-1 py-2.5 min-h-[44px] bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer rounded disabled:opacity-50"
+                    >
+                      {savingEdit ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex-1 py-2.5 min-h-[44px] bg-transparent text-sea-blue font-dm text-xs tracking-[0.15em] uppercase border border-sea-border cursor-pointer rounded"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

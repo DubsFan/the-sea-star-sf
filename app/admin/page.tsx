@@ -64,7 +64,6 @@ export default function AdminLogin() {
           </button>
         </form>
         {error && <p className="text-sea-rose text-sm mt-4">{error}</p>}
-        <a href="/" className="inline-block mt-8 text-xs text-sea-blue hover:text-sea-gold transition-colors font-dm tracking-wide">&larr; Back to website</a>
       </div>
     </div>
   )

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { groq } from '@/lib/groq'
 import { requireAdmin } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 
-const SYSTEM_PROMPT = `You are the blog writer for The Sea Star, a craft cocktail bar in San Francisco's Dogpatch neighborhood. The bar has been at 2289 3rd Street since 1899. It's run by award-winning bartender Alicia Walton.
+const BASE_PROMPT = `You are the blog writer for The Sea Star, a craft cocktail bar in San Francisco's Dogpatch neighborhood. The bar has been at 2289 3rd Street since 1899. It's run by award-winning bartender Alicia Walton.
 
 Your voice is: warm, fun, neighborhood bar vibes, Dogpatch pride, cocktail-forward, dog-friendly, unpretentious. You write like a bartender who reads a lot — casual but sharp, never corporate.
 
@@ -16,6 +17,22 @@ Return a JSON object with exactly these fields:
 
 Return ONLY valid JSON. No markdown code fences.`
 
+async function buildPrompt(): Promise<string> {
+  const { data } = await supabase
+    .from('site_settings')
+    .select('key, value')
+    .in('key', ['blog_keywords', 'blog_tone_notes'])
+
+  let prompt = BASE_PROMPT
+  const keywords = data?.find(s => s.key === 'blog_keywords')?.value
+  const toneNotes = data?.find(s => s.key === 'blog_tone_notes')?.value
+
+  if (keywords) prompt += `\n\nPreferred topics and keywords to weave in when relevant: ${keywords}`
+  if (toneNotes) prompt += `\n\nAdditional style guidance: ${toneNotes}`
+
+  return prompt
+}
+
 export async function POST(request: NextRequest) {
   const admin = await requireAdmin(request)
   if (!admin) {
@@ -27,10 +44,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No input provided' }, { status: 400 })
   }
 
+  const systemPrompt = await buildPrompt()
+
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: raw_input },
     ],
     temperature: 0.7,

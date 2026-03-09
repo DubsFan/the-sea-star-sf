@@ -33,6 +33,27 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true })
 }
 
+export async function PATCH(request: NextRequest) {
+  const admin = await requireAdmin(request)
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id, email, name, is_active } = await request.json()
+  if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
+
+  const updates: Record<string, unknown> = {}
+  if (email !== undefined) updates.email = email
+  if (name !== undefined) updates.name = name
+  if (is_active !== undefined) updates.is_active = is_active
+
+  const { error } = await supabase
+    .from('email_subscribers')
+    .update(updates)
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
+
 export async function DELETE(request: NextRequest) {
   const admin = await requireAdmin(request)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

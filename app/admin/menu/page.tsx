@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useSession } from '../layout'
+import { useSession } from '../session-context'
 
 interface MenuItem {
   id: string
