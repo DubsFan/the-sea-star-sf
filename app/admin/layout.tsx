@@ -10,6 +10,7 @@ import { SessionContext, type SessionData } from './session-context'
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<SessionData | null>(null)
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -36,6 +37,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       })
   }, [pathname, router])
 
+  // Fetch unread message count
+  useEffect(() => {
+    if (!authenticated || pathname === '/admin') return
+    fetch('/api/contact?unread_count=true')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.count != null) setUnreadCount(data.count) })
+      .catch(() => {})
+  }, [authenticated, pathname])
+
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/admin')
@@ -52,22 +62,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isSocialAdmin = session?.role === 'social_admin'
   const canSeeContent = isAdminOrAbove || isSocialAdmin
 
-  const navItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: DashboardIcon },
-    ...(!isSocialAdmin ? [
-      { label: 'Menu', href: '/admin/menu', icon: MenuIcon },
-    ] : []),
-    { label: 'Blog', href: '/admin/blog', icon: BlogIcon },
+  // Primary nav: Home, Menu, Create, Inbox
+  const primaryNav = [
+    { label: 'Home', href: '/admin/dashboard', icon: HomeIcon },
+    ...(!isSocialAdmin ? [{ label: 'Menu', href: '/admin/menu', icon: MenuIcon }] : []),
+    ...(canSeeContent ? [{ label: 'Create', href: '/admin/create', icon: CreateIcon }] : []),
+    { label: 'Inbox', href: '/admin/messages', icon: InboxIcon, badge: unreadCount },
+  ]
+
+  // More menu items
+  const moreItems = [
     { label: 'Media', href: '/admin/media', icon: MediaIcon },
     ...(canSeeContent ? [{ label: 'Subscribers', href: '/admin/subscribers', icon: SubsIcon }] : []),
-    { label: 'Messages', href: '/admin/messages', icon: MsgIcon },
+    ...(isAdminOrAbove ? [{ label: 'SEO', href: '/admin/seo', icon: SeoIcon }] : []),
     ...(isAdminOrAbove ? [{ label: 'Users', href: '/admin/users', icon: UsersIcon }] : []),
     ...(isSuperAdmin ? [{ label: 'Settings', href: '/admin/settings', icon: SettingsIcon }] : []),
   ]
 
-  // Mobile: show first 5 in tab bar, rest in "More"
-  const mobileMain = navItems.slice(0, 5)
-  const mobileMore = navItems.slice(5)
+  const allNav = [...primaryNav, ...moreItems]
+
+  // For mobile: show primary + More button
+  const mobileMain = primaryNav.slice(0, 4)
+
+  // Check if Create tab is active (matches /admin/create or /admin/blog)
+  const isCreateActive = pathname.startsWith('/admin/create') || pathname === '/admin/blog'
 
   return (
     <SessionContext.Provider value={session}>
@@ -87,16 +105,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           )}
           <nav className="flex-1 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-dm rounded transition-all no-underline ${pathname === item.href ? 'bg-sea-gold/10 text-sea-gold' : 'text-sea-blue hover:text-sea-gold hover:bg-sea-gold/5'}`}
-              >
-                <item.icon active={pathname === item.href} />
-                {item.label}
-              </Link>
-            ))}
+            {allNav.map((item) => {
+              const active = item.href === '/admin/create'
+                ? isCreateActive
+                : pathname === item.href
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-dm rounded transition-all no-underline relative ${active ? 'bg-sea-gold/10 text-sea-gold' : 'text-sea-blue hover:text-sea-gold hover:bg-sea-gold/5'}`}
+                >
+                  <item.icon active={active} />
+                  {item.label}
+                  {'badge' in item && (item as { badge?: number }).badge ? (
+                    <span className="ml-auto bg-red-500 text-white text-[0.6rem] font-dm font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
+                      {(item as { badge: number }).badge}
+                    </span>
+                  ) : null}
+                </Link>
+              )
+            })}
           </nav>
           <button onClick={handleLogout} className="mt-auto px-4 py-2.5 text-sm font-dm text-sea-blue hover:text-sea-rose transition-colors bg-transparent border-none cursor-pointer text-left">
             Logout
@@ -125,18 +153,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Mobile Bottom Tab Bar */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#0a0e18] border-t border-sea-gold/10 flex z-40 safe-bottom">
-          {mobileMain.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center py-2 pt-2.5 no-underline transition-colors min-h-[56px] ${pathname === item.href ? 'text-sea-gold' : 'text-sea-blue'}`}
-            >
-              <item.icon active={pathname === item.href} />
-              <span className="text-[0.55rem] mt-1 font-dm">{item.label}</span>
-            </Link>
-          ))}
-          {mobileMore.length > 0 && (
-            <MobileMoreMenu items={mobileMore} pathname={pathname} />
+          {mobileMain.map((item) => {
+            const active = item.href === '/admin/create'
+              ? isCreateActive
+              : pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex-1 flex flex-col items-center justify-center py-2 pt-2.5 no-underline transition-colors min-h-[56px] relative ${active ? 'text-sea-gold' : 'text-sea-blue'}`}
+              >
+                <div className="relative">
+                  <item.icon active={active} />
+                  {'badge' in item && (item as { badge?: number }).badge ? (
+                    <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[0.5rem] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5">
+                      {(item as { badge: number }).badge}
+                    </span>
+                  ) : null}
+                </div>
+                <span className="text-[0.55rem] mt-1 font-dm">{item.label}</span>
+              </Link>
+            )
+          })}
+          {moreItems.length > 0 && (
+            <MobileMoreMenu items={moreItems} pathname={pathname} />
           )}
         </nav>
       </div>
@@ -179,18 +219,18 @@ function MobileMoreMenu({ items, pathname }: { items: { label: string; href: str
   )
 }
 
-// Simple SVG icons for nav
-function DashboardIcon({ active }: { active: boolean }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+// SVG Icons
+function HomeIcon({ active }: { active: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/></svg>
 }
 function MenuIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
 }
-function WineIcon({ active }: { active: boolean }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M8 2h8l-1 7a5 5 0 01-10 0L8 2zM12 15v6M8 21h8"/></svg>
+function CreateIcon({ active }: { active: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? '#c9a96e' : 'none'} stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8" stroke={active ? '#06080d' : '#6b7a99'} strokeWidth="2"/></svg>
 }
-function BlogIcon({ active }: { active: boolean }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h6"/></svg>
+function InboxIcon({ active }: { active: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
 }
 function MediaIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
@@ -198,8 +238,8 @@ function MediaIcon({ active }: { active: boolean }) {
 function SubsIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M4 4h16v16H4z"/><path d="M4 8l8 5 8-5"/></svg>
 }
-function MsgIcon({ active }: { active: boolean }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+function SeoIcon({ active }: { active: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M8 11h6"/></svg>
 }
 function UsersIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#c9a96e' : '#6b7a99'} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>

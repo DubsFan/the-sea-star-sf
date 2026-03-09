@@ -7,6 +7,16 @@ export async function GET(request: NextRequest) {
   const admin = await requireAdmin(request)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Quick unread count for badge
+  const url = new URL(request.url)
+  if (url.searchParams.get('unread_count') === 'true') {
+    const { count } = await supabase
+      .from('contact_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_read', false)
+    return NextResponse.json({ count: count || 0 })
+  }
+
   const { data, error } = await supabase
     .from('contact_submissions')
     .select('*')

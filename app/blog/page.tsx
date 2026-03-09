@@ -1,10 +1,19 @@
 import { supabase } from '@/lib/supabase'
+import { getPageSeo } from '@/lib/seo'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'Journal | The Sea Star SF',
-  description: 'Stories, cocktail insights, and news from behind the bar at The Sea Star in Dogpatch, San Francisco.',
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getPageSeo('/blog')
+  return {
+    title: seo.metaTitle,
+    description: seo.metaDescription,
+    openGraph: {
+      title: seo.ogTitle || seo.metaTitle,
+      description: seo.ogDescription || seo.metaDescription,
+      ...(seo.ogImage ? { images: [seo.ogImage] } : {}),
+    },
+  }
 }
 
 export const revalidate = 60

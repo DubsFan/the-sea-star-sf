@@ -22,7 +22,7 @@ export async function createSession(username: string, role: UserRole, displayNam
 
   cookies().set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production' && !process.env.PLAYWRIGHT_TEST,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7,
     path: '/',
