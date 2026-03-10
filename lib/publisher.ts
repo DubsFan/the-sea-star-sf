@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import { logActivity } from './activity'
 import type { AppDeps } from './deps'
+import { BUSINESS } from './business'
 
 type EntityType = 'blog_post' | 'event'
 
@@ -32,6 +33,16 @@ export async function publishToSite(type: EntityType, id: string, actor?: string
     actor,
   }, deps ? { db: deps.db } : undefined)
 
+  // Fire IndexNow ping (non-blocking)
+  const slug = type === 'blog_post'
+    ? await db.from('blog_posts').select('slug').eq('id', id).single().then(r => r.data?.slug)
+    : await db.from('events').select('id').eq('id', id).single().then(r => r.data?.id)
+
+  if (slug) {
+    const path = type === 'blog_post' ? `/blog/${slug}` : `/events/${slug}`
+    pingIndexNow(`${BUSINESS.url}${path}`).catch(() => {})
+  }
+
   return data
 }
 
@@ -59,4 +70,15 @@ export async function scheduleForSite(type: EntityType, id: string, scheduledFor
   }, deps ? { db: deps.db } : undefined)
 
   return data
+}
+
+/**
+ * Ping IndexNow to notify search engines of new/updated content.
+ * Non-blocking — failures are silently ignored.
+ */
+async function pingIndexNow(pageUrl: string): Promise<void> {
+  const host = new URL(BUSINESS.url).host
+  const indexNowUrl = `https://api.indexnow.org/indexnow?url=${encodeURIComponent(pageUrl)}&key=${host}`
+
+  await fetch(indexNowUrl, { method: 'GET' })
 }

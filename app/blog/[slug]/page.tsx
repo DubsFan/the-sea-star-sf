@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { BUSINESS } from '@/lib/business'
 
 export const revalidate = 60
 
@@ -51,19 +52,28 @@ export default async function BlogPostPage({ params }: Props) {
 
   if (!post) notFound()
 
+  // Strip HTML for word count
+  const plainText = (post.body || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  const wordCount = plainText.split(' ').filter(Boolean).length
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
+    description: post.meta_description || post.excerpt || '',
     datePublished: post.published_at || post.created_at,
+    ...(post.updated_at ? { dateModified: post.updated_at } : {}),
     ...(post.featured_image ? { image: post.featured_image } : {}),
-    author: { '@type': 'Person', name: 'Alicia Walton' },
+    wordCount,
+    ...(post.focus_keyword ? { keywords: post.focus_keyword } : {}),
+    author: { '@type': 'Person', name: BUSINESS.founder.name },
     publisher: {
       '@type': 'BarOrPub',
-      name: 'The Sea Star',
-      address: { '@type': 'PostalAddress', streetAddress: '2289 3rd Street', addressLocality: 'San Francisco', addressRegion: 'CA', postalCode: '94107' },
+      '@id': `${BUSINESS.url}/#organization`,
+      name: BUSINESS.name,
+      address: { '@type': 'PostalAddress', ...BUSINESS.address },
     },
-    url: `https://theseastarsf.com/blog/${post.slug}`,
+    url: `${BUSINESS.url}/blog/${post.slug}`,
   }
 
   return (

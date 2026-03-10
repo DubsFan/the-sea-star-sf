@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import Starfield from './components/Starfield'
+import { BUSINESS } from '@/lib/business'
 
 export const metadata: Metadata = {
   title: 'The Sea Star SF | Craft Cocktails in Dogpatch Since 1899',
@@ -13,6 +14,37 @@ export const metadata: Metadata = {
   },
 }
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': ['BarOrPub', 'Organization'],
+  '@id': `${BUSINESS.url}/#organization`,
+  name: BUSINESS.name,
+  description: BUSINESS.description,
+  url: BUSINESS.url,
+  ...(BUSINESS.telephone ? { telephone: BUSINESS.telephone } : {}),
+  email: BUSINESS.email,
+  priceRange: BUSINESS.priceRange,
+  servesCuisine: BUSINESS.servesCuisine,
+  address: {
+    '@type': 'PostalAddress',
+    ...BUSINESS.address,
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: BUSINESS.geo.latitude,
+    longitude: BUSINESS.geo.longitude,
+  },
+  ...(BUSINESS.sameAs.length > 0 ? { sameAs: BUSINESS.sameAs } : {}),
+  ...(BUSINESS.openingHours.length > 0 ? { openingHours: BUSINESS.openingHours } : {}),
+  menu: BUSINESS.menuUrl,
+  acceptsReservations: true,
+  founder: {
+    '@type': 'Person',
+    name: BUSINESS.founder.name,
+    jobTitle: BUSINESS.founder.jobTitle,
+  },
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -21,6 +53,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[#06080d] text-[#d8e0ed] antialiased overflow-x-hidden">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <Starfield />
         <Toaster position="bottom-center" />
         <div className="relative z-[1]">
