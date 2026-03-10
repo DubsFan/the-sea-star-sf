@@ -243,7 +243,7 @@ export default function Home() {
             Book Event
           </a>
         </div>
-        <button aria-label="Open menu" aria-expanded={mobileMenuOpen} className="md:hidden flex flex-col gap-[5px] bg-transparent border-none p-2" onClick={() => setMobileMenuOpen(true)}>
+        <button aria-label="Open menu" aria-expanded={mobileMenuOpen} className="md:hidden flex flex-col gap-[5px] items-center justify-center bg-transparent border-none min-h-[44px] min-w-[44px] p-2" onClick={() => setMobileMenuOpen(true)}>
           <span className="block w-6 h-[1px] bg-sea-gold" aria-hidden="true" />
           <span className="block w-6 h-[1px] bg-sea-gold" aria-hidden="true" />
           <span className="block w-6 h-[1px] bg-sea-gold" aria-hidden="true" />
@@ -327,10 +327,10 @@ export default function Home() {
             <span className="text-sea-gold">Booze</span> Your Own Adventure
           </p>
           <div className="flex gap-6 justify-center flex-wrap opacity-0" style={{ animation: 'fadeUp 1s ease-out 1.1s forwards' }}>
-            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/30 hover:bg-sea-gold/30 hover:-translate-y-0.5 transition-all no-underline">
+            <a href="#menu" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-10 py-4 min-h-[44px] flex items-center bg-sea-gold/20 text-sea-gold border border-sea-gold/30 hover:bg-sea-gold/30 hover:-translate-y-0.5 transition-all no-underline">
               Explore the Menu
             </a>
-            <a href="#visit" className="font-dm text-[0.6rem] font-normal tracking-[0.3em] uppercase px-10 py-4 bg-sea-gold/20 text-sea-gold border border-sea-gold/30 hover:bg-sea-gold/30 hover:-translate-y-0.5 transition-all no-underline">
+            <a href="#visit" className="font-dm text-[0.6rem] font-normal tracking-[0.3em] uppercase px-10 py-4 min-h-[44px] flex items-center bg-sea-gold/20 text-sea-gold border border-sea-gold/30 hover:bg-sea-gold/30 hover:-translate-y-0.5 transition-all no-underline">
               Plan Your Visit
             </a>
           </div>
@@ -421,7 +421,7 @@ export default function Home() {
               <button
                 key={cat}
                 onClick={() => setActiveTab(cat)}
-                className={`font-dm text-[0.55rem] tracking-[0.2em] uppercase px-4 py-2.5 border cursor-pointer transition-all ${activeTab === cat ? 'border-sea-gold text-sea-gold bg-sea-gold/5' : 'border-sea-gold/10 text-sea-blue hover:border-sea-gold hover:text-sea-gold'}`}
+                className={`font-dm text-[0.55rem] tracking-[0.2em] uppercase px-4 py-2.5 min-h-[44px] border cursor-pointer transition-all ${activeTab === cat ? 'border-sea-gold text-sea-gold bg-sea-gold/5' : 'border-sea-gold/10 text-sea-blue hover:border-sea-gold hover:text-sea-gold'}`}
               >
                 {CATEGORY_LABELS[cat] || cat}
               </button>
