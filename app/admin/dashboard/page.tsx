@@ -149,7 +149,6 @@ export default function Dashboard() {
       {/* Status Pills */}
       {stats && (
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 -mx-1 px-1 scrollbar-hide">
-          <StatusPill href="/admin/messages" label={`${stats.unreadMessages} unread`} highlight={stats.unreadMessages > 0} />
           <StatusPill href="/admin/marketing?tab=email" label={`${stats.subscribers} subs`} />
           <StatusPill href="/admin/marketing?tab=blog" label={`${stats.publishedPosts} posts`} />
           <StatusPill label={stats.socialConfigured ? 'Social: Active' : 'Social: Off'} highlight={!stats.socialConfigured} />
@@ -246,7 +245,6 @@ export default function Dashboard() {
           <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-3">
             <CheckItem done={stats.weeklyBlogPublished} label="Publish a blog post" href="/admin/marketing?tab=blog" />
             <CheckItem done={stats.weeklySocialPosted} label="Post to social media" href="/admin/marketing?tab=social" />
-            <CheckItem done={stats.weeklyMessagesRead} label="Check messages" href="/admin/messages" />
             <CheckItem done={false} label="Review menu for accuracy" href="/admin/menu" />
           </div>
         </div>

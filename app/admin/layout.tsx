@@ -10,7 +10,7 @@ import { SessionContext, type SessionData } from './session-context'
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<SessionData | null>(null)
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -37,15 +37,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       })
   }, [pathname, router])
 
-  // Fetch unread message count
-  useEffect(() => {
-    if (!authenticated || pathname === '/admin') return
-    fetch('/api/contact?unread_count=true', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.count != null) setUnreadCount(data.count) })
-      .catch(() => {})
-  }, [authenticated, pathname])
-
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { credentials: 'include', method: 'POST' })
     router.push('/admin')
@@ -62,12 +53,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isSocialAdmin = session?.role === 'social_admin'
   const canSeeContent = isAdminOrAbove || isSocialAdmin
 
-  // Primary nav: Home, Menu, Marketing, Inbox
+  // Primary nav: Home, Menu, Marketing
   const primaryNav = [
     { label: 'Home', href: '/admin/dashboard', icon: HomeIcon },
     { label: 'Menu', href: '/admin/menu', icon: MenuIcon },
     ...(canSeeContent ? [{ label: 'Marketing', href: '/admin/marketing', icon: MarketingIcon }] : []),
-    { label: 'Inbox', href: '/admin/messages', icon: InboxIcon, badge: unreadCount },
   ]
 
   // More menu items
