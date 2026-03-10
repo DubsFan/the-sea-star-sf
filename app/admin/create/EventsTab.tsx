@@ -165,7 +165,7 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
             <input type="text" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-sea-blue mb-1 font-dm">Start Date/Time</label>
               <input type="datetime-local" value={form.starts_at} onChange={(e) => setForm(f => ({ ...f, starts_at: e.target.value }))} className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold" />
@@ -201,7 +201,7 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
             <MediaPicker isOpen={showPicker} mode="single" onSelect={(urls) => { setForm(f => ({ ...f, featured_image: urls[0] || '' })); setShowPicker(false) }} onClose={() => setShowPicker(false)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-sea-blue mb-1 font-dm">Recurrence</label>
               <select value={form.recurrence_preset} onChange={(e) => setForm(f => ({ ...f, recurrence_preset: e.target.value }))} className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold">
@@ -224,7 +224,7 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
             <span className="text-sm text-sea-blue font-dm">Public event (shown on website)</span>
           </label>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button onClick={handleCreate} className="px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer">
               Create Event
             </button>

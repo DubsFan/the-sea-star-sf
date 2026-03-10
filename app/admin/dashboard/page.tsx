@@ -255,7 +255,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <h2 className="font-cormorant text-lg text-sea-white mb-3">SEO Health</h2>
           <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <HealthIndicator
                 label="Blog freshness"
                 status={stats.weeklyBlogPublished ? 'green' : 'yellow'}

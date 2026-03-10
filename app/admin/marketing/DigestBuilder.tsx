@@ -196,14 +196,14 @@ export default function DigestBuilder({ onDigestReady }: DigestBuilderProps) {
                   <button
                     onClick={() => moveItem(i, -1)}
                     disabled={i === 0}
-                    className="w-8 h-8 flex items-center justify-center bg-transparent border border-sea-gold/10 text-sea-blue rounded cursor-pointer disabled:opacity-30 hover:border-sea-gold/30 transition-all"
+                    className="w-10 h-10 min-h-[44px] flex items-center justify-center bg-transparent border border-sea-gold/10 text-sea-blue rounded cursor-pointer disabled:opacity-30 hover:border-sea-gold/30 transition-all"
                   >
                     &uarr;
                   </button>
                   <button
                     onClick={() => moveItem(i, 1)}
                     disabled={i === selected.length - 1}
-                    className="w-8 h-8 flex items-center justify-center bg-transparent border border-sea-gold/10 text-sea-blue rounded cursor-pointer disabled:opacity-30 hover:border-sea-gold/30 transition-all"
+                    className="w-10 h-10 min-h-[44px] flex items-center justify-center bg-transparent border border-sea-gold/10 text-sea-blue rounded cursor-pointer disabled:opacity-30 hover:border-sea-gold/30 transition-all"
                   >
                     &darr;
                   </button>

@@ -38,8 +38,8 @@ export default function ChannelRow({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-3">
-        <span className="text-xs text-sea-blue font-dm w-28 flex-shrink-0">{label}</span>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <span className="text-xs text-sea-blue font-dm w-full sm:w-28 sm:flex-shrink-0">{label}</span>
         <div className="flex flex-wrap gap-1">
           {options.map((opt) => (
             <button
@@ -58,7 +58,7 @@ export default function ChannelRow({
       </div>
 
       {value === 'schedule' && onScheduledForChange && (
-        <div className="ml-28 flex flex-wrap gap-2">
+        <div className="ml-0 sm:ml-28 flex flex-wrap gap-2">
           <input
             type="date"
             value={dateParts.date}
@@ -77,7 +77,7 @@ export default function ChannelRow({
       )}
 
       {value === 'draft' && (
-        <p className="ml-28 text-[0.6rem] text-sea-blue/50 font-dm">Saved as draft for review</p>
+        <p className="ml-0 sm:ml-28 text-[0.6rem] text-sea-blue/50 font-dm">Saved as draft for review</p>
       )}
     </div>
   )
