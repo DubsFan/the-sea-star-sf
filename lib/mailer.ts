@@ -135,10 +135,17 @@ export async function sendMailer(campaignId: string, actor?: string) {
   }
   const html = renderMailerHtml(source, campaign.subject || source.title)
 
-  const { data: subscribers } = await supabase
+  // Tag-targeted sends: if campaign has target_tags, filter subscribers
+  let subscriberQuery = supabase
     .from('email_subscribers')
     .select('email')
     .eq('is_active', true)
+
+  if (campaign.target_tags && Array.isArray(campaign.target_tags) && campaign.target_tags.length > 0) {
+    subscriberQuery = subscriberQuery.overlaps('tags', campaign.target_tags)
+  }
+
+  const { data: subscribers } = await subscriberQuery
 
   if (!subscribers || subscribers.length === 0) {
     await supabase.from('mailer_campaigns').update({

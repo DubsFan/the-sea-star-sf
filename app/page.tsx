@@ -102,7 +102,6 @@ export default function Home() {
   const [loginUser, setLoginUser] = useState('')
   const [loginPass, setLoginPass] = useState('')
   const [loginError, setLoginError] = useState(false)
-  const [homeFaqs, setHomeFaqs] = useState<{id:string, question:string, answer:string}[]>([])
   const revealRefs = useRef<(HTMLDivElement | null)[]>([])
   const revealedSet = useRef<Set<HTMLDivElement>>(new Set())
   const observerRef = useRef<IntersectionObserver | null>(null)
@@ -118,10 +117,6 @@ export default function Home() {
       .then(data => { if (Array.isArray(data)) setBlogPosts(data) })
       .catch(() => {})
 
-    fetch('/api/faq?featured=true&limit=6')
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setHomeFaqs(data) })
-      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -616,36 +611,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ Section — featured FAQs from Supabase */}
-      {homeFaqs.length > 0 && (
-        <section id="faqs" className="py-32 bg-[#0a0e18]/85 border-t border-sea-gold/10">
-          <div className="max-w-[900px] mx-auto px-6 md:px-12">
-            <div ref={addRevealRef} className="text-center mb-12 transition-all duration-700">
-              <p className="font-dm text-[0.55rem] font-medium tracking-[0.5em] uppercase text-sea-gold mb-6">Good Questions</p>
-              <h2 className="font-cormorant text-[clamp(2.2rem,5vw,3.8rem)] font-light leading-tight text-sea-white">Frequently <em className="text-sea-gold">Asked</em></h2>
-            </div>
-            <div ref={addRevealRef} className="space-y-3 transition-all duration-700">
-              {homeFaqs.map(faq => (
-                <details key={faq.id} className="group bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden">
-                  <summary className="px-5 py-4 cursor-pointer text-sea-white font-dm text-sm font-medium list-none flex items-center justify-between gap-4 min-h-[52px]">
-                    {faq.question}
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7a99" strokeWidth="2" className="flex-shrink-0 transition-transform group-open:rotate-180">
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </summary>
-                  <div className="px-5 pb-4">
-                    <p className="text-sm text-sea-blue font-dm leading-relaxed">{faq.answer}</p>
-                  </div>
-                </details>
-              ))}
-            </div>
-            <div ref={addRevealRef} className="text-center mt-10 transition-all duration-700">
-              <a href="/faq" className="font-dm text-[0.55rem] font-medium tracking-[0.25em] uppercase text-sea-gold border-b border-sea-gold/40 pb-0.5 no-underline hover:border-sea-gold transition-colors">View All FAQs &rarr;</a>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Blog modal for fallback static content */}
       {blogModalOpen && (
         <div className="fixed inset-0 bg-[#06080d]/95 backdrop-blur-xl z-[200] overflow-y-auto p-8 md:p-16">
@@ -761,6 +726,8 @@ export default function Home() {
               {[['Our Story', 'story'], ['Alicia Walton', 'alicia'], ['Cocktails', 'menu'], ['Reviews', 'reviews'], ['Events', 'events'], ['Journal', 'journal']].map(([label, href]) => (
                 <a key={label} href={`#${href}`} className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">{label}</a>
               ))}
+              <a href="/faq" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">FAQ</a>
+              <a href="/blog" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">Blog</a>
             </div>
             <div>
               <div className="text-[0.55rem] font-medium tracking-[0.35em] uppercase text-sea-gold mb-5">Connect</div>

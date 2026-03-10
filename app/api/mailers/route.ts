@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
     cta_text: body.cta_text || null,
     primary_keyword: body.primary_keyword || null,
     source_library_item_id: body.source_library_item_id || null,
+    target_tags: body.target_tags || null,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

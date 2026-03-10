@@ -9,6 +9,7 @@ interface Subscriber {
   email: string
   name: string | null
   is_active: boolean
+  tags: string[]
 }
 
 export default function SubscribersTab() {
@@ -19,62 +20,27 @@ export default function SubscribersTab() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ email: '', name: '', is_active: true })
+  const [editForm, setEditForm] = useState({ email: '', name: '', is_active: true, tags: [] as string[] })
   const [savingEdit, setSavingEdit] = useState(false)
 
   const isAdminOrAbove = session?.role === 'super_admin' || session?.role === 'admin' || session?.role === 'social_admin'
 
-  // Newsletter settings
-  const [showNewsletterSettings, setShowNewsletterSettings] = useState(false)
-  const [nlSettings, setNlSettings] = useState<Record<string, string>>({})
-  const [nlEditing, setNlEditing] = useState<Record<string, string>>({})
-  const [nlSaving, setNlSaving] = useState<string | null>(null)
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
-  const [loadingPreview, setLoadingPreview] = useState(false)
+  // Tags
+  const [allTags, setAllTags] = useState<string[]>([])
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
+  const [newTagName, setNewTagName] = useState('')
+  const [bulkTagAction, setBulkTagAction] = useState<string | null>(null)
+  const [bulkTagProcessing, setBulkTagProcessing] = useState(false)
 
-  const loadNlSettings = async () => {
-    const res = await fetch('/api/admin/settings', { credentials: 'include' })
+  const loadTags = async () => {
+    const res = await fetch('/api/subscribe/tags', { credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
-      if (Array.isArray(data)) {
-        const map: Record<string, string> = {}
-        for (const s of data as { key: string; value: string }[]) {
-          if (s.key.startsWith('newsletter_')) map[s.key] = s.value
-        }
-        setNlSettings(map)
-      }
+      if (Array.isArray(data)) setAllTags(data)
     }
   }
 
-  useEffect(() => { if (showNewsletterSettings) loadNlSettings() }, [showNewsletterSettings])
-
-  const saveNlSetting = async (key: string) => {
-    setNlSaving(key)
-    const res = await fetch('/api/admin/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ key, value: nlEditing[key] }),
-    })
-    if (res.ok) {
-      toast.success('Saved')
-      setNlSettings(prev => ({ ...prev, [key]: nlEditing[key] }))
-      setNlEditing(prev => { const n = { ...prev }; delete n[key]; return n })
-    } else {
-      toast.error('Failed')
-    }
-    setNlSaving(null)
-  }
-
-  const handlePreviewEmail = async () => {
-    setLoadingPreview(true)
-    try {
-      const res = await fetch('/api/newsletter/preview', { credentials: 'include' })
-      if (res.ok) setPreviewHtml(await res.text())
-      else toast.error('Preview failed')
-    } catch { toast.error('Preview failed') }
-    finally { setLoadingPreview(false) }
-  }
+  useEffect(() => { loadTags() }, [])
 
   const loadSubscribers = () => {
     fetch('/api/subscribe', { credentials: 'include' })
@@ -124,7 +90,7 @@ export default function SubscribersTab() {
 
   const startEdit = (sub: Subscriber) => {
     setEditingId(sub.id)
-    setEditForm({ email: sub.email, name: sub.name || '', is_active: sub.is_active })
+    setEditForm({ email: sub.email, name: sub.name || '', is_active: sub.is_active, tags: Array.isArray(sub.tags) ? sub.tags : [] })
   }
 
   const cancelEdit = () => {
@@ -138,6 +104,7 @@ export default function SubscribersTab() {
       const res = await fetch('/api/subscribe', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ id: editingId, ...editForm }),
       })
       if (res.ok) {
@@ -187,88 +154,97 @@ export default function SubscribersTab() {
     URL.revokeObjectURL(url)
   }
 
-  const activeCount = subscribers.filter((s) => s.is_active).length
-  const inactiveCount = subscribers.length - activeCount
+  const handleBulkTag = async (action: 'add' | 'remove', tag: string) => {
+    if (selected.size === 0) return
+    setBulkTagProcessing(true)
+    try {
+      const res = await fetch('/api/subscribe/bulk-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ids: Array.from(selected), action, tag }),
+      })
+      if (res.ok) {
+        toast.success(`${action === 'add' ? 'Added' : 'Removed'} tag "${tag}" for ${selected.size} subscriber(s)`)
+        loadSubscribers()
+        loadTags()
+      }
+    } catch {} finally {
+      setBulkTagProcessing(false)
+      setBulkTagAction(null)
+    }
+  }
+
+  const filteredSubscribers = tagFilter
+    ? subscribers.filter(s => Array.isArray(s.tags) && s.tags.includes(tagFilter))
+    : subscribers
+
+  const activeCount = filteredSubscribers.filter((s) => s.is_active).length
+  const inactiveCount = filteredSubscribers.length - activeCount
 
   return (
     <div>
-      {/* Newsletter Settings Collapsible */}
-      <div className="mb-6">
-        <button
-          onClick={() => setShowNewsletterSettings(!showNewsletterSettings)}
-          className="flex items-center gap-2 text-sm text-sea-blue font-dm bg-transparent border-none cursor-pointer hover:text-sea-gold transition-colors"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showNewsletterSettings ? 'rotate-90' : ''}`}>
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-          Newsletter Settings
-        </button>
-        {showNewsletterSettings && (
-          <div className="mt-3 bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-4">
-            <p className="text-xs text-sea-blue font-dm">Configure email newsletter schedule and template.</p>
-            {/* Cadence */}
-            <div>
-              <label className="block text-xs text-sea-blue mb-1 font-dm">Send Cadence</label>
-              <select
-                value={'newsletter_cadence' in nlEditing ? nlEditing.newsletter_cadence : nlSettings.newsletter_cadence || ''}
-                onChange={(e) => setNlEditing({ ...nlEditing, newsletter_cadence: e.target.value })}
-                onFocus={() => { if (!('newsletter_cadence' in nlEditing)) setNlEditing({ ...nlEditing, newsletter_cadence: nlSettings.newsletter_cadence || '' }) }}
-                className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded min-h-[44px]"
-              >
-                <option value="">Not set</option>
-                <option value="weekly">Weekly</option>
-                <option value="biweekly">Biweekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-              {'newsletter_cadence' in nlEditing && (
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => saveNlSetting('newsletter_cadence')} disabled={nlSaving === 'newsletter_cadence'} className="px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer rounded disabled:opacity-50 min-h-[44px]">{nlSaving === 'newsletter_cadence' ? 'Saving...' : 'Save'}</button>
-                  <button onClick={() => setNlEditing(prev => { const n = { ...prev }; delete n.newsletter_cadence; return n })} className="px-4 py-2 bg-transparent text-sea-blue font-dm text-xs uppercase border border-sea-border cursor-pointer rounded min-h-[44px]">Cancel</button>
-                </div>
-              )}
-            </div>
-            {/* Next Send */}
-            <div>
-              <label className="block text-xs text-sea-blue mb-1 font-dm">Next Send Date</label>
-              <input
-                type="date"
-                value={'newsletter_next_send' in nlEditing ? nlEditing.newsletter_next_send : nlSettings.newsletter_next_send || ''}
-                onChange={(e) => setNlEditing({ ...nlEditing, newsletter_next_send: e.target.value })}
-                onFocus={() => { if (!('newsletter_next_send' in nlEditing)) setNlEditing({ ...nlEditing, newsletter_next_send: nlSettings.newsletter_next_send || '' }) }}
-                className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded min-h-[44px]"
-              />
-              {'newsletter_next_send' in nlEditing && (
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => saveNlSetting('newsletter_next_send')} disabled={nlSaving === 'newsletter_next_send'} className="px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer rounded disabled:opacity-50 min-h-[44px]">{nlSaving === 'newsletter_next_send' ? 'Saving...' : 'Save'}</button>
-                  <button onClick={() => setNlEditing(prev => { const n = { ...prev }; delete n.newsletter_next_send; return n })} className="px-4 py-2 bg-transparent text-sea-blue font-dm text-xs uppercase border border-sea-border cursor-pointer rounded min-h-[44px]">Cancel</button>
-                </div>
-              )}
-            </div>
-            {/* Template Notes */}
-            <div>
-              <label className="block text-xs text-sea-blue mb-1 font-dm">Email Template Notes</label>
-              <textarea
-                value={'newsletter_template_notes' in nlEditing ? nlEditing.newsletter_template_notes : nlSettings.newsletter_template_notes || ''}
-                onChange={(e) => setNlEditing({ ...nlEditing, newsletter_template_notes: e.target.value })}
-                onFocus={() => { if (!('newsletter_template_notes' in nlEditing)) setNlEditing({ ...nlEditing, newsletter_template_notes: nlSettings.newsletter_template_notes || '' }) }}
-                rows={2}
-                placeholder="Custom intro/outro text for newsletters..."
-                className="w-full px-4 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded resize-y"
-              />
-              {'newsletter_template_notes' in nlEditing && (
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => saveNlSetting('newsletter_template_notes')} disabled={nlSaving === 'newsletter_template_notes'} className="px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer rounded disabled:opacity-50 min-h-[44px]">{nlSaving === 'newsletter_template_notes' ? 'Saving...' : 'Save'}</button>
-                  <button onClick={() => setNlEditing(prev => { const n = { ...prev }; delete n.newsletter_template_notes; return n })} className="px-4 py-2 bg-transparent text-sea-blue font-dm text-xs uppercase border border-sea-border cursor-pointer rounded min-h-[44px]">Cancel</button>
-                </div>
-              )}
-            </div>
+      {/* Tag Management */}
+      <div className="mb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <input
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
+            placeholder="New tag name..."
+            className="px-3 py-2 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-xs outline-none focus:border-sea-gold rounded min-h-[44px] w-36"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newTagName.trim()) {
+                e.preventDefault()
+                fetch('/api/subscribe/tags', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ tag: newTagName.trim() }),
+                }).then(res => {
+                  if (res.ok) { setNewTagName(''); loadTags(); toast.success('Tag created') }
+                })
+              }
+            }}
+          />
+          <button
+            onClick={() => {
+              if (!newTagName.trim()) return
+              fetch('/api/subscribe/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ tag: newTagName.trim() }),
+              }).then(res => {
+                if (res.ok) { setNewTagName(''); loadTags(); toast.success('Tag created') }
+              })
+            }}
+            className="px-3 py-2 bg-sea-gold/10 text-sea-gold font-dm text-xs border border-sea-gold/20 rounded cursor-pointer hover:bg-sea-gold/20 transition-all min-h-[44px]"
+          >
+            + Tag
+          </button>
+        </div>
+        {/* Tag filter pills */}
+        {allTags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={handlePreviewEmail}
-              disabled={loadingPreview}
-              className="w-full sm:w-auto px-6 py-3 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all min-h-[44px] rounded disabled:opacity-50"
+              onClick={() => setTagFilter(null)}
+              className={`px-3 py-1.5 text-[0.65rem] font-dm rounded border cursor-pointer transition-all min-h-[36px] ${
+                tagFilter === null ? 'bg-sea-gold/10 border-sea-gold/30 text-sea-gold' : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+              }`}
             >
-              {loadingPreview ? 'Loading...' : 'Preview Email'}
+              All
             </button>
+            {allTags.map(tag => (
+              <button
+                key={tag}
+                onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
+                className={`px-3 py-1.5 text-[0.65rem] font-dm rounded border cursor-pointer transition-all min-h-[36px] ${
+                  tagFilter === tag ? 'bg-sea-gold/10 border-sea-gold/30 text-sea-gold' : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -301,23 +277,62 @@ export default function SubscribersTab() {
       )}
 
       {selected.size > 0 && isAdminOrAbove && (
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 mb-4 px-4 py-3 bg-[#0d1220] border border-sea-gold/20 rounded">
-          <span className="text-sm text-sea-gold font-dm">{selected.size} selected</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelected(new Set())}
-              className="px-4 py-2.5 min-h-[44px] text-xs text-sea-blue font-dm hover:text-sea-white transition-colors cursor-pointer border border-sea-gold/10 rounded"
-            >
-              Clear
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-5 py-2.5 min-h-[44px] bg-red-900/40 text-red-400 font-dm text-xs tracking-[0.15em] uppercase border border-red-400/30 rounded cursor-pointer hover:bg-red-900/60 transition-all disabled:opacity-50"
-            >
-              {deleting ? 'Deleting...' : 'Delete'}
-            </button>
+        <div className="sticky top-0 z-10 mb-4 px-4 py-3 bg-[#0d1220] border border-sea-gold/20 rounded">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-sea-gold font-dm">{selected.size} selected</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelected(new Set())}
+                className="px-4 py-2.5 min-h-[44px] text-xs text-sea-blue font-dm hover:text-sea-white transition-colors cursor-pointer border border-sea-gold/10 rounded"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-5 py-2.5 min-h-[44px] bg-red-900/40 text-red-400 font-dm text-xs tracking-[0.15em] uppercase border border-red-400/30 rounded cursor-pointer hover:bg-red-900/60 transition-all disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
+          {/* Bulk tag actions */}
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-sea-gold/10">
+              <span className="text-[0.6rem] tracking-[0.15em] uppercase text-sea-blue font-dm">Bulk Tags:</span>
+              {bulkTagAction ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-sea-gold font-dm">{bulkTagAction === 'add' ? 'Add' : 'Remove'} tag:</span>
+                  {allTags.map(tag => (
+                    <button
+                      key={tag}
+                      disabled={bulkTagProcessing}
+                      onClick={() => handleBulkTag(bulkTagAction as 'add' | 'remove', tag)}
+                      className="px-2 py-1 text-[0.6rem] font-dm bg-sea-gold/10 text-sea-gold border border-sea-gold/20 rounded cursor-pointer hover:bg-sea-gold/20 transition-all min-h-[32px] disabled:opacity-50"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                  <button onClick={() => setBulkTagAction(null)} className="text-xs text-sea-blue font-dm cursor-pointer bg-transparent border-none hover:text-sea-white">Cancel</button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setBulkTagAction('add')}
+                    className="px-3 py-1.5 text-[0.6rem] font-dm text-sea-gold bg-sea-gold/10 border border-sea-gold/20 rounded cursor-pointer hover:bg-sea-gold/20 transition-all min-h-[32px]"
+                  >
+                    + Add Tag
+                  </button>
+                  <button
+                    onClick={() => setBulkTagAction('remove')}
+                    className="px-3 py-1.5 text-[0.6rem] font-dm text-red-400 bg-red-900/20 border border-red-400/20 rounded cursor-pointer hover:bg-red-900/30 transition-all min-h-[32px]"
+                  >
+                    - Remove Tag
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -338,6 +353,7 @@ export default function SubscribersTab() {
               )}
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Email</th>
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Name</th>
+              <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Tags</th>
               <th className="text-left p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Active</th>
               {isAdminOrAbove && (
                 <th className="w-16 p-3 text-[0.6rem] tracking-[0.2em] uppercase text-sea-blue font-dm font-medium">Edit</th>
@@ -345,7 +361,7 @@ export default function SubscribersTab() {
             </tr>
           </thead>
           <tbody>
-            {subscribers.map((sub) => (
+            {filteredSubscribers.map((sub) => (
               <tr key={sub.id} className={`border-b border-sea-gold/5 ${selected.has(sub.id) ? 'bg-sea-gold/5' : ''}`}>
                 {isAdminOrAbove && (
                   <td className="w-10 p-3">
@@ -366,6 +382,30 @@ export default function SubscribersTab() {
                       <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-2 py-1.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded" />
                     </td>
                     <td className="p-3">
+                      <div className="flex flex-wrap gap-1">
+                        {editForm.tags.map(tag => (
+                          <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 text-[0.6rem] font-dm bg-sea-gold/10 text-sea-gold border border-sea-gold/20 rounded">
+                            {tag}
+                            <button onClick={() => setEditForm({ ...editForm, tags: editForm.tags.filter(t => t !== tag) })} className="text-sea-gold/60 hover:text-red-400 bg-transparent border-none cursor-pointer text-xs leading-none">&times;</button>
+                          </span>
+                        ))}
+                        <select
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value && !editForm.tags.includes(e.target.value)) {
+                              setEditForm({ ...editForm, tags: [...editForm.tags, e.target.value] })
+                            }
+                          }}
+                          className="px-1 py-0.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-blue font-dm text-[0.6rem] outline-none rounded cursor-pointer"
+                        >
+                          <option value="">+ tag</option>
+                          {allTags.filter(t => !editForm.tags.includes(t)).map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
+                    <td className="p-3">
                       <button onClick={() => setEditForm({ ...editForm, is_active: !editForm.is_active })} className={`text-xs font-dm px-2 py-1 rounded cursor-pointer border-none ${editForm.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
                         {editForm.is_active ? 'Active' : 'Inactive'}
                       </button>
@@ -381,6 +421,13 @@ export default function SubscribersTab() {
                   <>
                     <td className="p-3 text-sm text-sea-white font-dm">{sub.email}</td>
                     <td className="p-3 text-sm text-sea-blue font-dm">{sub.name || '-'}</td>
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-1">
+                        {Array.isArray(sub.tags) && sub.tags.map(tag => (
+                          <span key={tag} className="px-2 py-0.5 text-[0.6rem] font-dm bg-sea-gold/10 text-sea-gold border border-sea-gold/20 rounded">{tag}</span>
+                        ))}
+                      </div>
+                    </td>
                     <td className="p-3">
                       <span className={`text-xs font-dm px-2 py-1 rounded ${sub.is_active ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
                         {sub.is_active ? 'Active' : 'Inactive'}
@@ -411,7 +458,7 @@ export default function SubscribersTab() {
           </button>
         )}
         <div className="space-y-2">
-          {subscribers.map((sub) => (
+          {filteredSubscribers.map((sub) => (
             <div
               key={sub.id}
               className={`bg-[#0a0e18] border rounded-lg overflow-hidden ${selected.has(sub.id) ? 'border-sea-gold/40 bg-sea-gold/5' : 'border-sea-gold/10'}`}
@@ -434,6 +481,13 @@ export default function SubscribersTab() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-sea-white font-dm truncate">{sub.email}</p>
                       {sub.name && <p className="text-xs text-sea-blue font-dm mt-0.5">{sub.name}</p>}
+                      {Array.isArray(sub.tags) && sub.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {sub.tags.map(tag => (
+                            <span key={tag} className="px-1.5 py-0.5 text-[0.55rem] font-dm bg-sea-gold/10 text-sea-gold border border-sea-gold/20 rounded">{tag}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
@@ -470,6 +524,31 @@ export default function SubscribersTab() {
                       className="w-full px-3 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold rounded"
                     />
                   </div>
+                  <div>
+                    <label className="text-[0.6rem] tracking-[0.15em] uppercase text-sea-blue font-dm mb-1 block">Tags</label>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {editForm.tags.map(tag => (
+                        <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 text-[0.6rem] font-dm bg-sea-gold/10 text-sea-gold border border-sea-gold/20 rounded min-h-[32px]">
+                          {tag}
+                          <button onClick={() => setEditForm({ ...editForm, tags: editForm.tags.filter(t => t !== tag) })} className="text-sea-gold/60 hover:text-red-400 bg-transparent border-none cursor-pointer text-sm leading-none ml-0.5">&times;</button>
+                        </span>
+                      ))}
+                    </div>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value && !editForm.tags.includes(e.target.value)) {
+                          setEditForm({ ...editForm, tags: [...editForm.tags, e.target.value] })
+                        }
+                      }}
+                      className="w-full px-3 py-2.5 min-h-[44px] bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-blue font-dm text-xs outline-none focus:border-sea-gold rounded cursor-pointer"
+                    >
+                      <option value="">Add a tag...</option>
+                      {allTags.filter(t => !editForm.tags.includes(t)).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex items-center justify-between">
                     <label className="text-[0.6rem] tracking-[0.15em] uppercase text-sea-blue font-dm">Status</label>
                     <button
@@ -502,27 +581,6 @@ export default function SubscribersTab() {
         {subscribers.length === 0 && <p className="text-center py-8 text-sea-blue text-sm font-dm">No subscribers yet.</p>}
       </div>
 
-      {/* Email Preview Modal */}
-      {previewHtml && (
-        <div className="fixed inset-0 bg-[#06080d]/95 backdrop-blur-xl z-[200] overflow-y-auto p-4 md:p-16">
-          <button
-            className="fixed top-4 right-4 bg-transparent border border-sea-border text-sea-gold text-xl w-10 h-10 flex items-center justify-center cursor-pointer hover:border-sea-gold transition-all z-[201] rounded"
-            onClick={() => setPreviewHtml(null)}
-          >
-            &times;
-          </button>
-          <div className="max-w-[600px] mx-auto mt-12">
-            <h3 className="font-cormorant text-xl text-sea-white mb-4">Email Preview</h3>
-            <div className="bg-white rounded-lg overflow-hidden">
-              <iframe
-                srcDoc={previewHtml}
-                className="w-full min-h-[600px] border-none"
-                title="Newsletter Preview"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

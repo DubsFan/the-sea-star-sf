@@ -7,7 +7,7 @@ import BlogTab from '../create/BlogTab'
 import SocialTab from '../create/SocialTab'
 import EventsTab from '../create/EventsTab'
 import DraftsTab from '../create/DraftsTab'
-import SubscribersTab from './SubscribersTab'
+import NewsletterTab from './NewsletterTab'
 import MediaTab from './MediaTab'
 import SeoTab from './SeoTab'
 import ContentPackImportModal from './ContentPackImportModal'
@@ -16,7 +16,7 @@ const TABS = [
   { key: 'blog', label: 'Blog' },
   { key: 'social', label: 'Social' },
   { key: 'events', label: 'Events' },
-  { key: 'email', label: 'Email' },
+  { key: 'newsletter', label: 'Newsletter' },
   { key: 'seo', label: 'SEO' },
   { key: 'drafts', label: 'Drafts' },
   { key: 'media', label: 'Media' },
@@ -26,7 +26,8 @@ type TabKey = typeof TABS[number]['key']
 
 // Normalize legacy tab params
 const TAB_ALIASES: Record<string, TabKey> = {
-  subscribers: 'email',
+  subscribers: 'newsletter',
+  email: 'newsletter',
 }
 
 export default function MarketingPage() {
@@ -103,7 +104,7 @@ export default function MarketingPage() {
       {activeTab === 'blog' && <BlogTab isAdminOrAbove={isAdminOrAbove} />}
       {activeTab === 'social' && <SocialTab />}
       {activeTab === 'events' && <EventsTab isAdminOrAbove={isAdminOrAbove} />}
-      {activeTab === 'email' && <SubscribersTab />}
+      {activeTab === 'newsletter' && <NewsletterTab />}
       {activeTab === 'seo' && <SeoTab />}
       {activeTab === 'drafts' && <DraftsTab isAdminOrAbove={isAdminOrAbove} onSwitchTab={switchTab} />}
       {activeTab === 'media' && <MediaTab />}

@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
 
   // Parse CSVs
   const blogSeeds: Array<{ source_file: string; source_row_id: string; source_order: number; primary_keyword: string; title: string; starter: string }> = []
+  const emailSeeds: Array<{ source_file: string; source_row_id: string; source_order: number; primary_keyword: string; subject_line: string; starter: string }> = []
   const faqItems: Array<{ source_file: string; source_row_id: string; source_order: number; category: string; question: string; answer: string }> = []
   const errors: string[] = []
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Parse email CSV → blog seeds
+  // Parse email CSV → both blog seeds AND email seeds
   if (emailCsv) {
     try {
       const text = await emailCsv.text()
@@ -80,12 +81,22 @@ export async function POST(request: NextRequest) {
           errors.push(`Email CSV row ${i + 2}: missing ID, Primary Keyword, or Subject Line`)
           continue
         }
+        // Add as blog seed too
         blogSeeds.push({
           source_file: emailCsv.name,
           source_row_id: row.id,
           source_order: blogSeeds.length,
           primary_keyword: row.primary_keyword,
           title: row.subject_line,
+          starter: row.starter || '',
+        })
+        // Add as email seed
+        emailSeeds.push({
+          source_file: emailCsv.name,
+          source_row_id: row.id,
+          source_order: i,
+          primary_keyword: row.primary_keyword,
+          subject_line: row.subject_line,
           starter: row.starter || '',
         })
       }
@@ -135,6 +146,7 @@ export async function POST(request: NextRequest) {
       name,
       checksum,
       blog_seed_count: blogSeeds.length,
+      email_seed_count: emailSeeds.length,
       faq_count: faqItems.length,
       errors,
     })
@@ -185,6 +197,17 @@ export async function POST(request: NextRequest) {
       title: s.title,
       starter: s.starter,
     })),
+    ...emailSeeds.map((s) => ({
+      pack_id: pack.id,
+      asset_type: 'email_seed',
+      source_file: s.source_file,
+      source_row_id: s.source_row_id,
+      source_order: s.source_order,
+      primary_keyword: s.primary_keyword,
+      title: s.subject_line,
+      subject_line: s.subject_line,
+      starter: s.starter,
+    })),
     ...faqItems.map((f) => ({
       pack_id: pack.id,
       asset_type: 'faq',
@@ -206,6 +229,7 @@ export async function POST(request: NextRequest) {
     pack_id: pack.id,
     name: pack.name,
     blog_seed_count: blogSeeds.length,
+    email_seed_count: emailSeeds.length,
     faq_count: faqItems.length,
   })
 }

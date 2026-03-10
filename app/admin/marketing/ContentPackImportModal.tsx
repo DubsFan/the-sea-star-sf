@@ -7,6 +7,7 @@ interface PreviewResult {
   name: string
   checksum: string
   blog_seed_count: number
+  email_seed_count: number
   faq_count: number
   errors: string[]
 }
@@ -61,7 +62,7 @@ export default function ContentPackImportModal({ onClose, onImported }: { onClos
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(`Imported: ${data.blog_seed_count} blog seeds, ${data.faq_count} FAQs`)
+        toast.success(`Imported: ${data.blog_seed_count} blog seeds, ${data.email_seed_count} email seeds, ${data.faq_count} FAQs`)
         onImported()
         onClose()
       } else {
@@ -85,7 +86,7 @@ export default function ContentPackImportModal({ onClose, onImported }: { onClos
 
         <form ref={formRef} className="space-y-4">
           <FileInput label="Blog CSV" accept=".csv" onChange={setBlogCsv} hint="Columns: ID, Primary Keyword, Title, Starter" />
-          <FileInput label="Email CSV (imports as blog seeds)" accept=".csv" onChange={setEmailCsv} hint="Columns: ID, Primary Keyword, Subject Line, Starter" />
+          <FileInput label="Email CSV (newsletter + blog seeds)" accept=".csv" onChange={setEmailCsv} hint="Columns: ID, Primary Keyword, Subject Line, Starter" />
           <FileInput label="FAQ CSV" accept=".csv" onChange={setFaqCsv} hint="Columns: ID, Category, Question, Answer" />
           <FileInput label="Brief (.md, optional)" accept=".md,.markdown" onChange={setBriefMd} hint="Markdown brief for AI generation rules" />
           <FileInput label="Brief (.txt, optional)" accept=".txt" onChange={setBriefTxt} hint="Plain text brief for reference" />
@@ -104,8 +105,9 @@ export default function ContentPackImportModal({ onClose, onImported }: { onClos
         {preview && (
           <div className="mt-6 bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-3">
             <h3 className="font-cormorant text-lg text-sea-white">Preview: {preview.name}</h3>
-            <div className="flex gap-4 text-sm font-dm">
+            <div className="flex flex-wrap gap-4 text-sm font-dm">
               <span className="text-sea-light">{preview.blog_seed_count} blog seeds</span>
+              {preview.email_seed_count > 0 && <span className="text-sea-light">{preview.email_seed_count} email seeds</span>}
               <span className="text-sea-light">{preview.faq_count} FAQs</span>
             </div>
             {preview.errors.length > 0 && (
