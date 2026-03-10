@@ -232,9 +232,12 @@ export async function POST(request: NextRequest) {
   if (newKeywords.length > 0) {
     const { data: settingsData } = await supabase
       .from('site_settings')
-      .select('value')
+      .select('key, value')
       .in('key', ['seo_keywords', 'blog_keywords'])
-    const existing = (settingsData?.[0]?.value || '').split(',').map((k: string) => k.trim()).filter(Boolean)
+    const seoRow = settingsData?.find((s: { key: string; value: string }) => s.key === 'seo_keywords')
+    const blogRow = settingsData?.find((s: { key: string; value: string }) => s.key === 'blog_keywords')
+    const existingVal = seoRow?.value || blogRow?.value || ''
+    const existing = existingVal.split(',').map((k: string) => k.trim().toLowerCase()).filter(Boolean)
     const merged = Array.from(new Set([...existing, ...newKeywords.map(k => k.toLowerCase())])).sort()
     await supabase
       .from('site_settings')

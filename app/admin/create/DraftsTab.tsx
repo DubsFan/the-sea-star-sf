@@ -36,7 +36,7 @@ const TAB_MAP: Record<string, string> = {
   blog_post: 'blog',
   event: 'events',
   social_campaign: 'social',
-  mailer_campaign: 'email',
+  mailer_campaign: 'newsletter',
 }
 
 const API_MAP: Record<string, string> = {
@@ -338,7 +338,7 @@ export default function DraftsTab({ isAdminOrAbove, onSwitchTab }: { isAdminOrAb
               <label className="block text-xs text-sea-blue mb-1 font-dm">Full Description (HTML)</label>
               <textarea value={ef('description_html')} onChange={e => setEf('description_html', e.target.value)} rows={5} className={inputCls} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-sea-blue mb-1 font-dm">Starts</label>
                 <input type="datetime-local" value={(ef('starts_at') || '').slice(0, 16)} onChange={e => setEf('starts_at', e.target.value ? new Date(e.target.value).toISOString() : null)} className={inputCls} />
@@ -390,7 +390,7 @@ export default function DraftsTab({ isAdminOrAbove, onSwitchTab }: { isAdminOrAb
               <label className="block text-xs text-sea-blue mb-1 font-dm">Body (HTML)</label>
               <textarea value={ef('body_html')} onChange={e => setEf('body_html', e.target.value)} rows={8} className={inputCls} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-sea-blue mb-1 font-dm">CTA URL</label>
                 <input value={ef('cta_url')} onChange={e => setEf('cta_url', e.target.value)} placeholder="https://..." className={inputCls} />
