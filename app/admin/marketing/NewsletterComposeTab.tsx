@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 import MediaPicker from '../create/MediaPicker'
+import DigestBuilder from './DigestBuilder'
+import type { DigestItem } from '@/lib/digest-template'
 
 interface EmailSeed {
   id: string
@@ -36,8 +38,11 @@ export default function NewsletterComposeTab() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(false)
 
+  // Digest state
+  const digestDataRef = useRef<{ subject: string; bodyHtml: string; items: DigestItem[] } | null>(null)
+
   // Source picker
-  const [sourceType, setSourceType] = useState<'blank' | 'blog' | 'social' | 'event'>('blank')
+  const [sourceType, setSourceType] = useState<'digest' | 'blank' | 'blog' | 'social' | 'event'>('digest')
   const [sourceItems, setSourceItems] = useState<Array<{ id: string; title: string; image?: string; body?: string }>>([])
   const [loadingSource, setLoadingSource] = useState(false)
 
@@ -265,6 +270,70 @@ export default function NewsletterComposeTab() {
     }
   }
 
+  const handleSaveDigestDraft = async () => {
+    const d = digestDataRef.current
+    if (!d?.subject) return toast.error('Subject line required')
+    if (!d.items.length) return toast.error('Select at least one item')
+    setSaving(true)
+    try {
+      const res = await fetch('/api/mailers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          content_type: 'digest',
+          subject: d.subject,
+          body_html: d.bodyHtml,
+          target_tags: selectedTags.length > 0 ? selectedTags : null,
+          status: 'draft',
+        }),
+      })
+      if (res.ok) {
+        toast.success('Digest draft saved')
+        loadCampaigns()
+      } else {
+        toast.error('Save failed')
+      }
+    } finally { setSaving(false) }
+  }
+
+  const handleSendDigestNow = async () => {
+    const d = digestDataRef.current
+    if (!d?.subject) return toast.error('Subject line required')
+    if (!d.items.length) return toast.error('Select at least one item')
+    setSending(true)
+    try {
+      const createRes = await fetch('/api/mailers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          content_type: 'digest',
+          subject: d.subject,
+          body_html: d.bodyHtml,
+          target_tags: selectedTags.length > 0 ? selectedTags : null,
+          status: 'draft',
+        }),
+      })
+      const campaign = await createRes.json()
+      if (!campaign.id) { toast.error('Failed to create campaign'); return }
+
+      const sendRes = await fetch('/api/mailers/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ campaign_id: campaign.id }),
+      })
+      const result = await sendRes.json()
+      if (sendRes.ok) {
+        toast.success(`Digest sent to ${result.recipientCount} subscribers`)
+        loadCampaigns()
+      } else {
+        toast.error(result.error || 'Send failed')
+      }
+    } finally { setSending(false) }
+  }
+
   const handleSendCampaign = async (campaignId: string) => {
     setSendingCampaign(campaignId)
     try {
@@ -376,12 +445,12 @@ export default function NewsletterComposeTab() {
         <div>
           <label className="block text-xs text-sea-blue mb-2 font-dm tracking-[0.1em] uppercase">Create From</label>
           <div className="flex flex-wrap gap-2">
-            {(['blank', 'blog', 'social', 'event'] as const).map(t => (
+            {(['digest', 'blank', 'blog', 'social', 'event'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => {
                   setSourceType(t)
-                  if (t !== 'blank') loadSourceItems(t)
+                  if (t !== 'blank' && t !== 'digest') loadSourceItems(t)
                   else setSourceItems([])
                 }}
                 className={`px-3 py-2 min-h-[44px] text-xs font-dm rounded cursor-pointer transition-all ${
@@ -390,10 +459,15 @@ export default function NewsletterComposeTab() {
                     : 'bg-transparent border border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
                 }`}
               >
-                {t === 'blank' ? 'Blank' : t === 'blog' ? 'From Blog' : t === 'social' ? 'From Social' : 'From Event'}
+                {t === 'digest' ? 'Monthly Digest' : t === 'blank' ? 'Blank' : t === 'blog' ? 'From Blog' : t === 'social' ? 'From Social' : 'From Event'}
               </button>
             ))}
           </div>
+          {sourceType === 'digest' && (
+            <div className="mt-3">
+              <DigestBuilder onDigestReady={(data) => { digestDataRef.current = data }} />
+            </div>
+          )}
           {loadingSource && <p className="text-xs text-sea-gold mt-2 font-dm">Loading...</p>}
           {sourceItems.length > 0 && (
             <div className="mt-3 max-h-60 overflow-y-auto space-y-1 border border-sea-gold/10 rounded p-2">
@@ -411,6 +485,7 @@ export default function NewsletterComposeTab() {
           )}
         </div>
 
+        {sourceType !== 'digest' && <>
         <div>
           <label className="block text-xs text-sea-blue mb-1 font-dm">Subject Line</label>
           <input
@@ -473,6 +548,7 @@ export default function NewsletterComposeTab() {
           {heroImage && <img src={heroImage} alt="" className="w-20 h-20 object-cover rounded mt-2" />}
           <MediaPicker isOpen={showPicker} mode="single" onSelect={(urls) => { setHeroImage(urls[0] || ''); setShowPicker(false) }} onClose={() => setShowPicker(false)} />
         </div>
+        </>}
 
         {/* Tag Targeting */}
         {allTags.length > 0 && (
@@ -501,15 +577,15 @@ export default function NewsletterComposeTab() {
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <button
-            onClick={handleSaveDraft}
-            disabled={saving || !subject.trim()}
+            onClick={sourceType === 'digest' ? handleSaveDigestDraft : handleSaveDraft}
+            disabled={saving || (sourceType === 'digest' ? !digestDataRef.current?.subject : !subject.trim())}
             className="px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50 min-h-[44px]"
           >
             {saving ? 'Saving...' : 'Save Draft'}
           </button>
           <button
-            onClick={handleSendNow}
-            disabled={sending || !subject.trim()}
+            onClick={sourceType === 'digest' ? handleSendDigestNow : handleSendNow}
+            disabled={sending || (sourceType === 'digest' ? !digestDataRef.current?.subject : !subject.trim())}
             className="px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50 min-h-[44px]"
           >
             {sending ? 'Sending...' : 'Send Now'}

@@ -4,6 +4,10 @@ import { requireAdmin } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   const isAdmin = await requireAdmin(request)
+  const url = new URL(request.url)
+  const since = url.searchParams.get('since')
+  const status = url.searchParams.get('status')
+
   const query = supabase
     .from('blog_posts')
     .select('*')
@@ -11,7 +15,10 @@ export async function GET(request: NextRequest) {
 
   if (!isAdmin) {
     query.eq('is_published', true)
+  } else {
+    if (status) query.eq('status', status)
   }
+  if (since) query.gte('created_at', since)
 
   const { data, error } = await query
   if (error) {

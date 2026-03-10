@@ -27,10 +27,18 @@ export async function GET(request: NextRequest) {
   const admin = await requireAdmin(request)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data } = await supabase
+  const since = url.searchParams.get('since')
+  const status = url.searchParams.get('status')
+
+  let adminQuery = supabase
     .from('events')
     .select('*')
     .order('starts_at', { ascending: false })
+
+  if (status) adminQuery = adminQuery.eq('status', status)
+  if (since) adminQuery = adminQuery.gte('starts_at', since)
+
+  const { data } = await adminQuery
 
   return NextResponse.json(data || [])
 }

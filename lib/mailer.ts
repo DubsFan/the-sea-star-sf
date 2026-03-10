@@ -45,7 +45,10 @@ export async function renderMailerPreview(campaignId: string): Promise<string> {
 
   if (!campaign) throw new Error('Campaign not found')
 
-  if (campaign.content_type === 'standalone_email') {
+  if (campaign.content_type === 'standalone_email' || campaign.content_type === 'digest') {
+    if (campaign.content_type === 'digest' && campaign.body_html) {
+      return campaign.body_html
+    }
     const source: MailerSource = {
       type: 'blog' as const,
       title: campaign.subject || 'Newsletter',
@@ -120,7 +123,11 @@ export async function sendMailer(campaignId: string, actor?: string) {
   if (!campaign) throw new Error('Campaign not found')
 
   let source: MailerSource
-  if (campaign.content_type === 'standalone_email') {
+  let html: string | undefined
+  if (campaign.content_type === 'digest' && campaign.body_html) {
+    html = campaign.body_html
+    source = { type: 'blog', title: campaign.subject || 'Newsletter', excerpt: '', ctaUrl: '', ctaText: '' }
+  } else if (campaign.content_type === 'standalone_email') {
     source = {
       type: 'blog' as const,
       title: campaign.subject || 'Newsletter',
@@ -133,7 +140,7 @@ export async function sendMailer(campaignId: string, actor?: string) {
     source = await getMailerSource(campaign.content_type, campaign.source_id)
     if (campaign.hero_image) source.imageUrl = campaign.hero_image
   }
-  const html = renderMailerHtml(source, campaign.subject || source.title)
+  if (!html) html = renderMailerHtml(source, campaign.subject || source.title)
 
   // Tag-targeted sends: if campaign has target_tags, filter subscribers
   let subscriberQuery = supabase

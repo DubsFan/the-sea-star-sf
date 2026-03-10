@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 import { useSession } from '../session-context'
+import ChannelRow from '../create/ChannelRow'
 
 interface Stats {
   subscribers: number
@@ -25,6 +27,15 @@ interface ActivityItem {
   created_at: string
 }
 
+interface DraftItem {
+  id: string
+  type: string
+  title: string
+  status: string
+  image_url: string | null
+  content: Record<string, unknown>
+}
+
 function getGreeting(): string {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
@@ -38,11 +49,93 @@ export default function Dashboard() {
   const isCrew = session?.role === 'crew'
   const [stats, setStats] = useState<Stats | null>(null)
   const [activity, setActivity] = useState<ActivityItem[]>([])
+  const [readyItems, setReadyItems] = useState<DraftItem[]>([])
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [publishState, setPublishState] = useState<Record<string, { site: string; social: string; mailer: string; publishing?: boolean }>>({})
+
+  const loadReadyItems = () => {
+    fetch('/api/drafts', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .then((d: DraftItem[]) => {
+        const ready = Array.isArray(d) ? d.filter(item => item.status === 'ready') : []
+        setReadyItems(ready)
+        const state: typeof publishState = {}
+        for (const item of ready) {
+          if (!publishState[item.id]) {
+            state[item.id] = { site: 'now', social: 'now', mailer: 'skip' }
+          }
+        }
+        if (Object.keys(state).length) setPublishState(prev => ({ ...state, ...prev }))
+      })
+      .catch(() => {})
+  }
 
   useEffect(() => {
     fetch('/api/admin/stats', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(setStats).catch(() => {})
     fetch('/api/admin/activity', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (Array.isArray(d)) setActivity(d) }).catch(() => {})
+    loadReadyItems()
   }, [])
+
+  const handleQuickPublish = async (item: DraftItem) => {
+    const ps = publishState[item.id] || { site: 'now', social: 'now', mailer: 'skip' }
+    setPublishState(p => ({ ...p, [item.id]: { ...ps, publishing: true } }))
+
+    try {
+      if (item.type === 'social_campaign') {
+        const res = await fetch('/api/social/post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ campaign_id: item.id }),
+        })
+        if (res.ok) {
+          toast.success('Posted!')
+          setReadyItems(prev => prev.filter(i => i.id !== item.id))
+        } else {
+          const data = await res.json()
+          toast.error(data.error || 'Post failed')
+        }
+      } else if (item.type === 'mailer_campaign') {
+        const res = await fetch('/api/mailers/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ campaign_id: item.id }),
+        })
+        const data = await res.json()
+        if (res.ok) {
+          toast.success(`Sent to ${data.recipientCount} subscribers`)
+          setReadyItems(prev => prev.filter(i => i.id !== item.id))
+        } else {
+          toast.error(data.error || 'Send failed')
+        }
+      } else {
+        const endpoint = item.type === 'blog_post' ? '/api/blog/publish' : '/api/events/publish'
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            id: item.id,
+            site: { action: ps.site },
+            social: { action: ps.social },
+            mailer: { action: ps.mailer },
+          }),
+        })
+        if (res.ok) {
+          toast.success('Published!')
+          setReadyItems(prev => prev.filter(i => i.id !== item.id))
+        } else {
+          const data = await res.json()
+          toast.error(data.error || 'Publish failed')
+        }
+      }
+    } catch {
+      toast.error('Something went wrong')
+    } finally {
+      setPublishState(p => ({ ...p, [item.id]: { ...ps, publishing: false } }))
+    }
+  }
 
   return (
     <div className="max-w-4xl">
@@ -66,6 +159,75 @@ export default function Dashboard() {
           {stats.upcomingEvents > 0 && (
             <StatusPill href="/admin/marketing?tab=events" label={`${stats.upcomingEvents} events`} />
           )}
+        </div>
+      )}
+
+      {/* Ready to Publish */}
+      {readyItems.length > 0 && (
+        <div className="mb-8">
+          <h2 className="font-cormorant text-lg text-sea-white mb-3">Ready to Publish</h2>
+          <div className="space-y-2">
+            {readyItems.map(item => {
+              const isExpanded = expandedId === item.id
+              const ps = publishState[item.id] || { site: 'now', social: 'now', mailer: 'skip' }
+              const typeBadge = item.type === 'blog_post' ? 'Blog' : item.type === 'event' ? 'Event' : item.type === 'social_campaign' ? 'Social' : 'Email'
+              const badgeColor = item.type === 'blog_post' ? 'bg-blue-900/30 text-blue-400' : item.type === 'event' ? 'bg-purple-900/30 text-purple-400' : item.type === 'social_campaign' ? 'bg-pink-900/30 text-pink-400' : 'bg-sea-gold/10 text-sea-gold'
+              const isSocial = item.type === 'social_campaign'
+              const isMailer = item.type === 'mailer_campaign'
+
+              return (
+                <div key={item.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                    className="w-full p-3 flex items-center gap-3 bg-transparent border-none cursor-pointer text-left min-h-[56px]"
+                  >
+                    {item.image_url && <img src={item.image_url} alt="" className="w-[50px] h-[50px] object-cover rounded flex-shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-sea-light font-dm truncate">{item.title}</p>
+                    </div>
+                    <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${badgeColor}`}>{typeBadge}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-sea-blue transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}>
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                  {isExpanded && (
+                    <div className="border-t border-sea-gold/10 p-3 space-y-3">
+                      {isSocial ? (
+                        <button
+                          onClick={() => handleQuickPublish(item)}
+                          disabled={ps.publishing}
+                          className="w-full px-6 py-3 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50 min-h-[44px] rounded"
+                        >
+                          {ps.publishing ? 'Posting...' : 'Post Now'}
+                        </button>
+                      ) : isMailer ? (
+                        <button
+                          onClick={() => handleQuickPublish(item)}
+                          disabled={ps.publishing}
+                          className="w-full px-6 py-3 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50 min-h-[44px] rounded"
+                        >
+                          {ps.publishing ? 'Sending...' : 'Send Now'}
+                        </button>
+                      ) : (
+                        <>
+                          <ChannelRow label="Site" value={ps.site} onChange={v => setPublishState(p => ({ ...p, [item.id]: { ...ps, site: v } }))} />
+                          <ChannelRow label="Social" value={ps.social} onChange={v => setPublishState(p => ({ ...p, [item.id]: { ...ps, social: v } }))} />
+                          <ChannelRow label="Newsletter" value={ps.mailer} onChange={v => setPublishState(p => ({ ...p, [item.id]: { ...ps, mailer: v } }))} allowDraft />
+                          <button
+                            onClick={() => handleQuickPublish(item)}
+                            disabled={ps.publishing}
+                            className="w-full px-6 py-3 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50 min-h-[44px] rounded"
+                          >
+                            {ps.publishing ? 'Publishing...' : 'Publish'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
