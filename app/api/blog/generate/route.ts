@@ -25,10 +25,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No input provided' }, { status: 400 })
   }
 
-  const { keywords, toneNotes } = await buildBaseContext()
+  const { primaryKeywords, secondaryKeywords, toneNotes } = await buildBaseContext()
 
   let systemPrompt = BLOG_PROMPT
-  if (keywords) systemPrompt += `\n\nPreferred topics and keywords to weave in when relevant: ${keywords}`
+  if (primaryKeywords) systemPrompt += `\n\nCore identity (always include): ${primaryKeywords}`
+  if (secondaryKeywords) systemPrompt += `\nTopical themes (weave in when relevant): ${secondaryKeywords}`
   if (toneNotes) systemPrompt += `\n\nAdditional style guidance: ${toneNotes}`
   if (focus_keyword) systemPrompt += `\n\nSEO focus keyword to naturally weave into the title, first paragraph, and meta_description: "${focus_keyword}"`
 

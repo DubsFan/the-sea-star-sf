@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const { input, platform, context_type } = await request.json()
   if (!input) return NextResponse.json({ error: 'No input provided' }, { status: 400 })
 
-  const { keywords } = await buildBaseContext()
+  const { primaryKeywords, secondaryKeywords } = await buildBaseContext()
   const contextLabel = context_type === 'blog' ? 'a blog post' : context_type === 'event' ? 'an event' : 'a standalone post'
 
   const prompt = `You write social media captions for The Sea Star. ${SEA_STAR_VOICE}
@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
 Given notes for ${contextLabel}, write captions:
 ${platform !== 'instagram' ? '- facebook_caption: 2-3 sentences, call to action. Max 250 characters.' : ''}
 ${platform !== 'facebook' ? '- instagram_caption: 2-3 sentences, casual, 1-2 emojis. Include 3-5 hashtags. Max 300 characters.' : ''}
-${keywords ? `\nNaturally reference these themes when relevant (don't force them): ${keywords}` : ''}
+${primaryKeywords ? `\nCore identity (always include): ${primaryKeywords}` : ''}
+${secondaryKeywords ? `\nTopical themes (weave in when relevant): ${secondaryKeywords}` : ''}
 
 Return ONLY valid JSON.`
 

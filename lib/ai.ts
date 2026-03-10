@@ -1,19 +1,38 @@
 import { groq } from './groq'
 import { supabase } from './supabase'
 import type { AppDeps } from './deps'
+import { parseKeywords, serializeKeywords } from './keywords'
 
 export const SEA_STAR_VOICE = `The Sea Star is a craft cocktail bar in San Francisco's Dogpatch neighborhood. The bar has been at 2289 3rd Street since 1899. It's run by award-winning bartender Alicia Walton. The voice is: warm, fun, neighborhood bar vibes, Dogpatch pride, cocktail-forward, dog-friendly, unpretentious. Write like a bartender who reads a lot — casual but sharp, never corporate.`
 
-export async function buildBaseContext(deps?: Pick<AppDeps, 'db'>): Promise<{ keywords: string; toneNotes: string }> {
+export interface BaseContext {
+  keywords: string // combined (backward compat)
+  primaryKeywords: string
+  secondaryKeywords: string
+  toneNotes: string
+}
+
+export async function buildBaseContext(deps?: Pick<AppDeps, 'db'>): Promise<BaseContext> {
   const db = deps?.db || supabase
   const { data } = await db
     .from('site_settings')
     .select('key, value')
-    .in('key', ['seo_keywords', 'blog_keywords', 'blog_tone_notes'])
+    .in('key', ['seo_keywords_primary', 'seo_keywords_secondary', 'seo_keywords', 'blog_keywords', 'blog_tone_notes'])
+
+  const get = (key: string) => data?.find(s => s.key === key)?.value || ''
+
+  // Fallback chain: primary = seo_keywords_primary || seo_keywords || blog_keywords
+  const primaryRaw = get('seo_keywords_primary') || get('seo_keywords') || get('blog_keywords')
+  const secondaryRaw = get('seo_keywords_secondary')
+
+  const primary = parseKeywords(primaryRaw)
+  const secondary = parseKeywords(secondaryRaw)
 
   return {
-    keywords: data?.find(s => s.key === 'seo_keywords')?.value || data?.find(s => s.key === 'blog_keywords')?.value || '',
-    toneNotes: data?.find(s => s.key === 'blog_tone_notes')?.value || '',
+    keywords: serializeKeywords([...primary, ...secondary]), // backward compat
+    primaryKeywords: serializeKeywords(primary),
+    secondaryKeywords: serializeKeywords(secondary),
+    toneNotes: get('blog_tone_notes'),
   }
 }
 

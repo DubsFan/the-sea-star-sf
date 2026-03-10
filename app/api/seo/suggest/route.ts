@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
   const { type, context } = await request.json()
 
-  const { keywords } = await buildBaseContext()
+  const { keywords, primaryKeywords, secondaryKeywords } = await buildBaseContext()
   const contextStr = context || keywords || 'craft cocktail bar, Dogpatch SF, neighborhood bar'
 
   // Fetch unique primary_keyword values from content library
@@ -102,7 +102,7 @@ Given the bar's current keywords and season, suggest 5 blog post ideas that woul
 - target_keyword: primary search term to target
 
 Return valid JSON: { ideas: [{ title, description, target_keyword }] }`
-    input = `Keywords: ${contextStr}\nCurrent month: ${new Date().toLocaleString('en-US', { month: 'long' })}\nImported content keywords: ${libraryKwStr}`
+    input = `Core identity keywords: ${primaryKeywords || contextStr}\nTopical themes: ${secondaryKeywords || ''}\nCurrent month: ${new Date().toLocaleString('en-US', { month: 'long' })}\nImported content keywords: ${libraryKwStr}`
   } else if (type === 'keywords') {
     // Topic-aware keyword suggestion
     const userTopic = context?.trim() || ''

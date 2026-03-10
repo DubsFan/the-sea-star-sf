@@ -4,9 +4,14 @@ import { requireAdmin } from '@/lib/auth'
 
 const BUCKETS = ['Drink Images', 'blog-images', 'drink-images']
 
+const VIDEO_MIMES = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/avi', 'video/mov']
+
 export async function GET(request: NextRequest) {
   const session = await requireAdmin(request)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const url = new URL(request.url)
+  const tagFilter = url.searchParams.get('tags')
 
   const allFiles: { name: string; url: string; bucket: string; created_at: string }[] = []
 
@@ -30,6 +35,21 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Tag filtering placeholder — will use media_items table when available
+  if (tagFilter) {
+    // For now, filter by bucket name as a rough tag proxy
+    const tags = tagFilter.split(',').map(t => t.trim().toLowerCase())
+    const bucketMap: Record<string, string> = {
+      drinks: 'Drink Images',
+      'drink images': 'Drink Images',
+      blog: 'blog-images',
+    }
+    const matchBuckets = tags.map(t => bucketMap[t]).filter(Boolean)
+    if (matchBuckets.length > 0) {
+      return NextResponse.json(allFiles.filter(f => matchBuckets.includes(f.bucket)))
+    }
+  }
+
   return NextResponse.json(allFiles)
 }
 
@@ -42,6 +62,18 @@ export async function POST(request: NextRequest) {
   const bucket = (formData.get('bucket') as string) || 'Drink Images'
 
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
+
+  // Reject video uploads
+  if (VIDEO_MIMES.includes(file.type) || file.type.startsWith('video/')) {
+    return NextResponse.json({
+      error: 'Video uploads are not supported in this release. Use images or GIFs.',
+    }, { status: 400 })
+  }
+
+  // Validate image MIME
+  if (!file.type.startsWith('image/')) {
+    return NextResponse.json({ error: 'Only image files are supported' }, { status: 400 })
+  }
 
   const ext = file.name.split('.').pop()
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`

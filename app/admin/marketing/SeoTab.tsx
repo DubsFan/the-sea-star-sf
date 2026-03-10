@@ -8,45 +8,48 @@ interface PageSeoRow {
   og_title: string; og_description: string; og_image: string; focus_keyword: string
 }
 
-
 export default function SeoTab() {
   const [pages, setPages] = useState<PageSeoRow[]>([])
   const [editingPath, setEditingPath] = useState<string | null>(null)
   const [form, setForm] = useState<Partial<PageSeoRow>>({})
-  const [keywords, setKeywords] = useState('')
+  const [topicInput, setTopicInput] = useState('')
   const [suggestedKeywords, setSuggestedKeywords] = useState<string[]>([])
   const [topicMatchWeak, setTopicMatchWeak] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [masterKeywords, setMasterKeywords] = useState<string[]>([])
+  const [primaryKeywords, setPrimaryKeywords] = useState<string[]>([])
+  const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([])
   const [newKeyword, setNewKeyword] = useState('')
   const [savingKeywords, setSavingKeywords] = useState(false)
 
-  const loadMasterKeywords = async () => {
+  const loadKeywords = async () => {
     try {
       const res = await fetch('/api/admin/settings', { credentials: 'include' })
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data)) {
-          const seoRow = data.find((s: { key: string; value: string }) => s.key === 'seo_keywords')
-          const blogRow = data.find((s: { key: string; value: string }) => s.key === 'blog_keywords')
-          const val = seoRow?.value || blogRow?.value || ''
-          setMasterKeywords(val ? val.split(',').map((k: string) => k.trim()).filter(Boolean) : [])
-        }
-      }
+      if (!res.ok) return
+      const data = await res.json()
+      if (!Array.isArray(data)) return
+      const get = (key: string) => data.find((s: { key: string; value: string }) => s.key === key)?.value || ''
+
+      // Fallback: primary = seo_keywords_primary || seo_keywords || blog_keywords
+      const primaryRaw = get('seo_keywords_primary') || get('seo_keywords') || get('blog_keywords')
+      const secondaryRaw = get('seo_keywords_secondary')
+      setPrimaryKeywords(primaryRaw ? primaryRaw.split(',').map((k: string) => k.trim()).filter(Boolean) : [])
+      setSecondaryKeywords(secondaryRaw ? secondaryRaw.split(',').map((k: string) => k.trim()).filter(Boolean) : [])
     } catch { /* ignore */ }
   }
 
-  const saveMasterKeywords = async (kws: string[]) => {
+  const saveKeywords = async (tier: 'primary' | 'secondary', kws: string[]) => {
     setSavingKeywords(true)
+    const key = tier === 'primary' ? 'seo_keywords_primary' : 'seo_keywords_secondary'
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ key: 'seo_keywords', value: kws.join(', ') }),
+        body: JSON.stringify({ key, value: kws.join(', ') }),
       })
       if (res.ok) {
-        setMasterKeywords(kws)
+        if (tier === 'primary') setPrimaryKeywords(kws)
+        else setSecondaryKeywords(kws)
         toast.success('Keywords saved')
       } else {
         toast.error('Failed to save keywords')
@@ -56,16 +59,40 @@ export default function SeoTab() {
     }
   }
 
-  const addKeyword = (kw: string) => {
+  const allKeywords = [...primaryKeywords, ...secondaryKeywords]
+
+  const addKeyword = (kw: string, tier: 'primary' | 'secondary' = 'secondary') => {
     const trimmed = kw.trim().toLowerCase()
-    if (!trimmed || masterKeywords.some(k => k.toLowerCase() === trimmed)) return
-    const updated = [...masterKeywords, trimmed].sort()
-    saveMasterKeywords(updated)
+    if (!trimmed || allKeywords.some(k => k.toLowerCase() === trimmed)) return
+    if (tier === 'primary') {
+      saveKeywords('primary', [...primaryKeywords, trimmed].sort())
+    } else {
+      saveKeywords('secondary', [...secondaryKeywords, trimmed].sort())
+    }
   }
 
-  const removeKeyword = (kw: string) => {
-    const updated = masterKeywords.filter(k => k !== kw)
-    saveMasterKeywords(updated)
+  const removeKeyword = (kw: string, tier: 'primary' | 'secondary') => {
+    if (tier === 'primary') {
+      saveKeywords('primary', primaryKeywords.filter(k => k !== kw))
+    } else {
+      saveKeywords('secondary', secondaryKeywords.filter(k => k !== kw))
+    }
+  }
+
+  const promoteKeyword = (kw: string) => {
+    // Move from secondary to primary
+    const newSecondary = secondaryKeywords.filter(k => k !== kw)
+    const newPrimary = [...primaryKeywords, kw].sort()
+    saveKeywords('secondary', newSecondary)
+    saveKeywords('primary', newPrimary)
+  }
+
+  const demoteKeyword = (kw: string) => {
+    // Move from primary to secondary
+    const newPrimary = primaryKeywords.filter(k => k !== kw)
+    const newSecondary = [...secondaryKeywords, kw].sort()
+    saveKeywords('primary', newPrimary)
+    saveKeywords('secondary', newSecondary)
   }
 
   const loadPages = async () => {
@@ -74,7 +101,7 @@ export default function SeoTab() {
     if (Array.isArray(data)) setPages(data)
   }
 
-  useEffect(() => { loadPages(); loadMasterKeywords() }, [])
+  useEffect(() => { loadPages(); loadKeywords() }, [])
 
   const handleEdit = (page: PageSeoRow) => {
     setEditingPath(page.page_path)
@@ -105,7 +132,7 @@ export default function SeoTab() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ type: 'keywords', context: keywords }),
+        body: JSON.stringify({ type: 'keywords', context: topicInput }),
       })
       const data = await res.json()
       if (data.keywords) {
@@ -118,6 +145,27 @@ export default function SeoTab() {
       setLoading(false)
     }
   }
+
+  const KeywordPill = ({ kw, tier }: { kw: string; tier: 'primary' | 'secondary' }) => (
+    <span className={`inline-flex items-center gap-1 text-xs font-dm px-3 py-1.5 rounded-full border ${
+      tier === 'primary'
+        ? 'bg-sea-gold/15 text-sea-gold border-sea-gold/25'
+        : 'bg-sea-gold/5 text-sea-blue border-sea-gold/10'
+    }`}>
+      {kw}
+      <button
+        onClick={() => tier === 'primary' ? demoteKeyword(kw) : promoteKeyword(kw)}
+        disabled={savingKeywords}
+        title={tier === 'primary' ? 'Demote to secondary' : 'Promote to primary'}
+        className="w-4 h-4 flex items-center justify-center rounded-full bg-transparent text-sea-blue hover:text-sea-gold transition-colors cursor-pointer text-[0.6rem] leading-none border-none"
+      >{tier === 'primary' ? '↓' : '↑'}</button>
+      <button
+        onClick={() => removeKeyword(kw, tier)}
+        disabled={savingKeywords}
+        className="w-4 h-4 flex items-center justify-center rounded-full bg-sea-gold/20 text-sea-gold hover:bg-red-600 hover:text-white transition-colors cursor-pointer text-[0.6rem] leading-none border-none"
+      >×</button>
+    </span>
+  )
 
   return (
     <div>
@@ -163,29 +211,39 @@ export default function SeoTab() {
         </div>
       </div>
 
-      {/* Master SEO Keywords */}
-      <div className="mb-8">
-        <h3 className="font-cormorant text-lg text-sea-white mb-3">SEO Keywords</h3>
+      {/* Primary Keywords */}
+      <div className="mb-6">
+        <h3 className="font-cormorant text-lg text-sea-white mb-3">Primary Keywords</h3>
         <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
           <p className="text-xs text-sea-blue font-dm mb-3">
-            These keywords guide ALL AI-generated content — blog posts, social captions, and event descriptions.
+            Core identity — always included in AI-generated content.
           </p>
-          {masterKeywords.length > 0 ? (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {masterKeywords.map((kw) => (
-                <span key={kw} className="inline-flex items-center gap-1.5 text-xs font-dm px-3 py-1.5 rounded-full bg-sea-gold/10 text-sea-gold border border-sea-gold/15">
-                  {kw}
-                  <button
-                    onClick={() => removeKeyword(kw)}
-                    disabled={savingKeywords}
-                    className="w-4 h-4 flex items-center justify-center rounded-full bg-sea-gold/20 text-sea-gold hover:bg-red-600 hover:text-white transition-colors cursor-pointer text-[0.6rem] leading-none border-none"
-                  >×</button>
-                </span>
-              ))}
+          {primaryKeywords.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {primaryKeywords.map((kw) => <KeywordPill key={kw} kw={kw} tier="primary" />)}
             </div>
           ) : (
-            <p className="text-xs text-sea-blue/50 font-dm mb-4 italic">No keywords set yet.</p>
+            <p className="text-xs text-sea-blue/50 font-dm mb-3 italic">No primary keywords yet.</p>
           )}
+        </div>
+      </div>
+
+      {/* Secondary Keywords */}
+      <div className="mb-6">
+        <h3 className="font-cormorant text-lg text-sea-white mb-3">Secondary Keywords</h3>
+        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+          <p className="text-xs text-sea-blue font-dm mb-3">
+            Topical themes — woven in when relevant. Suggestions and imports land here.
+          </p>
+          {secondaryKeywords.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {secondaryKeywords.map((kw) => <KeywordPill key={kw} kw={kw} tier="secondary" />)}
+            </div>
+          ) : (
+            <p className="text-xs text-sea-blue/50 font-dm mb-3 italic">No secondary keywords yet.</p>
+          )}
+
+          {/* Add keyword */}
           <div className="flex gap-2 mb-4">
             <input
               type="text"
@@ -207,9 +265,9 @@ export default function SeoTab() {
             <div className="flex gap-2 items-center mb-2">
               <input
                 type="text"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-                placeholder="Context for suggestions (optional)..."
+                value={topicInput}
+                onChange={(e) => setTopicInput(e.target.value)}
+                placeholder="Topic for suggestions (e.g. Warriors Basketball)..."
                 className="flex-1 px-3 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold placeholder:text-sea-border min-h-[44px]"
               />
               <button onClick={handleSuggestKeywords} disabled={loading} className="px-4 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50 flex-shrink-0">
@@ -224,11 +282,11 @@ export default function SeoTab() {
             {suggestedKeywords.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {suggestedKeywords.map((kw, i) => {
-                  const alreadyAdded = masterKeywords.some(k => k.toLowerCase() === kw.toLowerCase())
+                  const alreadyAdded = allKeywords.some(k => k.toLowerCase() === kw.toLowerCase())
                   return (
                     <button
                       key={i}
-                      onClick={() => { if (!alreadyAdded) addKeyword(kw) }}
+                      onClick={() => { if (!alreadyAdded) addKeyword(kw, 'secondary') }}
                       disabled={alreadyAdded || savingKeywords}
                       className={`inline-flex items-center gap-1 text-xs font-dm px-3 py-1.5 rounded-full border transition-all min-h-[36px] ${
                         alreadyAdded
@@ -245,7 +303,6 @@ export default function SeoTab() {
           </div>
         </div>
       </div>
-
     </div>
   )
 }

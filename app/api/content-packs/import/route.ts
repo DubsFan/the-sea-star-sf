@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
     if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 })
   }
 
-  // Auto-merge primary_keywords into seo_keywords
+  // Auto-merge primary_keywords into seo_keywords_secondary
   const newKeywords = Array.from(new Set(
     items.map(i => 'primary_keyword' in i ? i.primary_keyword : null).filter((k): k is string => !!k)
   ))
@@ -233,15 +233,16 @@ export async function POST(request: NextRequest) {
     const { data: settingsData } = await supabase
       .from('site_settings')
       .select('key, value')
-      .in('key', ['seo_keywords', 'blog_keywords'])
+      .in('key', ['seo_keywords_secondary', 'seo_keywords', 'blog_keywords'])
+    const secondaryRow = settingsData?.find((s: { key: string; value: string }) => s.key === 'seo_keywords_secondary')
     const seoRow = settingsData?.find((s: { key: string; value: string }) => s.key === 'seo_keywords')
     const blogRow = settingsData?.find((s: { key: string; value: string }) => s.key === 'blog_keywords')
-    const existingVal = seoRow?.value || blogRow?.value || ''
+    const existingVal = secondaryRow?.value || seoRow?.value || blogRow?.value || ''
     const existing = existingVal.split(',').map((k: string) => k.trim().toLowerCase()).filter(Boolean)
     const merged = Array.from(new Set([...existing, ...newKeywords.map(k => k.toLowerCase())])).sort()
     await supabase
       .from('site_settings')
-      .upsert({ key: 'seo_keywords', value: merged.join(', '), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      .upsert({ key: 'seo_keywords_secondary', value: merged.join(', '), updated_at: new Date().toISOString() }, { onConflict: 'key' })
   }
 
   return NextResponse.json({

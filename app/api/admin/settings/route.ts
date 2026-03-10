@@ -14,6 +14,8 @@ const MARKETING_SAFE_KEYS = [
   'social_default_delay_days',
   'social_default_time_local',
   'newsletter_default_mode',
+  'seo_keywords_primary',
+  'seo_keywords_secondary',
 ]
 
 export async function GET(request: NextRequest) {

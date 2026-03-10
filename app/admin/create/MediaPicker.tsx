@@ -91,16 +91,39 @@ export default function MediaPicker({ isOpen, mode, maxFiles, onSelect, onClose 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files
     if (!fileList) return
+
+    // Client-side video rejection
+    const validFiles: File[] = []
+    let videoRejected = false
+    for (let i = 0; i < fileList.length; i++) {
+      if (fileList[i].type.startsWith('video/')) {
+        videoRejected = true
+      } else {
+        validFiles.push(fileList[i])
+      }
+    }
+    if (videoRejected) {
+      toast.error('Video uploads are not supported. Use images or GIFs.')
+    }
+    if (validFiles.length === 0) {
+      e.target.value = ''
+      return
+    }
+
     setUploading(true)
     const newUrls: string[] = []
-    for (let i = 0; i < fileList.length; i++) {
+    for (const file of validFiles) {
       const formData = new FormData()
-      formData.append('file', fileList[i])
+      formData.append('file', file)
       formData.append('bucket', 'Drink Images')
       try {
         const res = await fetch('/api/media', { credentials: 'include', method: 'POST', body: formData })
         const data = await res.json()
-        if (data.url) newUrls.push(data.url)
+        if (data.url) {
+          newUrls.push(data.url)
+        } else if (data.error) {
+          toast.error(data.error)
+        }
       } catch {
         toast.error('Upload failed')
       }
