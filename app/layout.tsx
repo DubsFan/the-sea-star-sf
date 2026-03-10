@@ -53,15 +53,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[#06080d] text-[#d8e0ed] antialiased overflow-x-hidden">
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-sea-gold focus:text-[#06080d] focus:px-4 focus:py-2 focus:text-sm focus:font-dm focus:rounded">Skip to main content</a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <Starfield />
         <Toaster position="bottom-center" />
-        <div className="relative z-[1]">
+        <main id="main" className="relative z-[1]">
           {children}
-        </div>
+        </main>
       </body>
     </html>
   )

@@ -98,3 +98,19 @@ body {
   60% { opacity: 0.4; }
   100% { transform: translateX(105vw) translateY(30vh) rotate(-15deg); opacity: 0; }
 }
+
+/* Accessibility: respect motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
+/* Accessibility: visible focus rings for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #c9a54e;
+  outline-offset: 2px;
+}

@@ -77,7 +77,7 @@ export default async function BlogPostPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#06080d]">
+    <article aria-label={post.title} className="min-h-screen bg-[#06080d]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="max-w-[700px] mx-auto px-6 md:px-12 py-32">
         <Link href="/blog" className="text-[0.55rem] tracking-[0.25em] uppercase text-sea-blue hover:text-sea-gold transition-colors no-underline mb-12 inline-block">
@@ -105,13 +105,13 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Subscribe CTA */}
         <div className="mt-16 border-t border-sea-gold/10 pt-12 text-center">
-          <h3 className="font-cormorant text-2xl font-light text-sea-white mb-3">Subscribe to our newsletter</h3>
+          <h2 className="font-cormorant text-2xl font-light text-sea-white mb-3">Subscribe to our newsletter</h2>
           <p className="text-sm text-sea-blue mb-6 font-dm">Get stories like this delivered to your inbox.</p>
           <Link href="/#journal" className="font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase px-8 py-3 bg-sea-gold text-[#06080d] hover:bg-sea-gold-light transition-all no-underline inline-block">
             Join the Crew
           </Link>
         </div>
       </div>
-    </div>
+    </article>
   )
 }

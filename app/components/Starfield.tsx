@@ -150,6 +150,7 @@ export default function Starfield() {
   return (
     <canvas
       ref={canvasRef}
+      aria-hidden="true"
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 50, opacity: 0.8, width: '100vw', height: '100vh' }}
     />

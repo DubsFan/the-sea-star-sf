@@ -93,7 +93,7 @@ export default async function BlogPage() {
               <div className="grid md:grid-cols-2">
                 <div className="aspect-video md:aspect-auto relative overflow-hidden bg-gradient-to-br from-[#0c2d3a] to-[#0f1523]">
                   {post.featured_image && (
-                    <div className="absolute inset-0 bg-cover bg-center opacity-70 group-hover:opacity-80 transition-opacity" style={{ backgroundImage: `url('${post.featured_image}')` }} />
+                    <div role="img" aria-label={post.title} className="absolute inset-0 bg-cover bg-center opacity-70 group-hover:opacity-80 transition-opacity" style={{ backgroundImage: `url('${post.featured_image}')` }} />
                   )}
                   <div className="absolute bottom-4 left-5 font-playfair text-6xl font-extrabold text-sea-gold/10">01</div>
                 </div>
@@ -119,7 +119,7 @@ export default async function BlogPage() {
             >
               <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-[#0c2d3a] to-[#0f1523]">
                 {post.featured_image && (
-                  <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-70 transition-opacity" style={{ backgroundImage: `url('${post.featured_image}')` }} />
+                  <div role="img" aria-label={post.title} className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-70 transition-opacity" style={{ backgroundImage: `url('${post.featured_image}')` }} />
                 )}
                 <div className="absolute bottom-3 left-4 font-playfair text-5xl font-extrabold text-sea-gold/10">{String(i + 2).padStart(2, '0')}</div>
               </div>

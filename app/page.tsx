@@ -224,7 +224,7 @@ export default function Home() {
   return (
     <>
       {/* NAV */}
-      <nav className={`fixed top-0 left-0 right-0 z-[100] px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-500 ${scrolled ? 'bg-[#06080d]/95 backdrop-blur-xl py-3 border-b border-sea-gold/10' : ''}`}>
+      <nav aria-label="Main navigation" className={`fixed top-0 left-0 right-0 z-[100] px-6 md:px-12 py-4 flex justify-between items-center transition-all duration-500 ${scrolled ? 'bg-[#06080d]/95 backdrop-blur-xl py-3 border-b border-sea-gold/10' : ''}`}>
         <div className="flex items-center gap-4">
           <a href="#" className="nav-logo no-underline">
             <img src="/sea-star-logo.png" alt="The Sea Star" style={{ height: '32px', display: 'block' }} />
@@ -243,17 +243,17 @@ export default function Home() {
             Book Event
           </a>
         </div>
-        <button className="md:hidden flex flex-col gap-[5px] bg-transparent border-none p-2" onClick={() => setMobileMenuOpen(true)}>
-          <span className="block w-6 h-[1px] bg-sea-gold" />
-          <span className="block w-6 h-[1px] bg-sea-gold" />
-          <span className="block w-6 h-[1px] bg-sea-gold" />
+        <button aria-label="Open menu" aria-expanded={mobileMenuOpen} className="md:hidden flex flex-col gap-[5px] bg-transparent border-none p-2" onClick={() => setMobileMenuOpen(true)}>
+          <span className="block w-6 h-[1px] bg-sea-gold" aria-hidden="true" />
+          <span className="block w-6 h-[1px] bg-sea-gold" aria-hidden="true" />
+          <span className="block w-6 h-[1px] bg-sea-gold" aria-hidden="true" />
         </button>
       </nav>
 
       {/* MOBILE MENU */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-[#06080d]/98 backdrop-blur-xl z-[99] flex flex-col items-center justify-center gap-8">
-          <button className="absolute top-6 right-8 bg-transparent border-none text-sea-gold text-3xl cursor-pointer font-light" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          <button aria-label="Close menu" className="absolute top-6 right-8 bg-transparent border-none text-sea-gold text-3xl cursor-pointer font-light" onClick={() => setMobileMenuOpen(false)}>&times;</button>
           {['Menu', 'Reviews', 'Events', 'Journal', 'Visit Us'].map((item, i) => {
             const targets = ['menu', 'reviews', 'events', 'journal', 'visit']
             return (
@@ -274,13 +274,14 @@ export default function Home() {
       {/* LOGIN MODAL */}
       {loginOpen && (
         <div className="fixed inset-0 bg-[#06080d]/98 backdrop-blur-xl z-[300] flex items-center justify-center">
-          <button className="absolute top-8 right-8 bg-transparent border border-[#2d3a52] text-sea-gold text-xl w-10 h-10 cursor-pointer flex items-center justify-center hover:border-sea-gold transition-all" onClick={() => setLoginOpen(false)}>&times;</button>
+          <button aria-label="Close login" className="absolute top-8 right-8 bg-transparent border border-[#2d3a52] text-sea-gold text-xl w-10 h-10 cursor-pointer flex items-center justify-center hover:border-sea-gold transition-all" onClick={() => setLoginOpen(false)}>&times;</button>
           <div className="max-w-[380px] w-[90%] text-center" style={{ animation: 'fadeUp 0.5s ease-out' }}>
             <h2 className="font-cormorant text-[2.4rem] font-light text-sea-light mb-2">Welcome Back</h2>
             <p className="text-[0.85rem] text-sea-blue mb-10">Staff access only</p>
             <input
               type="text"
               placeholder="Username"
+              aria-label="Username"
               autoComplete="off"
               value={loginUser}
               onChange={(e) => setLoginUser(e.target.value)}
@@ -290,6 +291,7 @@ export default function Home() {
             <input
               type="password"
               placeholder="Password"
+              aria-label="Password"
               value={loginPass}
               onChange={(e) => setLoginPass(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleLogin() }}
@@ -302,7 +304,7 @@ export default function Home() {
               Sign In
             </button>
             {loginError && (
-              <p className="text-[#c47e7e] text-[0.75rem] mt-4">Invalid credentials. Try again.</p>
+              <p role="alert" className="text-[#c47e7e] text-[0.75rem] mt-4">Invalid credentials. Try again.</p>
             )}
           </div>
         </div>
@@ -583,6 +585,7 @@ export default function Home() {
                 key={i}
                 role="button"
                 tabIndex={0}
+                aria-label={`Read: ${post.title}`}
                 className="border border-sea-gold/5 overflow-hidden hover:border-sea-gold/15 hover:-translate-y-1 active:scale-[0.98] transition-all cursor-pointer"
                 onClick={() => {
                   if ((post as any).slug) {
@@ -592,9 +595,20 @@ export default function Home() {
                     setBlogModalOpen(true)
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    if ((post as any).slug) {
+                      window.location.href = `/blog/${(post as any).slug}`
+                    } else {
+                      setActiveBlogIndex(i)
+                      setBlogModalOpen(true)
+                    }
+                  }
+                }}
               >
                 <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-[#0c2d3a] to-[#0f1523]">
-                  <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url('${blogImages[i] || ''}')` }} />
+                  <div role="img" aria-label={post.title} className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url('${blogImages[i] || ''}')` }} />
                   <div className="absolute bottom-3 left-4 font-playfair text-5xl font-extrabold text-sea-gold/15">{String(i + 1).padStart(2, '0')}</div>
                 </div>
                 <div className="p-6">
@@ -614,7 +628,7 @@ export default function Home() {
       {/* Blog modal for fallback static content */}
       {blogModalOpen && (
         <div className="fixed inset-0 bg-[#06080d]/95 backdrop-blur-xl z-[200] overflow-y-auto p-8 md:p-16">
-          <button className="fixed top-8 right-8 bg-transparent border border-sea-border text-sea-gold text-xl w-10 h-10 flex items-center justify-center cursor-pointer hover:border-sea-gold transition-all z-[201]" onClick={() => setBlogModalOpen(false)}>&times;</button>
+          <button aria-label="Close" className="fixed top-8 right-8 bg-transparent border border-sea-border text-sea-gold text-xl w-10 h-10 flex items-center justify-center cursor-pointer hover:border-sea-gold transition-all z-[201]" onClick={() => setBlogModalOpen(false)}>&times;</button>
           <div className="max-w-[700px] mx-auto" style={{ animation: 'fadeUp 0.5s ease-out' }}>
             <div className="text-[0.55rem] tracking-[0.25em] uppercase text-sea-gold mb-4">{BLOG_CONTENT[activeBlogIndex].date}</div>
             <h2 className="font-cormorant text-[clamp(2rem,4vw,2.8rem)] font-light text-sea-white leading-tight mb-8">{BLOG_CONTENT[activeBlogIndex].title}</h2>
@@ -646,8 +660,8 @@ export default function Home() {
           <h2 className="font-cormorant text-3xl font-light text-sea-white mb-3">Join the Crew</h2>
           <p className="text-sm text-sea-blue mb-8 font-dm">New drinks, events, and stories from behind the bar. No spam, ever.</p>
           <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
-            <input type="text" placeholder="Your name" value={subscribeName} onChange={(e) => setSubscribeName(e.target.value)} className="w-full px-4 py-3 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold transition-colors placeholder:text-sea-border" />
-            <input type="email" placeholder="Your email" value={subscribeEmail} onChange={(e) => setSubscribeEmail(e.target.value)} required className="w-full px-4 py-3 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold transition-colors placeholder:text-sea-border" />
+            <input type="text" placeholder="Your name" aria-label="Your name" value={subscribeName} onChange={(e) => setSubscribeName(e.target.value)} className="w-full px-4 py-3 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold transition-colors placeholder:text-sea-border" />
+            <input type="email" placeholder="Your email" aria-label="Email address" aria-required="true" value={subscribeEmail} onChange={(e) => setSubscribeEmail(e.target.value)} required className="w-full px-4 py-3 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold transition-colors placeholder:text-sea-border" />
             <button type="submit" className="w-full py-3 bg-sea-gold text-[#06080d] font-dm text-[0.6rem] font-medium tracking-[0.3em] uppercase border-none cursor-pointer hover:bg-sea-gold-light transition-all">
               Subscribe
             </button>
@@ -666,6 +680,7 @@ export default function Home() {
             <div className="bg-[#06080d] p-8">
               <h3 className="font-cormorant text-2xl font-light text-sea-gold mb-6">Hours</h3>
               <table className="w-full">
+                <thead className="sr-only"><tr><th scope="col">Day</th><th scope="col">Hours</th></tr></thead>
                 <tbody>
                   {[
                     ['Monday', '4 PM \u2013 1 AM'],
@@ -721,14 +736,14 @@ export default function Home() {
               <div className="text-[0.6rem] text-sea-border leading-relaxed">2289 3rd Street, San Francisco, CA 94107</div>
               <div className="text-[0.6rem] text-sea-border mt-1">&copy; 2026 The Sea Star SF</div>
             </div>
-            <div>
+            <nav aria-label="Footer navigation">
               <div className="text-[0.55rem] font-medium tracking-[0.35em] uppercase text-sea-gold mb-5">Navigate</div>
               {[['Our Story', 'story'], ['Alicia Walton', 'alicia'], ['Cocktails', 'menu'], ['Reviews', 'reviews'], ['Events', 'events'], ['Journal', 'journal']].map(([label, href]) => (
                 <a key={label} href={`#${href}`} className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">{label}</a>
               ))}
               <a href="/faq" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">FAQ</a>
               <a href="/blog" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">Blog</a>
-            </div>
+            </nav>
             <div>
               <div className="text-[0.55rem] font-medium tracking-[0.35em] uppercase text-sea-gold mb-5">Connect</div>
               <a href="tel:+14155525330" className="block text-[0.85rem] text-sea-blue leading-8 hover:text-sea-gold transition-colors no-underline">(415) 552-5330</a>

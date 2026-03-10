@@ -87,6 +87,7 @@ export default async function FaqPage() {
                         <summary className="px-5 py-4 cursor-pointer text-sea-white font-dm text-sm font-medium list-none flex items-center justify-between gap-4 min-h-[52px]">
                           {faq.question}
                           <svg
+                            aria-hidden="true"
                             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7a99" strokeWidth="2"
                             className="flex-shrink-0 transition-transform group-open:rotate-180"
                           >

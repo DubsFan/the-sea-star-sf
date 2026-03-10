@@ -107,6 +107,17 @@ vercel --prod            # deploy to production (Vercel CLI ONLY — NOT connect
 - Tables should have mobile card alternatives. No horizontal scrolling.
 - All admin pages must be fully usable on a phone screen.
 
+## ADA Compliance Rule
+- ALL public-facing pages MUST meet WCAG 2.1 AA standards
+- Every interactive element needs keyboard access (Enter/Space triggers)
+- Every form input needs a label (visible `<label>` or `aria-label`)
+- Every image needs meaningful alt text (or `aria-hidden` if decorative)
+- Every button/link needs accessible name (visible text or `aria-label`)
+- Use semantic HTML: `<article>`, `<nav>`, `<main>`, `<section>`, headings in order
+- Animations must respect `prefers-reduced-motion`
+- Color contrast minimum 4.5:1 for text, 3:1 for large text
+- This applies to ALL new code — never ship inaccessible markup
+
 ## GUARDRAILS
 - Never claim done without testing
 - Verify files exist before referencing
