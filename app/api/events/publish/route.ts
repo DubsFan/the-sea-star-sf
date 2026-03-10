@@ -6,8 +6,18 @@ import { sendMailer } from '@/lib/mailer'
 import { executeSocialPost } from '@/lib/social-post'
 import { SEA_STAR_VOICE, generateWithGroq, cleanJsonResponse } from '@/lib/ai'
 
-interface ChannelAction {
+interface SiteChannelInput {
   action: 'skip' | 'now' | 'schedule'
+  scheduledFor?: string
+}
+
+interface SocialChannelInput {
+  action: 'skip' | 'now' | 'schedule'
+  scheduledFor?: string
+}
+
+interface MailerChannelInput {
+  action: 'skip' | 'now' | 'schedule' | 'draft'
   scheduledFor?: string
   hero_image?: string
 }
@@ -24,12 +34,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing or invalid id' }, { status: 400 })
   }
 
-  const site: ChannelAction = body.site || { action: 'now' }
-  const social: ChannelAction = body.social || { action: 'skip' }
-  const mailer: ChannelAction = body.mailer || { action: 'skip' }
+  const site: SiteChannelInput = body.site || { action: 'now' }
+  const social: SocialChannelInput = body.social || { action: 'skip' }
+  const mailer: MailerChannelInput = body.mailer || { action: 'skip' }
 
-  const validActions = ['skip', 'now', 'schedule']
-  if (!validActions.includes(site.action) || !validActions.includes(social.action) || !validActions.includes(mailer.action)) {
+  const siteActions = ['skip', 'now', 'schedule']
+  const socialActions = ['skip', 'now', 'schedule']
+  const mailerActions = ['skip', 'now', 'schedule', 'draft']
+  if (!siteActions.includes(site.action) || !socialActions.includes(social.action) || !mailerActions.includes(mailer.action)) {
     return NextResponse.json({ error: 'Invalid channel action' }, { status: 400 })
   }
   if (site.action === 'schedule' && !site.scheduledFor) {

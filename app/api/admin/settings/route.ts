@@ -16,6 +16,11 @@ const MARKETING_SAFE_KEYS = [
   'newsletter_default_mode',
   'seo_keywords_primary',
   'seo_keywords_secondary',
+  'blog_default_mode',
+  'blog_default_day_of_week',
+  'blog_default_time_local',
+  'newsletter_default_day_of_week',
+  'newsletter_default_time_local',
 ]
 
 export async function GET(request: NextRequest) {

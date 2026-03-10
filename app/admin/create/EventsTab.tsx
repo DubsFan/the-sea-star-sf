@@ -27,6 +27,7 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
   const [mailerHeroImage, setMailerHeroImage] = useState('')
   const [showMailerPicker, setShowMailerPicker] = useState(false)
   const [publishActions, setPublishActions] = useState({ site: 'now', social: 'skip', mailer: 'skip' })
+  const [scheduledDates, setScheduledDates] = useState<{ site?: string; social?: string; mailer?: string }>({})
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
 
   const loadEvents = async () => {
@@ -93,6 +94,17 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
   }
 
   const handlePublish = async (eventId: string) => {
+    // Validate: schedule without date → error
+    if (publishActions.site === 'schedule' && !scheduledDates.site) {
+      toast.error('Pick a date for website scheduling'); return
+    }
+    if (publishActions.social === 'schedule' && !scheduledDates.social) {
+      toast.error('Pick a date for social scheduling'); return
+    }
+    if (publishActions.mailer === 'schedule' && !scheduledDates.mailer) {
+      toast.error('Pick a date for newsletter scheduling'); return
+    }
+
     setPublishing(true)
     try {
       const res = await fetch('/api/events/publish', {
@@ -100,15 +112,16 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: eventId,
-          site: { action: publishActions.site },
-          social: { action: publishActions.social },
-          mailer: { action: publishActions.mailer, hero_image: !useSourceImage && mailerHeroImage ? mailerHeroImage : undefined },
+          site: { action: publishActions.site, scheduledFor: scheduledDates.site },
+          social: { action: publishActions.social, scheduledFor: scheduledDates.social },
+          mailer: { action: publishActions.mailer, scheduledFor: scheduledDates.mailer, hero_image: !useSourceImage && mailerHeroImage ? mailerHeroImage : undefined },
         }),
       })
       if (res.ok) {
         toast.success('Event published!')
         setPublishId(null)
         setPublishActions({ site: 'now', social: 'skip', mailer: 'skip' })
+        setScheduledDates({})
         loadEvents()
       }
     } finally {
@@ -287,11 +300,14 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
 
                   {/* Publish panel */}
                   {publishId === event.id && (
-                    <div className="pt-3 border-t border-sea-gold/10 space-y-2">
-                      <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
-                      <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
-                      <ChannelRow label="Email Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
-                      {publishActions.mailer !== 'skip' && (
+                    <div className="pt-3 border-t border-sea-gold/10 space-y-3">
+                      <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))}
+                        scheduledFor={scheduledDates.site} onScheduledForChange={(iso) => setScheduledDates(d => ({ ...d, site: iso }))} />
+                      <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))}
+                        scheduledFor={scheduledDates.social} onScheduledForChange={(iso) => setScheduledDates(d => ({ ...d, social: iso }))} />
+                      <ChannelRow label="Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))}
+                        scheduledFor={scheduledDates.mailer} onScheduledForChange={(iso) => setScheduledDates(d => ({ ...d, mailer: iso }))} allowDraft />
+                      {publishActions.mailer !== 'skip' && publishActions.mailer !== 'draft' && (
                         <div className="mt-2 space-y-2">
                           <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
                             <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
@@ -308,7 +324,10 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
                           )}
                         </div>
                       )}
-                      <button onClick={() => handlePublish(event.id)} disabled={publishing} className="mt-2 px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
+                      <p className="text-[0.6rem] text-sea-blue/40 font-dm">
+                        Runs on the selected date. Exact send time may vary on the current hosting plan.
+                      </p>
+                      <button onClick={() => handlePublish(event.id)} disabled={publishing} className="mt-2 w-full px-4 py-3 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50 min-h-[48px]">
                         {publishing ? 'Publishing...' : 'Confirm Publish'}
                       </button>
                     </div>

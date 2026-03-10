@@ -8,16 +8,27 @@ import { publishToSite, scheduleForSite } from './publisher'
 import { executeSocialPost } from './social-post'
 import { sendMailer } from './mailer'
 
-interface ChannelAction {
+interface SiteChannelInput {
   action: 'skip' | 'now' | 'schedule'
   scheduledFor?: string
 }
 
+interface SocialChannelInput {
+  action: 'skip' | 'now' | 'schedule'
+  scheduledFor?: string
+}
+
+interface MailerChannelInput {
+  action: 'skip' | 'now' | 'schedule' | 'draft'
+  scheduledFor?: string
+  hero_image?: string
+}
+
 interface PublishInput {
   id: string
-  site: ChannelAction
-  social: ChannelAction
-  mailer: ChannelAction
+  site: SiteChannelInput
+  social: SocialChannelInput
+  mailer: MailerChannelInput
   actor: string
 }
 

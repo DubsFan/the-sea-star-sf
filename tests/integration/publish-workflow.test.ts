@@ -117,6 +117,68 @@ describe('publish-workflow', () => {
     expect(event?.status).toBe('published')
   })
 
+  it('blog: mailer draft action creates draft campaign', async () => {
+    await db.from('blog_posts').update({ status: 'draft', is_published: false }).eq('id', S.blogPost)
+
+    const { executeBlogPublishWorkflow } = await import('@/lib/publish-workflow')
+    const results = await executeBlogPublishWorkflow({
+      id: S.blogPost,
+      site: { action: 'now' },
+      social: { action: 'skip' },
+      mailer: { action: 'draft' },
+      actor: 'test',
+    }, deps)
+
+    expect(results.site).toEqual({ status: 'published' })
+    expect(results.mailer).toBeTruthy()
+    // draft action creates campaign with 'draft' DB status, workflow returns 'scheduled' with campaignId
+    expect((results.mailer as { status: string }).status).toBe('scheduled')
+
+    // Verify mailer campaign was created with draft status
+    const { data: campaigns } = await db
+      .from('mailer_campaigns')
+      .select('status, scheduled_for')
+      .eq('source_id', S.blogPost)
+      .eq('status', 'draft')
+    expect(campaigns?.length).toBeGreaterThanOrEqual(1)
+    expect(campaigns?.[0]?.scheduled_for).toBeNull()
+  })
+
+  it('blog: scheduled channels preserve scheduledFor in DB', async () => {
+    await db.from('blog_posts').update({ status: 'draft', is_published: false }).eq('id', S.blogPost)
+
+    const futureDate = '2026-06-01T18:00:00Z'
+    const { executeBlogPublishWorkflow } = await import('@/lib/publish-workflow')
+    const results = await executeBlogPublishWorkflow({
+      id: S.blogPost,
+      site: { action: 'schedule', scheduledFor: futureDate },
+      social: { action: 'schedule', scheduledFor: futureDate },
+      mailer: { action: 'schedule', scheduledFor: futureDate },
+      actor: 'test',
+    }, deps)
+
+    expect(results.site).toEqual({ status: 'scheduled', scheduledFor: futureDate })
+
+    // Verify social campaign has scheduled_for in DB
+    const { data: socials } = await db
+      .from('social_campaigns')
+      .select('status, scheduled_for')
+      .eq('source_id', S.blogPost)
+      .eq('status', 'scheduled')
+    expect(socials?.length).toBeGreaterThanOrEqual(1)
+    // Supabase may return +00:00 instead of Z — normalize before comparing
+    expect(new Date(socials![0].scheduled_for).getTime()).toBe(new Date(futureDate).getTime())
+
+    // Verify mailer campaign has scheduled_for in DB
+    const { data: mailers } = await db
+      .from('mailer_campaigns')
+      .select('status, scheduled_for')
+      .eq('source_id', S.blogPost)
+      .eq('status', 'scheduled')
+    expect(mailers?.length).toBeGreaterThanOrEqual(1)
+    expect(new Date(mailers![0].scheduled_for).getTime()).toBe(new Date(futureDate).getTime())
+  })
+
   it('event: publishes with social and mailer', async () => {
     await db.from('events').update({ status: 'draft' }).eq('id', S.event)
 

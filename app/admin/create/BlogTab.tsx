@@ -1,9 +1,15 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 import ChannelRow from './ChannelRow'
 import MediaPicker from './MediaPicker'
+import {
+  computeNextDayOfWeek,
+  computeEventPresetDate,
+  rollForwardIfWeekend,
+  type DayOfWeek,
+} from '@/lib/campaign-timing'
 
 interface BlogPost {
   id: string; title: string; slug: string; body: string; excerpt: string; meta_description: string
@@ -42,10 +48,25 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
   const [publishActions, setPublishActions] = useState({ site: 'now', social: 'schedule', mailer: 'draft' })
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
   const [showTimingPanel, setShowTimingPanel] = useState(false)
-  const [showFineTune, setShowFineTune] = useState(false)
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
-  const [eventPreset, setEventPreset] = useState<string | null>(null) // '2-before' | 'day-of' | 'day-after' | 'custom' | null
+  const [scheduledDates, setScheduledDates] = useState<{ site?: string; social?: string; mailer?: string }>({})
+
+  // Publishing Defaults
+  const [showDefaults, setShowDefaults] = useState(false)
+  const [defaults, setDefaults] = useState({
+    blog_default_mode: 'schedule',
+    blog_default_day_of_week: 'tuesday',
+    blog_default_time_local: '10:00',
+    social_default_mode: 'schedule',
+    social_default_delay_days: '2',
+    social_default_time_local: '18:00',
+    newsletter_default_mode: 'draft',
+    newsletter_default_day_of_week: 'thursday',
+    newsletter_default_time_local: '09:00',
+  })
+  const [savingDefaults, setSavingDefaults] = useState(false)
+  const defaultsLoadedRef = useRef(false)
 
   // Blog Seeds
   const [seeds, setSeeds] = useState<BlogSeed[]>([])
@@ -69,13 +90,55 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
       const data = await res.json()
       if (!Array.isArray(data)) return
       const get = (key: string) => data.find((s: Setting) => s.key === key)?.value
+
+      const blogMode = get('blog_default_mode') || 'schedule'
+      const blogDay = (get('blog_default_day_of_week') || 'tuesday') as DayOfWeek
+      const blogTime = get('blog_default_time_local') || '10:00'
       const socialMode = get('social_default_mode') || 'schedule'
+      const socialDelay = get('social_default_delay_days') || '2'
+      const socialTime = get('social_default_time_local') || '18:00'
       const newsletterMode = get('newsletter_default_mode') || 'draft'
-      setPublishActions(prev => ({
-        ...prev,
+      const newsletterDay = (get('newsletter_default_day_of_week') || 'thursday') as DayOfWeek
+      const newsletterTime = get('newsletter_default_time_local') || '09:00'
+
+      // Update defaults state for the Publishing Defaults section
+      setDefaults({
+        blog_default_mode: blogMode,
+        blog_default_day_of_week: blogDay,
+        blog_default_time_local: blogTime,
+        social_default_mode: socialMode,
+        social_default_delay_days: socialDelay,
+        social_default_time_local: socialTime,
+        newsletter_default_mode: newsletterMode,
+        newsletter_default_day_of_week: newsletterDay,
+        newsletter_default_time_local: newsletterTime,
+      })
+
+      // Set channel actions
+      setPublishActions({
+        site: blogMode === 'schedule' ? 'schedule' : 'now',
         social: socialMode,
         mailer: newsletterMode,
-      }))
+      })
+
+      // Compute default scheduled dates
+      const dates: { site?: string; social?: string; mailer?: string } = {}
+      if (blogMode === 'schedule') {
+        dates.site = computeNextDayOfWeek(blogDay, blogTime)
+      }
+      if (socialMode === 'schedule') {
+        // Social: delay days from now at socialTime
+        const delayDays = parseInt(socialDelay, 10) || 2
+        const future = new Date(Date.now() + delayDays * 24 * 60 * 60 * 1000)
+        const p = future.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+        const raw = `${p}T${socialTime}:00`
+        dates.social = rollForwardIfWeekend(new Date(raw).toISOString())
+      }
+      if (newsletterMode === 'schedule') {
+        dates.mailer = computeNextDayOfWeek(newsletterDay, newsletterTime)
+      }
+      setScheduledDates(dates)
+      defaultsLoadedRef.current = true
     } catch { /* use defaults */ }
   }
 
@@ -101,26 +164,6 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
     loadPublishDefaults()
     loadUpcomingEvents()
     setShowTimingPanel(true)
-    setEventPreset(null)
-  }
-
-  const saveDefaultsAfterPublish = async () => {
-    // Only save non-event timing as new defaults
-    if (eventPreset && eventPreset !== 'custom') return
-    try {
-      const saves = [
-        { key: 'social_default_mode', value: publishActions.social },
-        { key: 'newsletter_default_mode', value: publishActions.mailer },
-      ]
-      for (const s of saves) {
-        await fetch('/api/admin/settings', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(s),
-        })
-      }
-    } catch { /* ignore */ }
   }
 
   const handleGetBlogIdeas = async () => {
@@ -283,6 +326,17 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
   }
 
   const handlePublish = async (postId: string) => {
+    // Validate: schedule without date → error
+    if (publishActions.site === 'schedule' && !scheduledDates.site) {
+      toast.error('Pick a date for website scheduling'); return
+    }
+    if (publishActions.social === 'schedule' && !scheduledDates.social) {
+      toast.error('Pick a date for social scheduling'); return
+    }
+    if (publishActions.mailer === 'schedule' && !scheduledDates.mailer) {
+      toast.error('Pick a date for newsletter scheduling'); return
+    }
+
     setPublishing(true)
     try {
       const res = await fetch('/api/blog/publish', {
@@ -290,20 +344,20 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: postId,
-          site: { action: publishActions.site },
-          social: { action: publishActions.social },
-          mailer: { action: publishActions.mailer, hero_image: !useSourceImage && mailerHeroImage ? mailerHeroImage : undefined },
+          site: { action: publishActions.site, scheduledFor: scheduledDates.site },
+          social: { action: publishActions.social, scheduledFor: scheduledDates.social },
+          mailer: { action: publishActions.mailer, scheduledFor: scheduledDates.mailer, hero_image: !useSourceImage && mailerHeroImage ? mailerHeroImage : undefined },
         }),
       })
       if (res.ok) {
         toast.success('Published!')
-        await saveDefaultsAfterPublish()
         setPreview(null)
         setEditingPostId(null)
         setRawInput('')
         setPhotos([])
         setShowTimingPanel(false)
-        setPublishActions({ site: 'now', social: 'schedule', mailer: 'draft' })
+        setScheduledDates({})
+        loadPublishDefaults() // reload defaults (don't mutate them)
         loadPosts()
       } else {
         toast.error('Publish failed')
@@ -428,27 +482,51 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
               <div className="border-t border-sea-gold/10 pt-4">
                 <label className="block text-xs text-sea-blue mb-3 font-dm tracking-[0.1em] uppercase">Campaign Timing</label>
 
-                {/* Channel defaults summary */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between bg-[rgba(26,34,54,0.3)] rounded p-3">
-                    <span className="text-xs text-sea-blue font-dm">Website</span>
-                    <span className="text-xs text-sea-gold font-dm uppercase">Now</span>
-                  </div>
-                  <div className="flex items-center justify-between bg-[rgba(26,34,54,0.3)] rounded p-3">
-                    <span className="text-xs text-sea-blue font-dm">Social Media</span>
-                    <span className={`text-xs font-dm uppercase ${publishActions.social === 'skip' ? 'text-sea-blue/50' : 'text-sea-gold'}`}>
-                      {publishActions.social}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between bg-[rgba(26,34,54,0.3)] rounded p-3">
-                    <span className="text-xs text-sea-blue font-dm">Newsletter</span>
-                    <span className={`text-xs font-dm uppercase ${publishActions.mailer === 'skip' ? 'text-sea-blue/50' : 'text-sea-gold'}`}>
-                      {publishActions.mailer === 'draft' ? 'Draft for review' : publishActions.mailer}
-                    </span>
-                  </div>
+                <div className="space-y-3 mb-4">
+                  <ChannelRow
+                    label="Website"
+                    value={publishActions.site}
+                    onChange={(v) => setPublishActions(a => ({ ...a, site: v }))}
+                    scheduledFor={scheduledDates.site}
+                    onScheduledForChange={(iso) => setScheduledDates(d => ({ ...d, site: iso }))}
+                  />
+                  <ChannelRow
+                    label="Social Media"
+                    value={publishActions.social}
+                    onChange={(v) => setPublishActions(a => ({ ...a, social: v }))}
+                    scheduledFor={scheduledDates.social}
+                    onScheduledForChange={(iso) => setScheduledDates(d => ({ ...d, social: iso }))}
+                  />
+                  <ChannelRow
+                    label="Newsletter"
+                    value={publishActions.mailer}
+                    onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))}
+                    scheduledFor={scheduledDates.mailer}
+                    onScheduledForChange={(iso) => setScheduledDates(d => ({ ...d, mailer: iso }))}
+                    allowDraft
+                  />
                 </div>
 
-                {/* Event-aware timing */}
+                {/* Mailer hero image option */}
+                {publishActions.mailer !== 'skip' && publishActions.mailer !== 'draft' && (
+                  <div className="mb-4 space-y-2">
+                    <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                      <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
+                      <span className="text-xs text-sea-blue font-dm">Use blog featured image</span>
+                    </label>
+                    {!useSourceImage && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                          Choose Hero Image
+                        </button>
+                        {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
+                        <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Event-aware timing chips */}
                 {upcomingEvents.length > 0 && (
                   <div className="mb-4">
                     <p className="text-xs text-sea-blue font-dm mb-2">
@@ -460,7 +538,7 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
                           <button
                             key={ev.id}
                             onClick={() => setSelectedEventId(ev.id)}
-                            className={`px-3 py-1.5 text-[0.65rem] font-dm rounded border cursor-pointer transition-all min-h-[36px] ${
+                            className={`px-3 py-1.5 text-[0.65rem] font-dm rounded border cursor-pointer transition-all min-h-[44px] ${
                               selectedEventId === ev.id
                                 ? 'bg-sea-gold/10 border-sea-gold/30 text-sea-gold'
                                 : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
@@ -471,74 +549,43 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
                         ))}
                       </div>
                     )}
-                    {selectedEventId && (
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { key: '2-before', label: `2 days before ${upcomingEvents.find(e => e.id === selectedEventId)?.title || 'event'}` },
-                          { key: 'day-of', label: 'Day of event' },
-                          { key: 'day-after', label: 'Day after' },
-                          { key: 'custom', label: 'Custom' },
-                        ].map((chip) => (
-                          <button
-                            key={chip.key}
-                            onClick={() => setEventPreset(eventPreset === chip.key ? null : chip.key)}
-                            className={`px-3 py-1.5 text-[0.65rem] font-dm rounded-full border cursor-pointer transition-all min-h-[36px] ${
-                              eventPreset === chip.key
-                                ? 'bg-sea-gold/15 border-sea-gold/40 text-sea-gold'
-                                : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
-                            }`}
-                          >
-                            {chip.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {selectedEventId && (() => {
+                      const ev = upcomingEvents.find(e => e.id === selectedEventId)
+                      if (!ev) return null
+                      const socialTime = defaults.social_default_time_local || '18:00'
+                      return (
+                        <div className="flex flex-wrap gap-2">
+                          {([
+                            { key: '2-before' as const, label: '2 days before' },
+                            { key: 'day-of' as const, label: 'Day of event' },
+                            { key: 'day-after' as const, label: 'Day after' },
+                          ]).map((chip) => (
+                            <button
+                              key={chip.key}
+                              onClick={() => {
+                                const iso = computeEventPresetDate(ev.starts_at, chip.key, socialTime)
+                                const rolled = rollForwardIfWeekend(iso)
+                                setScheduledDates(d => ({
+                                  ...d,
+                                  social: rolled,
+                                  ...(publishActions.mailer === 'schedule' ? { mailer: rolled } : {}),
+                                }))
+                                setPublishActions(a => ({ ...a, social: 'schedule' }))
+                              }}
+                              className="px-3 py-1.5 text-[0.65rem] font-dm rounded-full border cursor-pointer transition-all min-h-[44px] bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20"
+                            >
+                              {chip.label}
+                            </button>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
                 )}
 
-                {/* Fine-tune channels (collapsed) */}
-                <div className="mb-4">
-                  <button
-                    onClick={() => setShowFineTune(!showFineTune)}
-                    className="flex items-center gap-2 text-xs text-sea-blue font-dm bg-transparent border-none cursor-pointer hover:text-sea-gold transition-colors"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showFineTune ? 'rotate-90' : ''}`}>
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                    Fine-tune channels
-                  </button>
-                  {showFineTune && (
-                    <div className="mt-2 space-y-2 pl-4 border-l border-sea-gold/10">
-                      <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
-                      <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
-                      <ChannelRow label="Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
-                      {publishActions.mailer !== 'skip' && (
-                        <div className="mt-2 space-y-2">
-                          <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
-                            <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
-                            <span className="text-xs text-sea-blue font-dm">Use blog featured image</span>
-                          </label>
-                          {!useSourceImage && (
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
-                                Choose Hero Image
-                              </button>
-                              {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
-                              <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Warning about defaults */}
-                {(!eventPreset || eventPreset === 'custom') && (
-                  <p className="text-[0.65rem] text-amber-400/80 font-dm mb-3 bg-amber-900/10 border border-amber-500/10 rounded px-3 py-2">
-                    Your timing changes will become the new default for future campaigns.
-                  </p>
-                )}
+                <p className="text-[0.6rem] text-sea-blue/40 font-dm mb-3">
+                  Runs on the selected date. Exact send time may vary on the current hosting plan.
+                </p>
 
                 <button
                   onClick={() => handlePublish(editingPostId)}
@@ -742,6 +789,133 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
           </div>
         )}
       </div>
+
+      {/* Publishing Defaults */}
+      {isAdminOrAbove && (
+        <div className="mt-8">
+          <button
+            onClick={() => { setShowDefaults(!showDefaults); if (!defaultsLoadedRef.current) loadPublishDefaults() }}
+            className="flex items-center gap-2 text-sm text-sea-blue font-dm bg-transparent border-none cursor-pointer hover:text-sea-gold transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showDefaults ? 'rotate-90' : ''}`}>
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+            Publishing Defaults
+          </button>
+          {showDefaults && (
+            <div className="mt-3 bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-5">
+              <p className="text-xs text-sea-blue font-dm">These defaults pre-fill the Campaign Timing panel when you publish.</p>
+
+              {/* Blog cadence */}
+              <div>
+                <label className="block text-xs text-sea-blue mb-2 font-dm">Blog usually goes out</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {['now', 'schedule'].map(opt => (
+                    <button key={opt} onClick={() => setDefaults(d => ({ ...d, blog_default_mode: opt }))}
+                      className={`min-h-[44px] px-3 py-1.5 text-[0.65rem] font-dm tracking-[0.1em] uppercase rounded border cursor-pointer transition-all ${
+                        defaults.blog_default_mode === opt ? 'bg-sea-gold/15 border-sea-gold/40 text-sea-gold' : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                      }`}>{opt}</button>
+                  ))}
+                </div>
+                {defaults.blog_default_mode === 'schedule' && (
+                  <div className="flex flex-wrap gap-2">
+                    <select value={defaults.blog_default_day_of_week} onChange={e => setDefaults(d => ({ ...d, blog_default_day_of_week: e.target.value }))}
+                      className="min-h-[44px] px-3 py-2 text-xs font-dm bg-sea-dark border border-sea-gold/20 rounded text-sea-blue outline-none" style={{ colorScheme: 'dark' }}>
+                      {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+                    </select>
+                    <input type="time" value={defaults.blog_default_time_local} onChange={e => setDefaults(d => ({ ...d, blog_default_time_local: e.target.value }))}
+                      className="min-h-[44px] px-3 py-2 text-xs font-dm bg-sea-dark border border-sea-gold/20 rounded text-sea-blue outline-none" style={{ colorScheme: 'dark' }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Social cadence */}
+              <div>
+                <label className="block text-xs text-sea-blue mb-2 font-dm">Social usually goes out</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {['skip', 'now', 'schedule'].map(opt => (
+                    <button key={opt} onClick={() => setDefaults(d => ({ ...d, social_default_mode: opt }))}
+                      className={`min-h-[44px] px-3 py-1.5 text-[0.65rem] font-dm tracking-[0.1em] uppercase rounded border cursor-pointer transition-all ${
+                        defaults.social_default_mode === opt ? 'bg-sea-gold/15 border-sea-gold/40 text-sea-gold' : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                      }`}>{opt}</button>
+                  ))}
+                </div>
+                {defaults.social_default_mode === 'schedule' && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="text-xs text-sea-blue font-dm">Delay</label>
+                    <input type="number" min="0" max="14" value={defaults.social_default_delay_days} onChange={e => setDefaults(d => ({ ...d, social_default_delay_days: e.target.value }))}
+                      className="min-h-[44px] w-16 px-3 py-2 text-xs font-dm bg-sea-dark border border-sea-gold/20 rounded text-sea-blue outline-none" style={{ colorScheme: 'dark' }} />
+                    <span className="text-xs text-sea-blue font-dm">days at</span>
+                    <input type="time" value={defaults.social_default_time_local} onChange={e => setDefaults(d => ({ ...d, social_default_time_local: e.target.value }))}
+                      className="min-h-[44px] px-3 py-2 text-xs font-dm bg-sea-dark border border-sea-gold/20 rounded text-sea-blue outline-none" style={{ colorScheme: 'dark' }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Newsletter cadence */}
+              <div>
+                <label className="block text-xs text-sea-blue mb-2 font-dm">Newsletter usually</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {['skip', 'draft', 'schedule'].map(opt => (
+                    <button key={opt} onClick={() => setDefaults(d => ({ ...d, newsletter_default_mode: opt }))}
+                      className={`min-h-[44px] px-3 py-1.5 text-[0.65rem] font-dm tracking-[0.1em] uppercase rounded border cursor-pointer transition-all ${
+                        defaults.newsletter_default_mode === opt ? 'bg-sea-gold/15 border-sea-gold/40 text-sea-gold' : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                      }`}>{opt}</button>
+                  ))}
+                </div>
+                {defaults.newsletter_default_mode === 'schedule' && (
+                  <div className="flex flex-wrap gap-2">
+                    <select value={defaults.newsletter_default_day_of_week} onChange={e => setDefaults(d => ({ ...d, newsletter_default_day_of_week: e.target.value }))}
+                      className="min-h-[44px] px-3 py-2 text-xs font-dm bg-sea-dark border border-sea-gold/20 rounded text-sea-blue outline-none" style={{ colorScheme: 'dark' }}>
+                      {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+                    </select>
+                    <input type="time" value={defaults.newsletter_default_time_local} onChange={e => setDefaults(d => ({ ...d, newsletter_default_time_local: e.target.value }))}
+                      className="min-h-[44px] px-3 py-2 text-xs font-dm bg-sea-dark border border-sea-gold/20 rounded text-sea-blue outline-none" style={{ colorScheme: 'dark' }} />
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={async () => {
+                  setSavingDefaults(true)
+                  try {
+                    const keys = [
+                      { key: 'blog_default_mode', value: defaults.blog_default_mode },
+                      { key: 'blog_default_day_of_week', value: defaults.blog_default_day_of_week },
+                      { key: 'blog_default_time_local', value: defaults.blog_default_time_local },
+                      { key: 'social_default_mode', value: defaults.social_default_mode },
+                      { key: 'social_default_delay_days', value: defaults.social_default_delay_days },
+                      { key: 'social_default_time_local', value: defaults.social_default_time_local },
+                      { key: 'newsletter_default_mode', value: defaults.newsletter_default_mode },
+                      { key: 'newsletter_default_day_of_week', value: defaults.newsletter_default_day_of_week },
+                      { key: 'newsletter_default_time_local', value: defaults.newsletter_default_time_local },
+                    ]
+                    for (const s of keys) {
+                      const res = await fetch('/api/admin/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(s),
+                      })
+                      if (!res.ok) { toast.error(`Failed to save ${s.key}`); setSavingDefaults(false); return }
+                    }
+                    toast.success('Defaults saved')
+                    defaultsLoadedRef.current = false // force reload next time
+                  } catch {
+                    toast.error('Failed to save defaults')
+                  } finally {
+                    setSavingDefaults(false)
+                  }
+                }}
+                disabled={savingDefaults}
+                className="w-full sm:w-auto px-6 py-2.5 min-h-[44px] bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50"
+              >
+                {savingDefaults ? 'Saving...' : 'Save Defaults'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
