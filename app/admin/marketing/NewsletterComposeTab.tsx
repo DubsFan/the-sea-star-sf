@@ -18,6 +18,8 @@ interface Campaign {
   content_type: string
   subject: string
   preview_text: string | null
+  hero_image: string | null
+  body_html: string | null
   status: string
   sent_at: string | null
   recipient_count: number
@@ -33,6 +35,11 @@ export default function NewsletterComposeTab() {
   const [nlSaving, setNlSaving] = useState<string | null>(null)
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(false)
+
+  // Source picker
+  const [sourceType, setSourceType] = useState<'blank' | 'blog' | 'social' | 'event'>('blank')
+  const [sourceItems, setSourceItems] = useState<Array<{ id: string; title: string; image?: string; body?: string }>>([])
+  const [loadingSource, setLoadingSource] = useState(false)
 
   // Compose form
   const [subject, setSubject] = useState('')
@@ -54,6 +61,8 @@ export default function NewsletterComposeTab() {
   // Past campaigns
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [sendingCampaign, setSendingCampaign] = useState<string | null>(null)
+  const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null)
+  const [campaignPreviewHtml, setCampaignPreviewHtml] = useState<string | null>(null)
 
   // Load tags
   const loadTags = async () => {
@@ -95,6 +104,33 @@ export default function NewsletterComposeTab() {
       const data = await res.json()
       if (Array.isArray(data)) setCampaigns(data)
     }
+  }
+
+  const loadSourceItems = async (type: 'blog' | 'social' | 'event') => {
+    setLoadingSource(true)
+    try {
+      const endpoints: Record<string, string> = { blog: '/api/blog', social: '/api/social', event: '/api/events' }
+      const res = await fetch(endpoints[type], { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          const items = data.slice(0, 20).map((item: Record<string, unknown>) => {
+            if (type === 'blog') return { id: item.id as string, title: item.title as string, image: ((item.images as string[]) || [])[0], body: item.body as string }
+            if (type === 'social') return { id: item.id as string, title: ((item.facebook_caption || item.instagram_caption || 'No caption') as string).slice(0, 80), image: item.image_url as string, body: (item.facebook_caption || item.instagram_caption) as string }
+            return { id: item.id as string, title: item.title as string, image: item.featured_image as string, body: item.description_html as string }
+          })
+          setSourceItems(items)
+        }
+      }
+    } finally { setLoadingSource(false) }
+  }
+
+  const handlePickSource = (item: { id: string; title: string; image?: string; body?: string }) => {
+    setSubject(item.title?.slice(0, 80) || '')
+    setBodyHtml(item.body || '')
+    if (item.image) setHeroImage(item.image)
+    setSourceItems([])
+    toast.success('Content loaded — edit before sending')
   }
 
   useEffect(() => { loadTags(); loadCampaigns() }, [])
@@ -336,6 +372,45 @@ export default function NewsletterComposeTab() {
       {/* Quick Compose */}
       <h3 className="font-cormorant text-lg text-sea-white mb-3">Compose Newsletter</h3>
       <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 md:p-6 mb-6 space-y-4">
+        {/* Source Picker */}
+        <div>
+          <label className="block text-xs text-sea-blue mb-2 font-dm tracking-[0.1em] uppercase">Create From</label>
+          <div className="flex flex-wrap gap-2">
+            {(['blank', 'blog', 'social', 'event'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => {
+                  setSourceType(t)
+                  if (t !== 'blank') loadSourceItems(t)
+                  else setSourceItems([])
+                }}
+                className={`px-3 py-2 min-h-[44px] text-xs font-dm rounded cursor-pointer transition-all ${
+                  sourceType === t
+                    ? 'bg-sea-gold/20 border-sea-gold/40 text-sea-gold border'
+                    : 'bg-transparent border border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                }`}
+              >
+                {t === 'blank' ? 'Blank' : t === 'blog' ? 'From Blog' : t === 'social' ? 'From Social' : 'From Event'}
+              </button>
+            ))}
+          </div>
+          {loadingSource && <p className="text-xs text-sea-gold mt-2 font-dm">Loading...</p>}
+          {sourceItems.length > 0 && (
+            <div className="mt-3 max-h-60 overflow-y-auto space-y-1 border border-sea-gold/10 rounded p-2">
+              {sourceItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => handlePickSource(item)}
+                  className="w-full p-2 flex items-center gap-3 bg-transparent border-none cursor-pointer text-left hover:bg-sea-gold/5 rounded transition-all min-h-[52px]"
+                >
+                  {item.image && <img src={item.image} alt="" className="w-10 h-10 object-cover rounded flex-shrink-0" />}
+                  <span className="text-sm text-sea-light font-dm truncate">{item.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div>
           <label className="block text-xs text-sea-blue mb-1 font-dm">Subject Line</label>
           <input
@@ -488,37 +563,86 @@ export default function NewsletterComposeTab() {
       {/* Past Campaigns */}
       <h3 className="font-cormorant text-lg text-sea-white mb-3">Past Campaigns</h3>
       <div className="space-y-2">
-        {campaigns.map((c) => (
-          <div key={c.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-3 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-sea-light font-dm truncate">{c.subject || 'No subject'}</p>
-              <div className="flex flex-wrap gap-1 mt-0.5">
-                <span className="text-[0.65rem] text-sea-blue font-dm">{c.content_type} &middot; {new Date(c.created_at).toLocaleDateString()}</span>
-                {c.recipient_count > 0 && <span className="text-[0.65rem] text-sea-blue font-dm">&middot; {c.recipient_count} sent</span>}
-                {c.target_tags && c.target_tags.length > 0 && (
-                  <span className="text-[0.65rem] text-sea-gold/60 font-dm">&middot; {c.target_tags.join(', ')}</span>
-                )}
-              </div>
-            </div>
-            <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${
-              c.status === 'sent' ? 'bg-green-900/30 text-green-400' :
-              c.status === 'scheduled' ? 'bg-yellow-900/30 text-yellow-400' :
-              c.status === 'failed' ? 'bg-red-900/30 text-red-400' :
-              'bg-sea-gold/10 text-sea-gold'
-            }`}>{c.status}</span>
-            {c.status === 'draft' && (
+        {campaigns.map((c) => {
+          const isExpanded = expandedCampaignId === c.id
+          return (
+            <div key={c.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden">
               <button
-                onClick={() => handleSendCampaign(c.id)}
-                disabled={sendingCampaign === c.id}
-                className="text-xs text-sea-gold bg-transparent border border-sea-gold/20 rounded px-3 py-1.5 cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50 font-dm flex-shrink-0 min-h-[44px]"
+                onClick={() => setExpandedCampaignId(isExpanded ? null : c.id)}
+                className="w-full p-3 flex items-center gap-3 bg-transparent border-none cursor-pointer text-left min-h-[56px]"
               >
-                {sendingCampaign === c.id ? 'Sending...' : 'Send'}
+                {c.hero_image && (
+                  <img src={c.hero_image} alt="" className="w-[80px] h-[80px] object-cover rounded flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-sea-light font-dm truncate">{c.subject || 'No subject'}</p>
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    <span className="text-[0.65rem] text-sea-blue font-dm">{c.content_type} &middot; {new Date(c.created_at).toLocaleDateString()}</span>
+                    {c.recipient_count > 0 && <span className="text-[0.65rem] text-sea-blue font-dm">&middot; {c.recipient_count} sent</span>}
+                    {c.target_tags && c.target_tags.length > 0 && (
+                      <span className="text-[0.65rem] text-sea-gold/60 font-dm">&middot; {c.target_tags.join(', ')}</span>
+                    )}
+                  </div>
+                </div>
+                <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${
+                  c.status === 'sent' ? 'bg-green-900/30 text-green-400' :
+                  c.status === 'scheduled' ? 'bg-yellow-900/30 text-yellow-400' :
+                  c.status === 'failed' ? 'bg-red-900/30 text-red-400' :
+                  'bg-sea-gold/10 text-sea-gold'
+                }`}>{c.status}</span>
               </button>
-            )}
-          </div>
-        ))}
+              {isExpanded && (
+                <div className="border-t border-sea-gold/10 p-3 space-y-3">
+                  {c.hero_image && (
+                    <img src={c.hero_image} alt="" className="w-full max-w-sm rounded" />
+                  )}
+                  {c.body_html && (
+                    <div className="text-sm text-sea-light font-dm leading-relaxed line-clamp-6" dangerouslySetInnerHTML={{ __html: c.body_html.slice(0, 800) }} />
+                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {c.status === 'draft' && (
+                      <button
+                        onClick={() => handleSendCampaign(c.id)}
+                        disabled={sendingCampaign === c.id}
+                        className="px-4 min-h-[44px] text-xs text-sea-gold bg-transparent border border-sea-gold/20 rounded cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50 font-dm"
+                      >
+                        {sendingCampaign === c.id ? 'Sending...' : 'Send Now'}
+                      </button>
+                    )}
+                    {c.body_html && (
+                      <button
+                        onClick={() => setCampaignPreviewHtml(c.body_html)}
+                        className="px-4 min-h-[44px] text-xs text-sea-blue bg-transparent border border-sea-border rounded cursor-pointer hover:border-sea-gold hover:text-sea-gold transition-all font-dm"
+                      >
+                        Full Preview
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
         {campaigns.length === 0 && <p className="text-center py-6 text-sea-blue text-sm font-dm">No campaigns yet.</p>}
       </div>
+
+      {/* Campaign Preview Modal */}
+      {campaignPreviewHtml && (
+        <div className="fixed inset-0 bg-[#06080d]/95 backdrop-blur-xl z-[200] overflow-y-auto p-4 md:p-16">
+          <button
+            className="fixed top-4 right-4 bg-transparent border border-sea-border text-sea-gold text-xl w-10 h-10 flex items-center justify-center cursor-pointer hover:border-sea-gold transition-all z-[201] rounded"
+            onClick={() => setCampaignPreviewHtml(null)}
+          >
+            &times;
+          </button>
+          <div className="max-w-[600px] mx-auto mt-12">
+            <h3 className="font-cormorant text-xl text-sea-white mb-4">Campaign Preview</h3>
+            <div className="bg-white rounded-lg overflow-hidden p-6">
+              <div dangerouslySetInnerHTML={{ __html: campaignPreviewHtml }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Email Preview Modal */}
       {previewHtml && (

@@ -9,32 +9,33 @@ export async function GET(request: NextRequest) {
   const [blogRes, eventsRes, socialRes, mailerRes] = await Promise.all([
     supabase
       .from('blog_posts')
-      .select('id, title, status, updated_at, created_at')
+      .select('id, title, status, updated_at, created_at, images')
       .in('status', ['draft', 'ready'])
       .order('updated_at', { ascending: false }),
     supabase
       .from('events')
-      .select('id, title, status, updated_at, created_at')
+      .select('id, title, status, updated_at, created_at, featured_image')
       .in('status', ['draft', 'ready'])
       .order('updated_at', { ascending: false }),
     supabase
       .from('social_campaigns')
-      .select('id, facebook_caption, instagram_caption, status, updated_at, created_at')
+      .select('id, facebook_caption, instagram_caption, status, updated_at, created_at, image_url')
       .in('status', ['draft', 'ready'])
       .order('updated_at', { ascending: false }),
     supabase
       .from('mailer_campaigns')
-      .select('id, subject, status, updated_at, created_at')
+      .select('id, subject, status, updated_at, created_at, hero_image')
       .in('status', ['draft', 'ready'])
       .order('updated_at', { ascending: false }),
   ])
 
   const drafts: Array<{
-    id: string; type: string; title: string; status: string; updated_at: string; note_count: number
+    id: string; type: string; title: string; status: string; updated_at: string; note_count: number; image_url: string | null
   }> = []
 
   // Blog posts
   for (const post of blogRes.data || []) {
+    const images = post.images as string[] | null
     drafts.push({
       id: post.id,
       type: 'blog_post',
@@ -42,6 +43,7 @@ export async function GET(request: NextRequest) {
       status: post.status,
       updated_at: post.updated_at || post.created_at,
       note_count: 0,
+      image_url: images?.[0] || null,
     })
   }
 
@@ -54,6 +56,7 @@ export async function GET(request: NextRequest) {
       status: event.status,
       updated_at: event.updated_at || event.created_at,
       note_count: 0,
+      image_url: event.featured_image || null,
     })
   }
 
@@ -67,6 +70,7 @@ export async function GET(request: NextRequest) {
       status: campaign.status,
       updated_at: campaign.updated_at || campaign.created_at,
       note_count: 0,
+      image_url: campaign.image_url || null,
     })
   }
 
@@ -79,6 +83,7 @@ export async function GET(request: NextRequest) {
       status: mailer.status,
       updated_at: mailer.updated_at || mailer.created_at,
       note_count: 0,
+      image_url: mailer.hero_image || null,
     })
   }
 

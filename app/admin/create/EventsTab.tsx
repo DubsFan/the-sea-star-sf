@@ -27,6 +27,7 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
   const [mailerHeroImage, setMailerHeroImage] = useState('')
   const [showMailerPicker, setShowMailerPicker] = useState(false)
   const [publishActions, setPublishActions] = useState({ site: 'now', social: 'skip', mailer: 'skip' })
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
 
   const loadEvents = async () => {
     const res = await fetch('/api/events', { credentials: 'include' })
@@ -225,9 +226,16 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
       <div className="space-y-2">
         {events.map((event) => {
           const isPast = new Date(event.starts_at) < new Date()
+          const isExpanded = expandedEventId === event.id
           return (
-            <div key={event.id} className={`bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-3 ${isPast ? 'opacity-50' : ''}`}>
-              <div className="flex items-center gap-3">
+            <div key={event.id} className={`bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden ${isPast ? 'opacity-50' : ''}`}>
+              <button
+                onClick={() => setExpandedEventId(isExpanded ? null : event.id)}
+                className="w-full p-3 flex items-center gap-3 bg-transparent border-none cursor-pointer text-left min-h-[56px]"
+              >
+                {event.featured_image && (
+                  <img src={event.featured_image} alt="" className="w-[80px] h-[80px] object-cover rounded flex-shrink-0" />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-sea-white font-dm truncate">{event.title}</p>
                   <p className="text-[0.65rem] text-sea-blue font-dm">
@@ -242,56 +250,69 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
                   event.status === 'ready' ? 'bg-cyan-900/30 text-cyan-400' :
                   'bg-sea-gold/10 text-sea-gold'
                 }`}>{event.status}</span>
-                {event.status === 'draft' && (
-                  <button
-                    onClick={async () => {
-                      const res = await fetch('/api/events', {
-                        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-                        body: JSON.stringify({ id: event.id, status: 'ready' }),
-                      })
-                      if (res.ok) { toast.success('Marked as ready'); loadEvents() }
-                    }}
-                    className="text-xs text-cyan-400 bg-transparent border-none cursor-pointer font-dm flex-shrink-0"
-                  >
-                    Ready
-                  </button>
-                )}
-                {(event.status === 'draft' || event.status === 'ready') && isAdminOrAbove && (
-                  <button onClick={() => { setPublishId(publishId === event.id ? null : event.id) }} className="text-xs text-sea-gold bg-transparent border-none cursor-pointer font-dm flex-shrink-0">
-                    Publish
-                  </button>
-                )}
-                {isAdminOrAbove && (
-                  <button onClick={() => handleDelete(event.id)} className="text-xs text-sea-rose bg-transparent border-none cursor-pointer font-dm flex-shrink-0">Del</button>
-                )}
-              </div>
+              </button>
+              {isExpanded && (
+                <div className="border-t border-sea-gold/10 p-3 space-y-3">
+                  {event.featured_image && (
+                    <img src={event.featured_image} alt="" className="w-full max-w-sm rounded" />
+                  )}
+                  {event.short_description && <p className="text-xs text-sea-blue font-dm leading-relaxed">{event.short_description}</p>}
+                  {event.description_html && (
+                    <div className="text-sm text-sea-light font-dm leading-relaxed line-clamp-4" dangerouslySetInnerHTML={{ __html: event.description_html.slice(0, 500) }} />
+                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {event.status === 'draft' && (
+                      <button
+                        onClick={async () => {
+                          const res = await fetch('/api/events', {
+                            method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                            body: JSON.stringify({ id: event.id, status: 'ready' }),
+                          })
+                          if (res.ok) { toast.success('Marked as ready'); loadEvents() }
+                        }}
+                        className="px-4 min-h-[44px] text-xs text-cyan-400 bg-transparent border border-cyan-500/30 rounded cursor-pointer hover:bg-cyan-900/20 transition-all font-dm"
+                      >
+                        Mark Ready
+                      </button>
+                    )}
+                    {(event.status === 'draft' || event.status === 'ready') && isAdminOrAbove && (
+                      <button onClick={() => { setPublishId(publishId === event.id ? null : event.id) }} className="px-4 min-h-[44px] text-xs text-sea-gold bg-transparent border border-sea-gold/20 rounded cursor-pointer hover:bg-sea-gold/10 transition-all font-dm">
+                        {publishId === event.id ? 'Hide Channels' : 'Publish'}
+                      </button>
+                    )}
+                    {isAdminOrAbove && (
+                      <button onClick={() => handleDelete(event.id)} className="px-4 min-h-[44px] text-xs text-sea-rose bg-transparent border border-sea-rose/20 rounded cursor-pointer hover:bg-red-900/10 transition-all font-dm">Delete</button>
+                    )}
+                  </div>
 
-              {/* Publish panel */}
-              {publishId === event.id && (
-                <div className="mt-3 pt-3 border-t border-sea-gold/10 space-y-2">
-                  <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
-                  <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
-                  <ChannelRow label="Email Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
-                  {publishActions.mailer !== 'skip' && (
-                    <div className="mt-2 space-y-2">
-                      <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
-                        <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
-                        <span className="text-xs text-sea-blue font-dm">Use event featured image</span>
-                      </label>
-                      {!useSourceImage && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
-                            Choose Hero Image
-                          </button>
-                          {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
-                          <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
+                  {/* Publish panel */}
+                  {publishId === event.id && (
+                    <div className="pt-3 border-t border-sea-gold/10 space-y-2">
+                      <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
+                      <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
+                      <ChannelRow label="Email Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
+                      {publishActions.mailer !== 'skip' && (
+                        <div className="mt-2 space-y-2">
+                          <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                            <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
+                            <span className="text-xs text-sea-blue font-dm">Use event featured image</span>
+                          </label>
+                          {!useSourceImage && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                                Choose Hero Image
+                              </button>
+                              {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
+                              <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
+                            </div>
+                          )}
                         </div>
                       )}
+                      <button onClick={() => handlePublish(event.id)} disabled={publishing} className="mt-2 px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
+                        {publishing ? 'Publishing...' : 'Confirm Publish'}
+                      </button>
                     </div>
                   )}
-                  <button onClick={() => handlePublish(event.id)} disabled={publishing} className="mt-2 px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
-                    {publishing ? 'Publishing...' : 'Confirm Publish'}
-                  </button>
                 </div>
               )}
             </div>

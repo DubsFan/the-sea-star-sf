@@ -19,6 +19,16 @@ export default function SocialTab() {
   const [posting, setPosting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [alsoNewsletter, setAlsoNewsletter] = useState(false)
+  const [nlTags, setNlTags] = useState<string[]>([])
+  const [allTags, setAllTags] = useState<string[]>([])
+
+  useEffect(() => {
+    fetch('/api/subscribe/tags', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { if (Array.isArray(d)) setAllTags(d) })
+  }, [])
 
   const loadCampaigns = async () => {
     const res = await fetch('/api/social', { credentials: 'include' })
@@ -61,6 +71,23 @@ export default function SocialTab() {
     setUploading(false)
   }
 
+  const createNewsletterFromSocial = async (campaignId: string) => {
+    await fetch('/api/mailers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        content_type: 'social',
+        source_id: campaignId,
+        subject: (fbCaption || igCaption || '').slice(0, 60),
+        body_html: fbCaption || igCaption || '',
+        hero_image: imageUrl || null,
+        target_tags: nlTags.length > 0 ? nlTags : null,
+        status: 'draft',
+      }),
+    })
+  }
+
   const handleSaveSocialDraft = async (markReady = false) => {
     if (!fbCaption && !igCaption) return toast.error('Generate captions first')
     setPosting(true)
@@ -78,8 +105,14 @@ export default function SocialTab() {
         }),
       })
       if (res.ok) {
-        toast.success(markReady ? 'Saved & marked ready' : 'Draft saved')
-        setInput(''); setFbCaption(''); setIgCaption(''); setImageUrl('')
+        const saved = await res.json()
+        if (alsoNewsletter && saved?.id) {
+          await createNewsletterFromSocial(saved.id)
+          toast.success(markReady ? 'Saved & newsletter draft created' : 'Draft saved + newsletter draft')
+        } else {
+          toast.success(markReady ? 'Saved & marked ready' : 'Draft saved')
+        }
+        setInput(''); setFbCaption(''); setIgCaption(''); setImageUrl(''); setAlsoNewsletter(false); setNlTags([])
         loadCampaigns()
       }
     } finally {
@@ -115,8 +148,13 @@ export default function SocialTab() {
       const fbOk = results.facebook?.success
       const igOk = results.instagram?.success
       if (fbOk || igOk) {
-        toast.success(`Posted! FB: ${fbOk ? 'yes' : 'no'}, IG: ${igOk ? 'yes' : 'no'}`)
-        setInput(''); setFbCaption(''); setIgCaption(''); setImageUrl('')
+        if (alsoNewsletter && campaign?.id) {
+          await createNewsletterFromSocial(campaign.id)
+          toast.success(`Posted + newsletter draft created! FB: ${fbOk ? 'yes' : 'no'}, IG: ${igOk ? 'yes' : 'no'}`)
+        } else {
+          toast.success(`Posted! FB: ${fbOk ? 'yes' : 'no'}, IG: ${igOk ? 'yes' : 'no'}`)
+        }
+        setInput(''); setFbCaption(''); setIgCaption(''); setImageUrl(''); setAlsoNewsletter(false); setNlTags([])
         loadCampaigns()
       } else {
         toast.error('Posting failed')
@@ -174,6 +212,53 @@ export default function SocialTab() {
               <MediaPicker isOpen={showPicker} mode="single" onSelect={(urls) => { setImageUrl(urls[0] || ''); setShowPicker(false) }} onClose={() => setShowPicker(false)} />
             </div>
 
+            {/* Also send as Newsletter */}
+            <div className="border-t border-sea-gold/10 pt-3">
+              <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                <input type="checkbox" checked={alsoNewsletter} onChange={(e) => setAlsoNewsletter(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
+                <span className="text-sm text-sea-blue font-dm">Also create newsletter draft</span>
+              </label>
+              {alsoNewsletter && allTags.length > 0 && (
+                <div className="mt-2">
+                  <label className="block text-[0.65rem] text-sea-blue/60 mb-1 font-dm">
+                    Send to: {nlTags.length === 0 ? 'All Subscribers' : nlTags.join(', ')}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {allTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => setNlTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                        className={`px-3 py-1.5 min-h-[44px] text-xs font-dm rounded cursor-pointer transition-all ${
+                          nlTags.includes(tag)
+                            ? 'bg-sea-gold/20 border-sea-gold/40 text-sea-gold border'
+                            : 'bg-transparent border border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Social Post Mockup Preview */}
+            {(imageUrl || fbCaption) && (
+              <div>
+                <label className="block text-xs text-sea-blue/60 mb-2 font-dm uppercase tracking-wider">Post Preview</label>
+                <div className="bg-white rounded-lg max-w-sm overflow-hidden shadow-lg">
+                  {imageUrl && <img src={imageUrl} alt="" className="w-full aspect-square object-cover" />}
+                  <div className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-[#0a3d62] flex items-center justify-center text-white text-xs font-bold">SS</div>
+                      <span className="text-sm font-semibold text-gray-900">The Sea Star SF</span>
+                    </div>
+                    <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap line-clamp-4">{fbCaption || igCaption}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3">
               <button onClick={() => handleSaveSocialDraft(false)} disabled={posting} className="px-6 py-2.5 bg-transparent text-sea-gold font-dm text-xs tracking-[0.2em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50">
                 Save Draft
@@ -192,21 +277,51 @@ export default function SocialTab() {
       {/* Past Campaigns */}
       <h3 className="font-cormorant text-lg text-sea-white mb-3">Past Social Posts</h3>
       <div className="space-y-2">
-        {campaigns.map((c) => (
-          <div key={c.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-3 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-sea-light font-dm truncate">{c.facebook_caption || c.instagram_caption || 'No caption'}</p>
-              <p className="text-[0.65rem] text-sea-blue font-dm">{c.content_type} &middot; {new Date(c.created_at).toLocaleDateString()}</p>
+        {campaigns.map((c) => {
+          const isExpanded = expandedId === c.id
+          return (
+            <div key={c.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : c.id)}
+                className="w-full p-3 flex items-center gap-3 bg-transparent border-none cursor-pointer text-left min-h-[56px]"
+              >
+                {c.image_url && (
+                  <img src={c.image_url} alt="" className="w-[80px] h-[80px] object-cover rounded flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-sea-light font-dm truncate">{c.facebook_caption || c.instagram_caption || 'No caption'}</p>
+                  <p className="text-[0.65rem] text-sea-blue font-dm">{c.content_type} &middot; {new Date(c.created_at).toLocaleDateString()}</p>
+                </div>
+                <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${
+                  c.status === 'posted' ? 'bg-green-900/30 text-green-400' :
+                  c.status === 'failed' ? 'bg-red-900/30 text-red-400' :
+                  c.status === 'scheduled' ? 'bg-yellow-900/30 text-yellow-400' :
+                  c.status === 'ready' ? 'bg-cyan-900/30 text-cyan-400' :
+                  'bg-sea-gold/10 text-sea-gold'
+                }`}>{c.status}</span>
+              </button>
+              {isExpanded && (
+                <div className="border-t border-sea-gold/10 p-3 space-y-3">
+                  {c.image_url && (
+                    <img src={c.image_url} alt="" className="w-full max-w-sm rounded" />
+                  )}
+                  {c.facebook_caption && (
+                    <div>
+                      <p className="text-[0.65rem] text-sea-blue/60 font-dm uppercase tracking-wider mb-1">Facebook</p>
+                      <p className="text-sm text-sea-light font-dm leading-relaxed whitespace-pre-wrap">{c.facebook_caption}</p>
+                    </div>
+                  )}
+                  {c.instagram_caption && (
+                    <div>
+                      <p className="text-[0.65rem] text-sea-blue/60 font-dm uppercase tracking-wider mb-1">Instagram</p>
+                      <p className="text-sm text-sea-light font-dm leading-relaxed whitespace-pre-wrap">{c.instagram_caption}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${
-              c.status === 'posted' ? 'bg-green-900/30 text-green-400' :
-              c.status === 'failed' ? 'bg-red-900/30 text-red-400' :
-              c.status === 'scheduled' ? 'bg-yellow-900/30 text-yellow-400' :
-              c.status === 'ready' ? 'bg-cyan-900/30 text-cyan-400' :
-              'bg-sea-gold/10 text-sea-gold'
-            }`}>{c.status}</span>
-          </div>
-        ))}
+          )
+        })}
         {campaigns.length === 0 && <p className="text-center py-6 text-sea-blue text-sm font-dm">No social posts yet.</p>}
       </div>
     </div>

@@ -12,6 +12,7 @@ interface DraftItem {
   status: string
   updated_at: string
   note_count: number
+  image_url: string | null
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -210,6 +211,9 @@ export default function DraftsTab({ isAdminOrAbove, onSwitchTab }: { isAdminOrAb
                 onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                 className="w-full p-3 flex items-center gap-3 bg-transparent border-none cursor-pointer text-left min-h-[56px]"
               >
+                {item.image_url && (
+                  <img src={item.image_url} alt="" className="w-[80px] h-[80px] object-cover rounded flex-shrink-0" />
+                )}
                 <span className={`text-[0.55rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${TYPE_COLORS[item.type]}`}>
                   {TYPE_LABELS[item.type]}
                 </span>

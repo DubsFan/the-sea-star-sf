@@ -36,6 +36,7 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
   const [publishActions, setPublishActions] = useState({ site: 'now', social: 'skip', mailer: 'skip' })
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
 
   // Blog Seeds
   const [seeds, setSeeds] = useState<BlogSeed[]>([])
@@ -292,7 +293,7 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
             <div className="flex gap-2 mt-2 flex-wrap">
               {photos.map((url, i) => (
                 <div key={i} className="relative">
-                  <img src={url} alt="" className="w-16 h-16 object-cover rounded" />
+                  <img src={url} alt="" className="w-20 h-20 object-cover rounded" />
                   <button onClick={() => setPhotos(p => p.filter((_, j) => j !== i))} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center border-none cursor-pointer">×</button>
                 </div>
               ))}
@@ -384,19 +385,39 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
       <div className="space-y-2">
         {posts.map((post) => {
           const badge = getStatusBadge(post)
+          const isExpanded = expandedPostId === post.id
           return (
-            <div key={post.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-3 flex items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-sea-white font-dm truncate">{post.title}</p>
-                <p className="text-[0.65rem] text-sea-blue font-dm">{new Date(post.created_at).toLocaleDateString()}</p>
-              </div>
-              <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
-              {post.social_posted_at && <span className="text-[0.55rem] font-dm px-1.5 py-0.5 rounded bg-purple-900/30 text-purple-400 flex-shrink-0">Social</span>}
-              {!post.is_published && post.status !== 'published' && (
-                <button onClick={() => handleEditPost(post)} className="text-xs text-sea-blue hover:text-sea-gold bg-transparent border-none cursor-pointer font-dm flex-shrink-0">Edit</button>
-              )}
-              {isAdminOrAbove && (
-                <button onClick={() => handleDeletePost(post.id)} className="text-xs text-sea-rose bg-transparent border-none cursor-pointer font-dm flex-shrink-0">Del</button>
+            <div key={post.id} className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedPostId(isExpanded ? null : post.id)}
+                className="w-full p-3 flex items-center gap-3 bg-transparent border-none cursor-pointer text-left min-h-[56px]"
+              >
+                {post.images?.[0] && (
+                  <img src={post.images[0]} alt="" className="w-[80px] h-[80px] object-cover rounded flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-sea-white font-dm truncate">{post.title}</p>
+                  <p className="text-[0.65rem] text-sea-blue font-dm">{new Date(post.created_at).toLocaleDateString()}</p>
+                </div>
+                <span className={`text-[0.6rem] font-dm px-2 py-0.5 rounded flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
+                {post.social_posted_at && <span className="text-[0.55rem] font-dm px-1.5 py-0.5 rounded bg-purple-900/30 text-purple-400 flex-shrink-0">Social</span>}
+              </button>
+              {isExpanded && (
+                <div className="border-t border-sea-gold/10 p-3 space-y-3">
+                  {post.images?.[0] && (
+                    <img src={post.images[0]} alt="" className="w-full max-w-sm rounded" />
+                  )}
+                  {post.excerpt && <p className="text-xs text-sea-blue font-dm leading-relaxed">{post.excerpt}</p>}
+                  <div className="text-sm text-sea-light font-dm leading-relaxed line-clamp-4" dangerouslySetInnerHTML={{ __html: post.body?.slice(0, 500) || '' }} />
+                  <div className="flex gap-2 flex-wrap">
+                    {!post.is_published && post.status !== 'published' && (
+                      <button onClick={() => handleEditPost(post)} className="px-4 min-h-[44px] text-xs text-sea-gold bg-transparent border border-sea-gold/20 rounded cursor-pointer hover:bg-sea-gold/10 transition-all font-dm">Edit</button>
+                    )}
+                    {isAdminOrAbove && (
+                      <button onClick={() => handleDeletePost(post.id)} className="px-4 min-h-[44px] text-xs text-sea-rose bg-transparent border border-sea-rose/20 rounded cursor-pointer hover:bg-red-900/10 transition-all font-dm">Delete</button>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           )
