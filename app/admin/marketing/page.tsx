@@ -10,6 +10,7 @@ import DraftsTab from '../create/DraftsTab'
 import NewsletterTab from './NewsletterTab'
 import MediaTab from './MediaTab'
 import SeoTab from './SeoTab'
+import FaqTab from './FaqTab'
 import ContentPackImportModal from './ContentPackImportModal'
 
 const TABS = [
@@ -18,6 +19,7 @@ const TABS = [
   { key: 'events', label: 'Events' },
   { key: 'newsletter', label: 'Newsletter' },
   { key: 'seo', label: 'SEO' },
+  { key: 'faq', label: 'FAQ' },
   { key: 'drafts', label: 'Drafts' },
   { key: 'media', label: 'Media' },
 ] as const
@@ -106,6 +108,7 @@ export default function MarketingPage() {
       {activeTab === 'events' && <EventsTab isAdminOrAbove={isAdminOrAbove} />}
       {activeTab === 'newsletter' && <NewsletterTab />}
       {activeTab === 'seo' && <SeoTab />}
+      {activeTab === 'faq' && <FaqTab isAdminOrAbove={isAdminOrAbove} />}
       {activeTab === 'drafts' && <DraftsTab isAdminOrAbove={isAdminOrAbove} onSwitchTab={switchTab} />}
       {activeTab === 'media' && <MediaTab />}
 

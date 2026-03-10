@@ -10,6 +10,10 @@ const MARKETING_SAFE_KEYS = [
   'newsletter_cadence',
   'newsletter_next_send',
   'newsletter_template_notes',
+  'social_default_mode',
+  'social_default_delay_days',
+  'social_default_time_local',
+  'newsletter_default_mode',
 ]
 
 export async function GET(request: NextRequest) {

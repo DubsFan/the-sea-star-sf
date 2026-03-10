@@ -19,6 +19,10 @@ interface Setting {
   key: string; value: string
 }
 
+interface UpcomingEvent {
+  id: string; title: string; starts_at: string
+}
+
 export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean }) {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [rawInput, setRawInput] = useState('')
@@ -35,19 +39,107 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
   const [editBody, setEditBody] = useState('')
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
-  const [publishActions, setPublishActions] = useState({ site: 'now', social: 'skip', mailer: 'skip' })
+  const [publishActions, setPublishActions] = useState({ site: 'now', social: 'schedule', mailer: 'draft' })
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
+  const [showTimingPanel, setShowTimingPanel] = useState(false)
+  const [showFineTune, setShowFineTune] = useState(false)
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [eventPreset, setEventPreset] = useState<string | null>(null) // '2-before' | 'day-of' | 'day-after' | 'custom' | null
 
   // Blog Seeds
   const [seeds, setSeeds] = useState<BlogSeed[]>([])
   const [seedFilter, setSeedFilter] = useState<'imported' | 'drafted' | 'all'>('imported')
   const [generatingSeed, setGeneratingSeed] = useState<string | null>(null)
 
+  // Blog Ideas
+  const [blogIdeas, setBlogIdeas] = useState<Array<{ title: string; description: string; target_keyword: string }>>([])
+  const [loadingIdeas, setLoadingIdeas] = useState(false)
+
   // AI Writing Style
   const [showStyle, setShowStyle] = useState(false)
   const [styleSettings, setStyleSettings] = useState<Record<string, string>>({})
   const [styleEditing, setStyleEditing] = useState<Record<string, string>>({})
   const [savingStyle, setSavingStyle] = useState<string | null>(null)
+
+  const loadPublishDefaults = async () => {
+    try {
+      const res = await fetch('/api/admin/settings', { credentials: 'include' })
+      if (!res.ok) return
+      const data = await res.json()
+      if (!Array.isArray(data)) return
+      const get = (key: string) => data.find((s: Setting) => s.key === key)?.value
+      const socialMode = get('social_default_mode') || 'schedule'
+      const newsletterMode = get('newsletter_default_mode') || 'draft'
+      setPublishActions(prev => ({
+        ...prev,
+        social: socialMode,
+        mailer: newsletterMode,
+      }))
+    } catch { /* use defaults */ }
+  }
+
+  const loadUpcomingEvents = async () => {
+    try {
+      const res = await fetch('/api/events?scope=public', { credentials: 'include' })
+      if (!res.ok) return
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        const now = new Date()
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+        const upcoming = data.filter((e: UpcomingEvent) => {
+          const d = new Date(e.starts_at)
+          return d >= now && d <= weekFromNow
+        })
+        setUpcomingEvents(upcoming)
+        if (upcoming.length > 0) setSelectedEventId(upcoming[0].id)
+      }
+    } catch { /* ignore */ }
+  }
+
+  const openTimingPanel = () => {
+    loadPublishDefaults()
+    loadUpcomingEvents()
+    setShowTimingPanel(true)
+    setEventPreset(null)
+  }
+
+  const saveDefaultsAfterPublish = async () => {
+    // Only save non-event timing as new defaults
+    if (eventPreset && eventPreset !== 'custom') return
+    try {
+      const saves = [
+        { key: 'social_default_mode', value: publishActions.social },
+        { key: 'newsletter_default_mode', value: publishActions.mailer },
+      ]
+      for (const s of saves) {
+        await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(s),
+        })
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleGetBlogIdeas = async () => {
+    setLoadingIdeas(true)
+    try {
+      const res = await fetch('/api/seo/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ type: 'content_ideas' }),
+      })
+      const data = await res.json()
+      if (data.ideas) setBlogIdeas(data.ideas)
+    } catch {
+      toast.error('Failed to get ideas')
+    } finally {
+      setLoadingIdeas(false)
+    }
+  }
 
   const loadSeeds = useCallback(async () => {
     const res = await fetch(`/api/content-library?asset_type=blog_seed${seedFilter !== 'all' ? `&status=${seedFilter}` : ''}`, { credentials: 'include' })
@@ -205,11 +297,13 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
       })
       if (res.ok) {
         toast.success('Published!')
+        await saveDefaultsAfterPublish()
         setPreview(null)
         setEditingPostId(null)
         setRawInput('')
         setPhotos([])
-        setPublishActions({ site: 'now', social: 'skip', mailer: 'skip' })
+        setShowTimingPanel(false)
+        setPublishActions({ site: 'now', social: 'schedule', mailer: 'draft' })
         loadPosts()
       } else {
         toast.error('Publish failed')
@@ -329,32 +423,130 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
               </div>
             </div>
 
-            {/* Publish Channel Actions */}
-            {isAdminOrAbove && editingPostId && (
+            {/* Campaign Timing Panel */}
+            {isAdminOrAbove && editingPostId && showTimingPanel && (
               <div className="border-t border-sea-gold/10 pt-4">
-                <label className="block text-xs text-sea-blue mb-3 font-dm tracking-[0.1em] uppercase">Publish Channels</label>
-                <div className="space-y-2">
-                  <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
-                  <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
-                  <ChannelRow label="Email Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
-                  {publishActions.mailer !== 'skip' && (
-                    <div className="ml-0 sm:ml-28 mt-2 space-y-2">
-                      <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
-                        <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
-                        <span className="text-xs text-sea-blue font-dm">Use blog featured image</span>
-                      </label>
-                      {!useSourceImage && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
-                            Choose Hero Image
+                <label className="block text-xs text-sea-blue mb-3 font-dm tracking-[0.1em] uppercase">Campaign Timing</label>
+
+                {/* Channel defaults summary */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between bg-[rgba(26,34,54,0.3)] rounded p-3">
+                    <span className="text-xs text-sea-blue font-dm">Website</span>
+                    <span className="text-xs text-sea-gold font-dm uppercase">Now</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-[rgba(26,34,54,0.3)] rounded p-3">
+                    <span className="text-xs text-sea-blue font-dm">Social Media</span>
+                    <span className={`text-xs font-dm uppercase ${publishActions.social === 'skip' ? 'text-sea-blue/50' : 'text-sea-gold'}`}>
+                      {publishActions.social}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between bg-[rgba(26,34,54,0.3)] rounded p-3">
+                    <span className="text-xs text-sea-blue font-dm">Newsletter</span>
+                    <span className={`text-xs font-dm uppercase ${publishActions.mailer === 'skip' ? 'text-sea-blue/50' : 'text-sea-gold'}`}>
+                      {publishActions.mailer === 'draft' ? 'Draft for review' : publishActions.mailer}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Event-aware timing */}
+                {upcomingEvents.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-sea-blue font-dm mb-2">
+                      Upcoming event{upcomingEvents.length > 1 ? 's' : ''} this week:
+                    </p>
+                    {upcomingEvents.length > 1 && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {upcomingEvents.map((ev) => (
+                          <button
+                            key={ev.id}
+                            onClick={() => setSelectedEventId(ev.id)}
+                            className={`px-3 py-1.5 text-[0.65rem] font-dm rounded border cursor-pointer transition-all min-h-[36px] ${
+                              selectedEventId === ev.id
+                                ? 'bg-sea-gold/10 border-sea-gold/30 text-sea-gold'
+                                : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                            }`}
+                          >
+                            {ev.title} ({new Date(ev.starts_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
                           </button>
-                          {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
-                          <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
+                        ))}
+                      </div>
+                    )}
+                    {selectedEventId && (
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { key: '2-before', label: `2 days before ${upcomingEvents.find(e => e.id === selectedEventId)?.title || 'event'}` },
+                          { key: 'day-of', label: 'Day of event' },
+                          { key: 'day-after', label: 'Day after' },
+                          { key: 'custom', label: 'Custom' },
+                        ].map((chip) => (
+                          <button
+                            key={chip.key}
+                            onClick={() => setEventPreset(eventPreset === chip.key ? null : chip.key)}
+                            className={`px-3 py-1.5 text-[0.65rem] font-dm rounded-full border cursor-pointer transition-all min-h-[36px] ${
+                              eventPreset === chip.key
+                                ? 'bg-sea-gold/15 border-sea-gold/40 text-sea-gold'
+                                : 'bg-transparent border-sea-gold/10 text-sea-blue hover:border-sea-gold/20'
+                            }`}
+                          >
+                            {chip.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Fine-tune channels (collapsed) */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowFineTune(!showFineTune)}
+                    className="flex items-center gap-2 text-xs text-sea-blue font-dm bg-transparent border-none cursor-pointer hover:text-sea-gold transition-colors"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showFineTune ? 'rotate-90' : ''}`}>
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                    Fine-tune channels
+                  </button>
+                  {showFineTune && (
+                    <div className="mt-2 space-y-2 pl-4 border-l border-sea-gold/10">
+                      <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
+                      <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
+                      <ChannelRow label="Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
+                      {publishActions.mailer !== 'skip' && (
+                        <div className="mt-2 space-y-2">
+                          <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                            <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
+                            <span className="text-xs text-sea-blue font-dm">Use blog featured image</span>
+                          </label>
+                          {!useSourceImage && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                                Choose Hero Image
+                              </button>
+                              {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
+                              <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   )}
                 </div>
+
+                {/* Warning about defaults */}
+                {(!eventPreset || eventPreset === 'custom') && (
+                  <p className="text-[0.65rem] text-amber-400/80 font-dm mb-3 bg-amber-900/10 border border-amber-500/10 rounded px-3 py-2">
+                    Your timing changes will become the new default for future campaigns.
+                  </p>
+                )}
+
+                <button
+                  onClick={() => handlePublish(editingPostId)}
+                  disabled={publishing}
+                  className="w-full px-6 py-3 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50 min-h-[48px]"
+                >
+                  {publishing ? 'Publishing...' : 'Confirm & Publish'}
+                </button>
               </div>
             )}
 
@@ -367,13 +559,13 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
                   Mark Ready
                 </button>
               )}
-              {isAdminOrAbove && editingPostId && (
-                <button onClick={() => handlePublish(editingPostId)} disabled={publishing} className="px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
-                  {publishing ? 'Publishing...' : 'Publish'}
+              {isAdminOrAbove && editingPostId && !showTimingPanel && (
+                <button onClick={openTimingPanel} className="px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer">
+                  Publish Everywhere
                 </button>
               )}
               {editingPostId && (
-                <button onClick={() => { setPreview(null); setEditingPostId(null); setPhotos([]) }} className="px-6 py-2.5 bg-transparent text-sea-blue font-dm text-xs tracking-[0.2em] uppercase border border-sea-border cursor-pointer hover:border-sea-gold transition-all">
+                <button onClick={() => { setPreview(null); setEditingPostId(null); setPhotos([]); setShowTimingPanel(false) }} className="px-6 py-2.5 bg-transparent text-sea-blue font-dm text-xs tracking-[0.2em] uppercase border border-sea-border cursor-pointer hover:border-sea-gold transition-all">
                   Cancel
                 </button>
               )}
@@ -467,6 +659,40 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
             </div>
           ))}
           {seeds.length === 0 && <p className="text-center py-4 text-sea-blue text-xs font-dm">No blog seeds. Import a content pack to get started.</p>}
+        </div>
+      </div>
+
+      {/* Blog Ideas */}
+      <div className="mt-8">
+        <h3 className="font-cormorant text-lg text-sea-white mb-3">Blog Ideas</h3>
+        <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
+          <button onClick={handleGetBlogIdeas} disabled={loadingIdeas} className="px-5 py-2.5 min-h-[44px] bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer hover:bg-sea-gold-light transition-all disabled:opacity-50">
+            {loadingIdeas ? 'Thinking...' : 'Get Blog Ideas'}
+          </button>
+          {blogIdeas.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {blogIdeas.map((idea, i) => (
+                <div key={i} className="border border-sea-gold/10 rounded p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-sea-white font-dm">{idea.title}</p>
+                    <p className="text-xs text-sea-blue font-dm mt-1">{idea.description}</p>
+                    <p className="text-[0.6rem] text-sea-gold/60 font-dm mt-1">Target: {idea.target_keyword}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setRawInput(idea.title + (idea.description ? '. ' + idea.description : ''))
+                      setFocusKeyword(idea.target_keyword || '')
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                      toast.success('Loaded into blog creator')
+                    }}
+                    className="px-4 py-2 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all flex-shrink-0"
+                  >
+                    Use This
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
