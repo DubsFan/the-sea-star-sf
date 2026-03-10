@@ -58,6 +58,7 @@ export async function renderMailerPreview(campaignId: string): Promise<string> {
   }
 
   const source = await getMailerSource(campaign.content_type, campaign.source_id)
+  if (campaign.hero_image) source.imageUrl = campaign.hero_image
   return renderMailerHtml(source, campaign.subject || source.title)
 }
 
@@ -130,6 +131,7 @@ export async function sendMailer(campaignId: string, actor?: string) {
     }
   } else {
     source = await getMailerSource(campaign.content_type, campaign.source_id)
+    if (campaign.hero_image) source.imageUrl = campaign.hero_image
   }
   const html = renderMailerHtml(source, campaign.subject || source.title)
 

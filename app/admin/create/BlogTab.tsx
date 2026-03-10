@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import ChannelRow from './ChannelRow'
+import MediaPicker from './MediaPicker'
 
 interface BlogPost {
   id: string; title: string; slug: string; body: string; excerpt: string; meta_description: string
@@ -24,6 +25,10 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
   const [focusKeyword, setFocusKeyword] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
+  const [useSourceImage, setUseSourceImage] = useState(true)
+  const [mailerHeroImage, setMailerHeroImage] = useState('')
+  const [showMailerPicker, setShowMailerPicker] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [preview, setPreview] = useState<{ title: string; body: string; excerpt: string; meta_description: string } | null>(null)
   const [editTitle, setEditTitle] = useState('')
@@ -124,7 +129,8 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
     for (let i = 0; i < Math.min(files.length, 5); i++) {
       const formData = new FormData()
       formData.append('file', files[i])
-      const res = await fetch('/api/menu/upload', { credentials: 'include', method: 'POST', body: formData })
+      formData.append('bucket', 'Drink Images')
+      const res = await fetch('/api/media', { credentials: 'include', method: 'POST', body: formData })
       const data = await res.json()
       if (data.url) urls.push(data.url)
     }
@@ -191,7 +197,7 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
           id: postId,
           site: { action: publishActions.site },
           social: { action: publishActions.social },
-          mailer: { action: publishActions.mailer },
+          mailer: { action: publishActions.mailer, hero_image: !useSourceImage && mailerHeroImage ? mailerHeroImage : undefined },
         }),
       })
       if (res.ok) {
@@ -272,7 +278,15 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
         </div>
         <div className="mb-4">
           <label className="block text-xs text-sea-blue mb-2 font-dm">Photos (up to 5)</label>
-          <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="text-sm text-sea-blue font-dm" />
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => setShowPicker(true)} disabled={photos.length >= 5} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50">
+              Add from Media
+            </button>
+            <label className="inline-flex items-center px-3 py-2.5 min-h-[44px] text-xs text-sea-blue/60 font-dm cursor-pointer hover:text-sea-blue transition-colors">
+              or upload directly
+              <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
+            </label>
+          </div>
           {uploading && <p className="text-xs text-sea-gold mt-1">Uploading...</p>}
           {photos.length > 0 && (
             <div className="flex gap-2 mt-2 flex-wrap">
@@ -284,6 +298,7 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
               ))}
             </div>
           )}
+          <MediaPicker isOpen={showPicker} mode="multiple" maxFiles={5 - photos.length} onSelect={(urls) => { setPhotos(p => [...p, ...urls]); setShowPicker(false) }} onClose={() => setShowPicker(false)} />
         </div>
         <button onClick={handleGenerate} disabled={generating || !rawInput.trim()} className="w-full sm:w-auto px-6 py-2.5 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.2em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
           {generating ? 'Generating...' : 'Generate Post'}
@@ -319,6 +334,23 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
                   <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
                   <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
                   <ChannelRow label="Email Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
+                  {publishActions.mailer !== 'skip' && (
+                    <div className="ml-0 sm:ml-28 mt-2 space-y-2">
+                      <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                        <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
+                        <span className="text-xs text-sea-blue font-dm">Use blog featured image</span>
+                      </label>
+                      {!useSourceImage && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                            Choose Hero Image
+                          </button>
+                          {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
+                          <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

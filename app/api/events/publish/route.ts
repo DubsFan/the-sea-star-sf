@@ -9,6 +9,7 @@ import { SEA_STAR_VOICE, generateWithGroq, cleanJsonResponse } from '@/lib/ai'
 interface ChannelAction {
   action: 'skip' | 'now' | 'schedule'
   scheduledFor?: string
+  hero_image?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -117,6 +118,7 @@ Return ONLY valid JSON with fields: facebook_caption, instagram_caption`
         source_id: id,
         subject: event.title,
         preview_text: event.short_description,
+        hero_image: mailer.hero_image || null,
         status: mailer.action === 'schedule' ? 'scheduled' : 'draft',
         scheduled_for: mailer.action === 'schedule' ? mailer.scheduledFor : null,
       }).select('id').single()

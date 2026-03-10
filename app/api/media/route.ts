@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/auth'
 
-const BUCKETS = ['Drink Images', 'blog-images']
+const BUCKETS = ['Drink Images', 'blog-images', 'drink-images']
 
 export async function GET(request: NextRequest) {
   const session = await requireAdmin(request)

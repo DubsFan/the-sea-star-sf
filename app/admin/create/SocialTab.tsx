@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import MediaPicker from './MediaPicker'
 
 interface SocialCampaign {
   id: string; content_type: string; facebook_caption: string; instagram_caption: string
@@ -17,6 +18,7 @@ export default function SocialTab() {
   const [generating, setGenerating] = useState(false)
   const [posting, setPosting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
 
   const loadCampaigns = async () => {
     const res = await fetch('/api/social', { credentials: 'include' })
@@ -52,7 +54,8 @@ export default function SocialTab() {
     setUploading(true)
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetch('/api/menu/upload', { credentials: 'include', method: 'POST', body: formData })
+    formData.append('bucket', 'Drink Images')
+    const res = await fetch('/api/media', { credentials: 'include', method: 'POST', body: formData })
     const data = await res.json()
     if (data.url) setImageUrl(data.url)
     setUploading(false)
@@ -157,9 +160,18 @@ export default function SocialTab() {
 
             <div>
               <label className="block text-xs text-sea-blue mb-2 font-dm">Image (required for Instagram)</label>
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm text-sea-blue font-dm" />
+              <div className="flex flex-wrap items-center gap-2">
+                <button onClick={() => setShowPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                  {imageUrl ? 'Change Image' : 'Choose Image'}
+                </button>
+                <label className="inline-flex items-center px-3 py-2.5 min-h-[44px] text-xs text-sea-blue/60 font-dm cursor-pointer hover:text-sea-blue transition-colors">
+                  or upload directly
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+              </div>
               {uploading && <p className="text-xs text-sea-gold mt-1">Uploading...</p>}
               {imageUrl && <img src={imageUrl} alt="" className="w-20 h-20 object-cover rounded mt-2" />}
+              <MediaPicker isOpen={showPicker} mode="single" onSelect={(urls) => { setImageUrl(urls[0] || ''); setShowPicker(false) }} onClose={() => setShowPicker(false)} />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">

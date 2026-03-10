@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import ChannelRow from './ChannelRow'
+import MediaPicker from './MediaPicker'
 
 interface EventItem {
   id: string; title: string; slug: string; short_description: string; description_html: string
@@ -21,6 +22,10 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
   const [rawInput, setRawInput] = useState('')
   const [publishing, setPublishing] = useState(false)
   const [publishId, setPublishId] = useState<string | null>(null)
+  const [showPicker, setShowPicker] = useState(false)
+  const [useSourceImage, setUseSourceImage] = useState(true)
+  const [mailerHeroImage, setMailerHeroImage] = useState('')
+  const [showMailerPicker, setShowMailerPicker] = useState(false)
   const [publishActions, setPublishActions] = useState({ site: 'now', social: 'skip', mailer: 'skip' })
 
   const loadEvents = async () => {
@@ -62,7 +67,8 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
     if (!file) return
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetch('/api/menu/upload', { credentials: 'include', method: 'POST', body: formData })
+    formData.append('bucket', 'Drink Images')
+    const res = await fetch('/api/media', { credentials: 'include', method: 'POST', body: formData })
     const data = await res.json()
     if (data.url) setForm(f => ({ ...f, featured_image: data.url }))
   }
@@ -95,7 +101,7 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
           id: eventId,
           site: { action: publishActions.site },
           social: { action: publishActions.social },
-          mailer: { action: publishActions.mailer },
+          mailer: { action: publishActions.mailer, hero_image: !useSourceImage && mailerHeroImage ? mailerHeroImage : undefined },
         }),
       })
       if (res.ok) {
@@ -168,8 +174,17 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
 
           <div>
             <label className="block text-xs text-sea-blue mb-2 font-dm">Event Image</label>
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm text-sea-blue font-dm" />
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={() => setShowPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                {form.featured_image ? 'Change Image' : 'Choose Image'}
+              </button>
+              <label className="inline-flex items-center px-3 py-2.5 min-h-[44px] text-xs text-sea-blue/60 font-dm cursor-pointer hover:text-sea-blue transition-colors">
+                or upload directly
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              </label>
+            </div>
             {form.featured_image && <img src={form.featured_image} alt="" className="w-20 h-20 object-cover rounded mt-2" />}
+            <MediaPicker isOpen={showPicker} mode="single" onSelect={(urls) => { setForm(f => ({ ...f, featured_image: urls[0] || '' })); setShowPicker(false) }} onClose={() => setShowPicker(false)} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -257,6 +272,23 @@ export default function EventsTab({ isAdminOrAbove }: { isAdminOrAbove: boolean 
                   <ChannelRow label="Website" value={publishActions.site} onChange={(v) => setPublishActions(a => ({ ...a, site: v }))} />
                   <ChannelRow label="Social Media" value={publishActions.social} onChange={(v) => setPublishActions(a => ({ ...a, social: v }))} />
                   <ChannelRow label="Email Newsletter" value={publishActions.mailer} onChange={(v) => setPublishActions(a => ({ ...a, mailer: v }))} />
+                  {publishActions.mailer !== 'skip' && (
+                    <div className="mt-2 space-y-2">
+                      <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                        <input type="checkbox" checked={useSourceImage} onChange={(e) => setUseSourceImage(e.target.checked)} className="w-5 h-5 accent-[#c9a54e]" />
+                        <span className="text-xs text-sea-blue font-dm">Use event featured image</span>
+                      </label>
+                      {!useSourceImage && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button onClick={() => setShowMailerPicker(true)} className="px-4 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all">
+                            Choose Hero Image
+                          </button>
+                          {mailerHeroImage && <img src={mailerHeroImage} alt="" className="w-12 h-12 object-cover rounded" />}
+                          <MediaPicker isOpen={showMailerPicker} mode="single" onSelect={(urls) => { setMailerHeroImage(urls[0] || ''); setShowMailerPicker(false) }} onClose={() => setShowMailerPicker(false)} />
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <button onClick={() => handlePublish(event.id)} disabled={publishing} className="mt-2 px-4 py-2 bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase hover:bg-sea-gold-light transition-all border-none cursor-pointer disabled:opacity-50">
                     {publishing ? 'Publishing...' : 'Confirm Publish'}
                   </button>
