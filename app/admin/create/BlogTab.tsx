@@ -66,7 +66,9 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
       if (Array.isArray(data)) {
         const map: Record<string, string> = {}
         for (const s of data as Setting[]) {
-          if (s.key === 'blog_keywords' || s.key === 'blog_tone_notes') map[s.key] = s.value
+          if (s.key === 'seo_keywords') map['seo_keywords'] = s.value
+          if (s.key === 'blog_keywords' && !map['seo_keywords']) map['seo_keywords'] = s.value
+          if (s.key === 'blog_tone_notes') map[s.key] = s.value
         }
         setStyleSettings(map)
       }
@@ -483,7 +485,7 @@ export default function BlogTab({ isAdminOrAbove }: { isAdminOrAbove: boolean })
           <div className="mt-3 bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4 space-y-4">
             <p className="text-xs text-sea-blue font-dm">These settings guide the AI when generating blog posts.</p>
             {[
-              { key: 'blog_keywords', label: 'Preferred Keywords & Topics', placeholder: 'Dogpatch, craft cocktails, dog-friendly, jukebox...' },
+              { key: 'seo_keywords', label: 'SEO Keywords & Topics', placeholder: 'Dogpatch, craft cocktails, dog-friendly, jukebox...' },
               { key: 'blog_tone_notes', label: 'Tone & Style Notes', placeholder: 'Topics to emphasize, phrases to use, things to avoid...' },
             ].map(({ key, label, placeholder }) => {
               const isEditing = key in styleEditing

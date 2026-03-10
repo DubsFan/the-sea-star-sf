@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth'
 
 // Keys that admin and social_admin can read/write (blog + newsletter settings)
 const MARKETING_SAFE_KEYS = [
+  'seo_keywords',
   'blog_keywords',
   'blog_tone_notes',
   'newsletter_cadence',

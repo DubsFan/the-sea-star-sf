@@ -59,16 +59,19 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json()
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (body.title !== undefined) updates.title = body.title
+  if (body.body !== undefined) updates.body = body.body
+  if (body.excerpt !== undefined) updates.excerpt = body.excerpt
+  if (body.meta_description !== undefined) updates.meta_description = body.meta_description
+  if (body.images !== undefined) updates.images = body.images
+  if (body.status !== undefined) updates.status = body.status
+  if (body.focus_keyword !== undefined) updates.focus_keyword = body.focus_keyword
+  if (body.featured_image !== undefined) updates.featured_image = body.featured_image
+
   const { data, error } = await supabase
     .from('blog_posts')
-    .update({
-      title: body.title,
-      body: body.body,
-      excerpt: body.excerpt,
-      meta_description: body.meta_description || null,
-      images: body.images || [],
-      updated_at: new Date().toISOString(),
-    })
+    .update(updates)
     .eq('id', body.id)
     .select()
     .single()

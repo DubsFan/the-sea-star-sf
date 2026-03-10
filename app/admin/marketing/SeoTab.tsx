@@ -38,6 +38,9 @@ export default function SeoTab() {
   const [faqs, setFaqs] = useState<FaqItem[]>([])
   const [faqLoading, setFaqLoading] = useState(false)
   const [packKeywords, setPackKeywords] = useState<string[]>([])
+  const [masterKeywords, setMasterKeywords] = useState<string[]>([])
+  const [newKeyword, setNewKeyword] = useState('')
+  const [savingKeywords, setSavingKeywords] = useState(false)
 
   const loadFaqs = async () => {
     setFaqLoading(true)
@@ -69,6 +72,53 @@ export default function SeoTab() {
     }
   }
 
+  const loadMasterKeywords = async () => {
+    try {
+      const res = await fetch('/api/admin/settings', { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          const seoRow = data.find((s: { key: string; value: string }) => s.key === 'seo_keywords')
+          const blogRow = data.find((s: { key: string; value: string }) => s.key === 'blog_keywords')
+          const val = seoRow?.value || blogRow?.value || ''
+          setMasterKeywords(val ? val.split(',').map((k: string) => k.trim()).filter(Boolean) : [])
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  const saveMasterKeywords = async (kws: string[]) => {
+    setSavingKeywords(true)
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ key: 'seo_keywords', value: kws.join(', ') }),
+      })
+      if (res.ok) {
+        setMasterKeywords(kws)
+        toast.success('Keywords saved')
+      } else {
+        toast.error('Failed to save keywords')
+      }
+    } finally {
+      setSavingKeywords(false)
+    }
+  }
+
+  const addKeyword = (kw: string) => {
+    const trimmed = kw.trim().toLowerCase()
+    if (!trimmed || masterKeywords.some(k => k.toLowerCase() === trimmed)) return
+    const updated = [...masterKeywords, trimmed].sort()
+    saveMasterKeywords(updated)
+  }
+
+  const removeKeyword = (kw: string) => {
+    const updated = masterKeywords.filter(k => k !== kw)
+    saveMasterKeywords(updated)
+  }
+
   const patchFaq = async (id: string, updates: Partial<FaqItem>) => {
     try {
       const res = await fetch(`/api/content-library/${id}`, {
@@ -94,7 +144,7 @@ export default function SeoTab() {
     if (Array.isArray(data)) setPages(data)
   }
 
-  useEffect(() => { loadPages(); loadFaqs(); loadPackKeywords() }, [])
+  useEffect(() => { loadPages(); loadFaqs(); loadPackKeywords(); loadMasterKeywords() }, [])
 
   const handleEdit = (page: PageSeoRow) => {
     setEditingPath(page.page_path)
@@ -197,22 +247,81 @@ export default function SeoTab() {
         </div>
       </div>
 
-      {/* Keyword Strategy */}
+      {/* Master SEO Keywords */}
       <div className="mb-8">
-        <h3 className="font-cormorant text-lg text-sea-white mb-3">Keyword Strategy</h3>
+        <h3 className="font-cormorant text-lg text-sea-white mb-3">SEO Keywords</h3>
         <div className="bg-[#0a0e18] border border-sea-gold/10 rounded-lg p-4">
-          <label className="block text-xs text-sea-blue mb-1 font-dm">Current Keywords</label>
-          <input type="text" value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="craft cocktails, dogpatch bar, sf nightlife..." className="w-full px-3 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold mb-3 placeholder:text-sea-border min-h-[44px]" />
-          <button onClick={handleSuggestKeywords} disabled={loading} className="px-5 py-2.5 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50">
-            {loading ? 'Thinking...' : 'Suggest Keywords'}
-          </button>
-          {suggestedKeywords.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {suggestedKeywords.map((kw, i) => (
-                <span key={i} className="text-xs font-dm px-2 py-1 rounded bg-sea-gold/10 text-sea-gold">{kw}</span>
+          <p className="text-xs text-sea-blue font-dm mb-3">
+            These keywords guide ALL AI-generated content — blog posts, social captions, and event descriptions.
+          </p>
+          {masterKeywords.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {masterKeywords.map((kw) => (
+                <span key={kw} className="inline-flex items-center gap-1.5 text-xs font-dm px-3 py-1.5 rounded-full bg-sea-gold/10 text-sea-gold border border-sea-gold/15">
+                  {kw}
+                  <button
+                    onClick={() => removeKeyword(kw)}
+                    disabled={savingKeywords}
+                    className="w-4 h-4 flex items-center justify-center rounded-full bg-sea-gold/20 text-sea-gold hover:bg-red-600 hover:text-white transition-colors cursor-pointer text-[0.6rem] leading-none border-none"
+                  >×</button>
+                </span>
               ))}
             </div>
+          ) : (
+            <p className="text-xs text-sea-blue/50 font-dm mb-4 italic">No keywords set yet.</p>
           )}
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              value={newKeyword}
+              onChange={(e) => setNewKeyword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { addKeyword(newKeyword); setNewKeyword('') } }}
+              placeholder="Add a keyword..."
+              className="flex-1 px-3 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold placeholder:text-sea-border min-h-[44px]"
+            />
+            <button
+              onClick={() => { addKeyword(newKeyword); setNewKeyword('') }}
+              disabled={!newKeyword.trim() || savingKeywords}
+              className="px-4 min-h-[44px] bg-sea-gold text-[#06080d] font-dm text-xs font-medium tracking-[0.15em] uppercase border-none cursor-pointer hover:bg-sea-gold-light transition-all disabled:opacity-50"
+            >Add</button>
+          </div>
+
+          {/* Suggest keywords */}
+          <div className="border-t border-sea-gold/10 pt-3">
+            <div className="flex gap-2 items-center mb-2">
+              <input
+                type="text"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                placeholder="Context for suggestions (optional)..."
+                className="flex-1 px-3 py-2.5 bg-[rgba(26,34,54,0.5)] border border-sea-gold/15 text-sea-light font-dm text-sm outline-none focus:border-sea-gold placeholder:text-sea-border min-h-[44px]"
+              />
+              <button onClick={handleSuggestKeywords} disabled={loading} className="px-4 min-h-[44px] bg-transparent text-sea-gold font-dm text-xs tracking-[0.15em] uppercase border border-sea-gold cursor-pointer hover:bg-sea-gold/10 transition-all disabled:opacity-50 flex-shrink-0">
+                {loading ? 'Thinking...' : 'Suggest'}
+              </button>
+            </div>
+            {suggestedKeywords.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {suggestedKeywords.map((kw, i) => {
+                  const alreadyAdded = masterKeywords.some(k => k.toLowerCase() === kw.toLowerCase())
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => { if (!alreadyAdded) addKeyword(kw) }}
+                      disabled={alreadyAdded || savingKeywords}
+                      className={`inline-flex items-center gap-1 text-xs font-dm px-3 py-1.5 rounded-full border transition-all min-h-[36px] ${
+                        alreadyAdded
+                          ? 'bg-green-900/20 border-green-500/20 text-green-400/60 cursor-default'
+                          : 'bg-sea-gold/5 border-sea-gold/20 text-sea-gold cursor-pointer hover:bg-sea-gold/15'
+                      }`}
+                    >
+                      {alreadyAdded ? '✓' : '+'} {kw}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

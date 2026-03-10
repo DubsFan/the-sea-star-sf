@@ -225,6 +225,22 @@ export async function POST(request: NextRequest) {
     if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 })
   }
 
+  // Auto-merge primary_keywords into seo_keywords
+  const newKeywords = Array.from(new Set(
+    items.map(i => 'primary_keyword' in i ? i.primary_keyword : null).filter((k): k is string => !!k)
+  ))
+  if (newKeywords.length > 0) {
+    const { data: settingsData } = await supabase
+      .from('site_settings')
+      .select('value')
+      .in('key', ['seo_keywords', 'blog_keywords'])
+    const existing = (settingsData?.[0]?.value || '').split(',').map((k: string) => k.trim()).filter(Boolean)
+    const merged = Array.from(new Set([...existing, ...newKeywords.map(k => k.toLowerCase())])).sort()
+    await supabase
+      .from('site_settings')
+      .upsert({ key: 'seo_keywords', value: merged.join(', '), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+  }
+
   return NextResponse.json({
     pack_id: pack.id,
     name: pack.name,

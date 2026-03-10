@@ -9,10 +9,10 @@ export async function buildBaseContext(deps?: Pick<AppDeps, 'db'>): Promise<{ ke
   const { data } = await db
     .from('site_settings')
     .select('key, value')
-    .in('key', ['blog_keywords', 'blog_tone_notes'])
+    .in('key', ['seo_keywords', 'blog_keywords', 'blog_tone_notes'])
 
   return {
-    keywords: data?.find(s => s.key === 'blog_keywords')?.value || '',
+    keywords: data?.find(s => s.key === 'seo_keywords')?.value || data?.find(s => s.key === 'blog_keywords')?.value || '',
     toneNotes: data?.find(s => s.key === 'blog_tone_notes')?.value || '',
   }
 }
